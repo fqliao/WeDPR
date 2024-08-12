@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 @Builder
 public class ListDatasetResponse {
-    int totalCount;
+    long totalCount;
     boolean isLast;
     List<Dataset> content;
 }
