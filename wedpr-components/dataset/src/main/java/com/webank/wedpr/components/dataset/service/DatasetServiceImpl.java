@@ -1,5 +1,8 @@
 package com.webank.wedpr.components.dataset.service;
 
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageInfo;
+import com.github.pagehelper.page.PageMethod;
 import com.webank.wedpr.components.dataset.common.DatasetConstant;
 import com.webank.wedpr.components.dataset.common.DatasetStatus;
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
@@ -463,8 +466,6 @@ public class DatasetServiceImpl implements DatasetServiceApi {
             pageSize = datasetConfig.getMaxBatchSize();
         }
 
-        int pageOffset = (pageNum - 1) * pageSize;
-
         String user = userInfo.getUser();
         String agency = userInfo.getAgency();
         List<String> userGroupList = userInfo.getUserGroupList();
@@ -474,22 +475,9 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                 DatasetPermissionUtils.toSubjectStrList(userGroupList, agency);
 
         try {
-            int totalCount =
-                    datasetMapper.countVisibleDatasetsForUser(
-                            agency,
-                            userSubject,
-                            userGroupSubjectList,
-                            ownerUser,
-                            ownerAgency,
-                            datasetTitle,
-                            permissionType,
-                            startTime,
-                            endTime);
-            boolean isLast = true;
+            try (Page<Object> objectPage = PageMethod.startPage(pageNum, pageSize)) {
 
-            List<Dataset> datasetList = new ArrayList<>();
-            if (totalCount > 0) {
-                datasetList =
+                List<Dataset> datasetList =
                         datasetMapper.queryVisibleDatasetsForUser(
                                 agency,
                                 userSubject,
@@ -499,35 +487,26 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                                 datasetTitle,
                                 permissionType,
                                 startTime,
-                                endTime,
-                                pageOffset,
-                                pageSize);
+                                endTime);
 
-                for (Dataset dataset : datasetList) {
-                    String datasetId = dataset.getDatasetId();
-                    DatasetUserPermissions datasetUserPermissions =
-                            DatasetUserPermissionValidator.confirmUserDatasetPermissions(
-                                    datasetId, userInfo, datasetPermissionMapper, false);
-                    dataset.setPermissions(datasetUserPermissions);
-                }
+                long totalCount = new PageInfo<>(datasetList).getTotal();
+                long pageEndOffset = (long) pageNum * pageSize;
+                boolean isLast = (pageEndOffset >= totalCount);
 
-                isLast = (datasetList.size() < pageSize);
+                long endTimeMillis = System.currentTimeMillis();
+
+                logger.info(
+                        "list dataset end, totalCount: {}, isLast: {}, cost(ms): {}",
+                        totalCount,
+                        isLast,
+                        (endTimeMillis - startTimeMillis));
+
+                return ListDatasetResponse.builder()
+                        .totalCount(totalCount)
+                        .isLast(isLast)
+                        .content(datasetList)
+                        .build();
             }
-
-            long endTimeMillis = System.currentTimeMillis();
-
-            logger.info(
-                    "list dataset end, totalCount: {}, isLast: {}, cost(ms): {}",
-                    totalCount,
-                    isLast,
-                    (endTimeMillis - startTimeMillis));
-
-            return ListDatasetResponse.builder()
-                    .totalCount(totalCount)
-                    .isLast(isLast)
-                    .content(datasetList)
-                    .build();
-
         } catch (Exception e) {
             logger.error("query visible datasets for user db operation exception ,e: ", e);
             throw new DatasetException(

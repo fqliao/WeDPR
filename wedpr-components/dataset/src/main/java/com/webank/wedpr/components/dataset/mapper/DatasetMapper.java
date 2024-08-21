@@ -40,24 +40,6 @@ public interface DatasetMapper {
             @Param("datasetTitle") String datasetTitle,
             @Param("permissionType") Integer permissionType,
             @Param("startTime") String startTime,
-            @Param("endTime") String endTime,
-            @Param("pageOffset") Integer pageOffset,
-            @Param("pageSize") Integer pageSize);
-
-    /**
-     * count all visible dataset for the user
-     *
-     * @return
-     */
-    int countVisibleDatasetsForUser(
-            @Param("loginAgency") String loginAgency,
-            @Param("loginUserSubject") String loginUserSubject,
-            @Param("loginUserGroupSubjectList") List<String> loginUserGroupSubjectList,
-            @Param("ownerUser") String ownerUser,
-            @Param("ownerAgency") String ownerAgency,
-            @Param("datasetTitle") String datasetTitle,
-            @Param("permissionType") Integer permissionType,
-            @Param("startTime") String startTime,
             @Param("endTime") String endTime);
 
     /**
