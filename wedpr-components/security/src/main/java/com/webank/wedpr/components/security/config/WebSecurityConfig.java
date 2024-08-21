@@ -6,9 +6,11 @@ import com.webank.wedpr.components.user.service.WedprGroupDetailService;
 import com.webank.wedpr.components.user.service.WedprGroupService;
 import com.webank.wedpr.components.user.service.WedprUserRoleService;
 import com.webank.wedpr.components.user.service.WedprUserService;
+import com.webank.wedpr.core.protocol.ServerTypeEnum;
 import com.webank.wedpr.core.utils.Constant;
 import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -38,6 +40,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired private WedprUserRoleService wedprUserRoleService;
 
     @Autowired private LoadingCache<String, UserJwtInfo> loadingCache;
+
+    @Value("${server.type:site_end}")
+    private String serverType;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -80,13 +85,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        String loginUrl = getLoginUrl(serverType);
         JwtLoginFilter jwtLoginFilter =
                 new JwtLoginFilter(
                         authenticationManager,
                         userJwtConfig,
                         wedprGroupDetailService,
                         wedprGroupService,
-                        wedprUserService);
+                        wedprUserService,
+                        loginUrl);
         JwtAuthenticationFilter jwtAuthenticationFilter =
                 new JwtAuthenticationFilter(
                         authenticationManager, userJwtConfig, wedprUserService, loadingCache);
@@ -103,11 +110,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sameOrigin()
                 .and()
                 .formLogin()
-                .loginProcessingUrl(Constant.LOGIN_URL)
+                .loginProcessingUrl(loginUrl)
                 .and()
                 .addFilter(jwtLoginFilter)
                 .addFilter(jwtAuthenticationFilter)
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+    }
+
+    public static String getLoginUrl(String serverType) {
+        String loginUrl = Constant.SITE_END_LOGIN_URL;
+        if (ServerTypeEnum.ADMIN_END.getName().equals(serverType)) {
+            loginUrl = Constant.ADMIN_END_LOGIN_URL;
+        }
+        return loginUrl;
     }
 }
