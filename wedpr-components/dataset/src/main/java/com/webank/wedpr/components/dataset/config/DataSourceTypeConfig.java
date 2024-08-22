@@ -53,7 +53,7 @@ public class DataSourceTypeConfig {
             // check db types
             for (LabelValue childLabelValue : labelValue.getChildren()) {
                 DBType dbType = DBType.fromStrType(childLabelValue.getValue());
-                logger.info(" add one db type: {}", dbType);
+                logger.info(" add one db datasource type: {}", dbType);
             }
         }
     }
