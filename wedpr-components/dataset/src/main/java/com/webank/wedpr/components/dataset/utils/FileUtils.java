@@ -1,16 +1,22 @@
 package com.webank.wedpr.components.dataset.utils;
 
+import com.alibaba.druid.util.HexBin;
 import com.webank.wedpr.components.dataset.exception.DatasetException;
-import com.webank.wedpr.core.utils.WeDPRException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.LineNumberReader;
-import lombok.SneakyThrows;
+import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FileUtils {
     private static final Logger logger = LoggerFactory.getLogger(FileUtils.class);
+
+    private FileUtils() {}
 
     public static int getFileLinesNumber(String filePath) throws DatasetException {
         try (FileReader fileReader = new FileReader(filePath);
@@ -18,32 +24,65 @@ public class FileUtils {
             lineNumberReader.skip(Long.MAX_VALUE);
             return lineNumberReader.getLineNumber();
         } catch (Exception e) {
-            logger.error("获取文件行数异常, filePath: {}, e: ", filePath, e);
+            logger.error("get file lines number exception, filePath: {}, e: ", filePath, e);
             throw new DatasetException(
-                    "获取文件行数异常, filePath: " + filePath + " ,e: " + e.getMessage());
+                    "get file lines number exception, filePath: "
+                            + filePath
+                            + " ,e: "
+                            + e.getMessage());
         }
     }
 
     /**
-     * 删除目录
+     * remove directory
      *
      * @param directory
      */
-    @SneakyThrows(WeDPRException.class)
-    public static void deleteDirectory(File directory) {
+    public static void deleteDirectory(File directory) throws IOException {
         if (directory.isDirectory()) {
-            // 获取目录中的所有文件和子目录
+            // Retrieve all files and subdirectories in the directory
             File[] files = directory.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    // 递归删除每个文件和子目录
+                    // Recursively delete each file and subdirectory
                     deleteDirectory(file);
                 }
             }
         }
-        // 删除空目录
-        if (!directory.delete()) {
-            throw new WeDPRException("deleteDirectory for " + directory + "failed!");
+
+        Files.delete(directory.toPath());
+    }
+
+    public static long getFileSize(String filePath) {
+        File file = new File(filePath);
+        return file.length();
+    }
+
+    public static String calculateFileHash(String filePath, String algorithm)
+            throws DatasetException {
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Unsupported hash algorithm type, algorithm: {}", algorithm);
+            throw new DatasetException("Unsupported hash algorithm type, algorithm: " + algorithm);
         }
+
+        byte[] buffer = new byte[1024 * 10];
+        try (FileInputStream inputStream = new FileInputStream(filePath)) {
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+            }
+        } catch (Exception e) {
+            logger.error(
+                    "Exception in calculating file hash, algorithm: {}, file: {}, e: ",
+                    algorithm,
+                    filePath,
+                    e);
+            throw new DatasetException("Exception in calculating file hash, e: " + e.getMessage());
+        }
+
+        return HexBin.encode(digest.digest(), false);
     }
 }

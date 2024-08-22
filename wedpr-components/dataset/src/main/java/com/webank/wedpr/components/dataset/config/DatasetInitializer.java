@@ -19,15 +19,30 @@ public class DatasetInitializer {
     @Bean
     public void createLargeFileDataDir() throws IOException {
         String largeFileDataDir = datasetConfig.getLargeFileDataDir();
+        String datasetBaseDir = datasetConfig.getDatasetBaseDir();
 
-        File file = new File(largeFileDataDir);
-        if (!file.exists()) {
-            Files.createDirectories(file.toPath());
-            logger.info(" => create large file data dir, largeFileDataDir: {}", largeFileDataDir);
-        } else {
-            logger.info(
-                    " => large file data dir has been exist, largeFileDataDir: {}",
-                    largeFileDataDir);
+        {
+            File file = new File(largeFileDataDir);
+            if (!file.exists()) {
+                Files.createDirectories(file.toPath());
+                logger.info(
+                        " => create large file data dir, largeFileDataDir: {}", largeFileDataDir);
+            } else {
+                logger.info(
+                        " => large file data dir has been exist, largeFileDataDir: {}",
+                        largeFileDataDir);
+            }
+        }
+
+        {
+            File file = new File(datasetBaseDir);
+            if (!file.exists()) {
+                Files.createDirectories(file.toPath());
+                logger.info(" => create dataset base dir, datasetBaseDir: {}", datasetBaseDir);
+            } else {
+                logger.info(
+                        " => dataset base dir has been exist, datasetBaseDir: {}", datasetBaseDir);
+            }
         }
     }
 }

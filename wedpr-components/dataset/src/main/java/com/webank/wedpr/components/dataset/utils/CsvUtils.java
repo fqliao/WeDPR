@@ -1,7 +1,10 @@
 package com.webank.wedpr.components.dataset.utils;
 
 import com.opencsv.CSVReaderHeaderAware;
+import com.webank.wedpr.components.dataset.datasource.DBType;
+import com.webank.wedpr.components.dataset.datasource.category.DBDataSource;
 import com.webank.wedpr.components.dataset.exception.DatasetException;
+import com.webank.wedpr.components.dataset.sqlutils.SQLExecutor;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -25,6 +28,8 @@ public class CsvUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(CsvUtils.class);
 
+    private static final String CSV_SEPARATOR = ",";
+
     private CsvUtils() {}
 
     /**
@@ -47,7 +52,7 @@ public class CsvUtils {
                 fieldList.add(entry.getKey());
             }
 
-            String joinString = String.join(",", fieldList);
+            String joinString = String.join(CSV_SEPARATOR, fieldList);
             logger.info(
                     "read csv header, fields count: {}, field list: {}, csvPath: {}",
                     fieldList.size(),
@@ -66,12 +71,12 @@ public class CsvUtils {
      * convert excel file to csv
      *
      * @param excelFilePath
-     * @param csvFilePath
+     * @param outputCsvFilePath
      * @param sheetNum
      * @throws IOException
      */
-    public static void convertExcelToCsv(String excelFilePath, String csvFilePath, int sheetNum)
-            throws DatasetException {
+    public static void convertExcelToCsv(
+            String excelFilePath, String outputCsvFilePath, int sheetNum) throws DatasetException {
 
         long startTimeMillis = System.currentTimeMillis();
         logger.info(
@@ -81,7 +86,7 @@ public class CsvUtils {
 
         // Create an output stream for writing to a CSV file.
         // read excel with apache POI
-        try (FileWriter fileWriter = new FileWriter(csvFilePath);
+        try (FileWriter fileWriter = new FileWriter(outputCsvFilePath);
                 PrintWriter csvWriter = new PrintWriter(fileWriter);
                 Workbook workbook = WorkbookFactory.create(new File(excelFilePath))) {
 
@@ -120,7 +125,7 @@ public class CsvUtils {
                                             + cellValue);
                     }
                     // add a comma separator after each cell.
-                    csvWriter.print(',');
+                    csvWriter.print(CSV_SEPARATOR);
                 }
 
                 // add a newline at the end of each row
@@ -142,6 +147,86 @@ public class CsvUtils {
                 "convert excel to csv success, excelPath: {}, sheetNum: {}, cost(ms)： {}",
                 excelFilePath,
                 sheetNum,
+                (endTimeMillis - startTimeMillis));
+    }
+
+    /**
+     * load data from database and write to csv file
+     *
+     * @param dbType
+     * @param dbDataSource
+     * @throws DatasetException
+     */
+    public static void convertDBDataToCsv(
+            DBType dbType, DBDataSource dbDataSource, String outputCsvFilePath)
+            throws DatasetException {
+
+        long startTimeMillis = System.currentTimeMillis();
+        logger.info(
+                "try to convert db data to csv, dbType: {}, dbDataSource: {}, outputCsvFilePath: {}",
+                dbType,
+                dbDataSource,
+                outputCsvFilePath);
+
+        final boolean[] bFirst = {true};
+
+        // Create an output stream for writing to a CSV file.
+        try (FileWriter fileWriter = new FileWriter(outputCsvFilePath);
+                PrintWriter csvWriter = new PrintWriter(fileWriter)) {
+
+            SQLExecutor sqlExecutor = new SQLExecutor();
+            sqlExecutor.executeSQL(
+                    dbType,
+                    dbDataSource,
+                    (fields, rowValues) -> {
+                        if (bFirst[0]) {
+                            bFirst[0] = false;
+                            // write header
+                            for (int i = 0; i < fields.size(); ++i) {
+                                csvWriter.write(fields.get(i));
+
+                                if (i < fields.size() - 1) {
+                                    // add a comma separator after each cell.
+                                    csvWriter.print(CSV_SEPARATOR);
+                                }
+                            }
+
+                            // add a newline at the end of each row
+                            csvWriter.println();
+                        }
+
+                        // write line values
+                        for (int i = 0; i < rowValues.size(); ++i) {
+                            csvWriter.write(rowValues.get(i));
+                            if (i < rowValues.size() - 1) {
+                                // add a comma separator after each cell.
+                                csvWriter.print(CSV_SEPARATOR);
+                            }
+                        }
+
+                        // add a newline at the end of each row
+                        csvWriter.println();
+                    });
+
+        } catch (Exception e) {
+            long endTimeMillis = System.currentTimeMillis();
+            logger.error(
+                    "convert db data to csv exception, dbType: {}, dbDataSource: {}, outputCsvFilePath: {}, cost(ms)： {}, e",
+                    dbType,
+                    dbDataSource,
+                    outputCsvFilePath,
+                    endTimeMillis - startTimeMillis,
+                    e);
+            throw new DatasetException("Failed to convert db data to csv, e: " + e.getMessage());
+        }
+
+        long endTimeMillis = System.currentTimeMillis();
+
+        logger.info(
+                "convert db data to csv success, dbType: {}, dbDataSource: {}, outputCsvFilePath: {}, cost(ms)： {}",
+                dbType,
+                dbDataSource,
+                outputCsvFilePath,
                 (endTimeMillis - startTimeMillis));
     }
 }

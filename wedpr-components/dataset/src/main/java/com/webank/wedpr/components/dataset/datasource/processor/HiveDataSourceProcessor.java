@@ -6,11 +6,6 @@ import com.webank.wedpr.components.dataset.exception.DatasetException;
 public class HiveDataSourceProcessor implements DataSourceProcessor {
 
     @Override
-    public boolean isSupportUploadChunkData() {
-        return false;
-    }
-
-    @Override
     public DataSourceMeta parseDataSourceMeta(String strDataSourceMeta) throws DatasetException {
         return null;
     }
@@ -22,10 +17,7 @@ public class HiveDataSourceProcessor implements DataSourceProcessor {
     public void analyzeData() throws DatasetException {}
 
     @Override
-    public void uploadData2Storage() throws DatasetException {}
-
-    @Override
-    public void updateMeta2DB() throws DatasetException {}
+    public void uploadData() throws DatasetException {}
 
     @Override
     public void cleanupData() throws DatasetException {}

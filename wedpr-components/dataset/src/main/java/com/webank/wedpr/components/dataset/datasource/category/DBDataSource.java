@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class DBDataSource implements DataSourceMeta {
-    // private DBType dbType;
     private String dbType;
     private String dbIp;
     private Integer dbPort;
@@ -15,4 +14,9 @@ public class DBDataSource implements DataSourceMeta {
     private String sql;
     // Data is loaded once when a data source is created, or on each access
     Boolean dynamicDataSource = false;
+
+    @Override
+    public boolean dynamicDataSource() {
+        return dynamicDataSource;
+    }
 }

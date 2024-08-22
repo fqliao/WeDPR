@@ -9,10 +9,12 @@ public enum DatasetStatus {
     Success(0, "Success"),
     Failure(-1, "Failure"),
     Fatal(-2, "Fatal"),
-    WaitingForUploadData(1, "WaitingForUploadData"),
-    DataUploading(2, "DataUploading"),
-    DataAnalyzing(3, "DataAnalyzing"),
-    UploadingDataToStorage(4, "UploadingDataToStorage");
+    InitialState(1, "InitialState"),
+    WaitingForUploadData(2, "WaitingForUploadData"),
+    WaitingForLoadDBData(3, "WaitingForLoadDBData"),
+    DataUploading(4, "DataUploading"),
+    DataAnalyzing(5, "DataAnalyzing"),
+    UploadingDataToStorage(6, "UploadingDataToStorage");
 
     private final Integer code;
     private final String message;

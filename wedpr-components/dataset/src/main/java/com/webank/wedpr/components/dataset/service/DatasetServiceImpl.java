@@ -11,6 +11,7 @@ import com.webank.wedpr.components.dataset.dao.DatasetPermission;
 import com.webank.wedpr.components.dataset.dao.DatasetUserPermissions;
 import com.webank.wedpr.components.dataset.dao.UserInfo;
 import com.webank.wedpr.components.dataset.datasource.DataSourceMeta;
+import com.webank.wedpr.components.dataset.datasource.DataSourceType;
 import com.webank.wedpr.components.dataset.datasource.dispatch.DataSourceProcessorDispatcher;
 import com.webank.wedpr.components.dataset.datasource.processor.DataSourceProcessor;
 import com.webank.wedpr.components.dataset.datasource.processor.DataSourceProcessorContext;
@@ -18,6 +19,7 @@ import com.webank.wedpr.components.dataset.exception.DatasetException;
 import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.mapper.DatasetPermissionMapper;
 import com.webank.wedpr.components.dataset.mapper.wapper.DatasetTransactionalWrapper;
+import com.webank.wedpr.components.dataset.mapper.wapper.DatasetWrapper;
 import com.webank.wedpr.components.dataset.message.CreateDatasetRequest;
 import com.webank.wedpr.components.dataset.message.CreateDatasetResponse;
 import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
@@ -54,6 +56,7 @@ public class DatasetServiceImpl implements DatasetServiceApi {
     @Autowired private DatasetPermissionMapper datasetPermissionMapper;
     @Autowired private DatasetTransactionalWrapper datasetTransactionalWrapper;
     @Autowired private DataSourceProcessorDispatcher dataSourceProcessorDispatcher;
+    @Autowired private DatasetWrapper datasetWrapper;
 
     @Qualifier("fileStorage")
     @Autowired
@@ -82,7 +85,10 @@ public class DatasetServiceImpl implements DatasetServiceApi {
 
     // CreateDatasetRequest => Dataset
     public Dataset constructDataset(
-            String datasetId, UserInfo userInfo, CreateDatasetRequest createDatasetRequest) {
+            String datasetId,
+            UserInfo userInfo,
+            boolean dynamicDataSource,
+            CreateDatasetRequest createDatasetRequest) {
         Dataset dataset = new Dataset();
 
         String datasetVisibilityDetails = createDatasetRequest.getDatasetVisibilityDetails();
@@ -114,8 +120,14 @@ public class DatasetServiceImpl implements DatasetServiceApi {
         dataset.setOwnerAgencyName(userInfo.getAgency());
         dataset.setOwnerUserId(userInfo.getUser());
         dataset.setOwnerUserName(userInfo.getUser());
-        dataset.setStatus(DatasetStatus.WaitingForUploadData.getCode());
-        dataset.setStatusDesc(DatasetStatus.WaitingForUploadData.getMessage());
+
+        if (dynamicDataSource) {
+            dataset.setStatus(DatasetStatus.Success.getCode());
+            dataset.setStatusDesc(DatasetStatus.Success.getMessage());
+        } else {
+            dataset.setStatus(DatasetStatus.InitialState.getCode());
+            dataset.setStatusDesc(DatasetStatus.InitialState.getMessage());
+        }
 
         return dataset;
     }
@@ -144,33 +156,46 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                 DatasetPermissionGenerator.generateDatasetVisibilityPermissions(
                         datasetVisibility, datasetId, userInfo, datasetVisibilityDetails, true);
 
-        String dataSourceType = createDatasetRequest.getDataSourceType();
+        String strDataSourceType = createDatasetRequest.getDataSourceType();
         String strDataSourceMeta = createDatasetRequest.getDataSourceMeta();
 
         // validates the type
         DataSourceProcessor dataSourceProcessor =
-                dataSourceProcessorDispatcher.getDataSourceProcessor(dataSourceType);
+                dataSourceProcessorDispatcher.getDataSourceProcessor(strDataSourceType);
         if (dataSourceProcessor == null) {
-            logger.error("Unsupported data source type, dataSourceType: {}", dataSourceType);
+            logger.error("Unsupported data source type, dataSourceType: {}", strDataSourceType);
             throw new DatasetException(
-                    "Unsupported data source type, dataSourceType: " + dataSourceType);
+                    "Unsupported data source type, dataSourceType: " + strDataSourceType);
         }
 
-        // create new dataset object
-        Dataset dataset = constructDataset(datasetId, userInfo, createDatasetRequest);
-
-        if (dataSourceProcessor.isSupportUploadChunkData()) {
-            // need upload chunks data, insert dataset first
-            datasetTransactionalWrapper.transactionalAddDataset(
-                    datasetId, dataset, datasetPermissionList);
-
-            return CreateDatasetResponse.builder().datasetId(datasetId).build();
-        }
+        boolean dynamicDataSource = false;
 
         // parse datasource meta
         DataSourceMeta dataSourceMeta = dataSourceProcessor.parseDataSourceMeta(strDataSourceMeta);
+        if (dataSourceMeta != null) {
+            dynamicDataSource = dataSourceMeta.dynamicDataSource();
+        }
+
+        // create new dataset object
+        Dataset dataset =
+                constructDataset(datasetId, userInfo, dynamicDataSource, createDatasetRequest);
+        // insert dataset to db
         datasetTransactionalWrapper.transactionalAddDataset(
                 datasetId, dataset, datasetPermissionList);
+
+        // waiting for upload process
+        if (DataSourceType.isUploadDataSource(strDataSourceType)) {
+            logger.info("upload data source type: {}, datasetId: {}", strDataSourceType, datasetId);
+            return CreateDatasetResponse.builder().datasetId(datasetId).build();
+        }
+
+        // dynamic data source
+        if (dynamicDataSource) {
+            logger.info(
+                    "dynamic data source type: {}, datasetId: {}", strDataSourceType, datasetId);
+            return CreateDatasetResponse.builder().datasetId(datasetId).build();
+        }
+
         // async process data source
         ThreadPoolUtils.execute(
                 executor,
@@ -182,17 +207,28 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                                     .dataset(dataset)
                                     .dataSourceMeta(dataSourceMeta)
                                     .datasetConfig(datasetConfig)
+                                    .userInfo(userInfo)
                                     .datasetTransactionalWrapper(datasetTransactionalWrapper)
                                     .chunkUpload(chunkUpload)
                                     .fileStorage(fileStorage)
                                     .build();
 
-                    dataSourceProcessor.processData(context);
+                    try {
+                        dataSourceProcessor.setContext(context);
+                        dataSourceProcessor.processData(context);
+                        dataset.setStatus(DatasetStatus.Success.getCode());
+                        dataset.setStatusDesc(DatasetStatus.Success.getMessage());
 
-                    boolean success = context.isSuccess();
-                    if (success) {
-                        // sync to others
                         datasetSyncer.syncCreateDataset(userInfo, dataset);
+                    } catch (Exception e) {
+                        dataset.setStatus(DatasetStatus.Failure.getCode());
+                        dataset.setStatusDesc(
+                                DatasetStatus.Failure.getMessage() + ":" + e.getMessage());
+                    } finally {
+                        try {
+                            datasetWrapper.updateMeta2DB(dataset);
+                        } catch (DatasetException ignore) {
+                        }
                     }
                 });
 

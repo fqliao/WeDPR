@@ -6,6 +6,7 @@ import com.webank.wedpr.components.dataset.config.DatasetConfig;
 import com.webank.wedpr.components.dataset.dao.Dataset;
 import com.webank.wedpr.components.dataset.dao.FileChunk;
 import com.webank.wedpr.components.dataset.dao.UserInfo;
+import com.webank.wedpr.components.dataset.datasource.DataSourceType;
 import com.webank.wedpr.components.dataset.datasource.category.UploadChunkDataSource;
 import com.webank.wedpr.components.dataset.datasource.dispatch.DataSourceProcessorDispatcher;
 import com.webank.wedpr.components.dataset.datasource.processor.DataSourceProcessor;
@@ -13,6 +14,7 @@ import com.webank.wedpr.components.dataset.datasource.processor.DataSourceProces
 import com.webank.wedpr.components.dataset.exception.DatasetException;
 import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.mapper.wapper.DatasetTransactionalWrapper;
+import com.webank.wedpr.components.dataset.mapper.wapper.DatasetWrapper;
 import com.webank.wedpr.components.dataset.message.MergeChunkRequest;
 import com.webank.wedpr.components.dataset.service.ChunkUploadApi;
 import com.webank.wedpr.components.dataset.sync.api.DatasetSyncerApi;
@@ -63,6 +65,8 @@ public class ChunkUploadController {
 
     @Autowired private DatasetTransactionalWrapper datasetTransactionalWrapper;
 
+    @Autowired private DatasetWrapper datasetWrapper;
+
     @Autowired
     @Qualifier("datasetAsyncExecutor")
     private Executor executor;
@@ -99,25 +103,25 @@ public class ChunkUploadController {
             }
 
             // get DataSourceProcessor for the dataset
-            String dataSourceType = dataset.getDataSourceType();
+            String strDataSourceType = dataset.getDataSourceType();
             DataSourceProcessor dataSourceProcessor =
-                    dataSourceProcessorDispatcher.getDataSourceProcessor(dataSourceType);
+                    dataSourceProcessorDispatcher.getDataSourceProcessor(strDataSourceType);
             if (dataSourceProcessor == null) {
                 logger.error(
                         "Unsupported data source type, datasetId: {}, dataSourceType: {}",
                         datasetId,
-                        dataSourceType);
-                throw new DatasetException("Unsupported data source type: " + dataSourceType);
+                        strDataSourceType);
+                throw new DatasetException("Unsupported data source type: " + strDataSourceType);
             }
 
-            if (!dataSourceProcessor.isSupportUploadChunkData()) {
+            if (!DataSourceType.isUploadDataSource(strDataSourceType)) {
                 logger.error(
                         "the data source does not support chunks upload, datasetId: {}, dataSourceType: {}",
                         datasetId,
-                        dataSourceType);
+                        strDataSourceType);
                 throw new DatasetException(
                         "the data source does not support chunks upload, data source type: "
-                                + dataSourceType);
+                                + strDataSourceType);
             }
 
             int status = dataset.getStatus();
@@ -202,25 +206,25 @@ public class ChunkUploadController {
             }
 
             // get DataSourceProcessor for the dataset
-            String dataSourceType = dataset.getDataSourceType();
+            String strDataSourceType = dataset.getDataSourceType();
             DataSourceProcessor dataSourceProcessor =
-                    dataSourceProcessorDispatcher.getDataSourceProcessor(dataSourceType);
+                    dataSourceProcessorDispatcher.getDataSourceProcessor(strDataSourceType);
             if (dataSourceProcessor == null) {
                 logger.error(
                         "Unsupported data source type, datasetId: {}, dataSourceType: {}",
                         datasetId,
-                        dataSourceType);
-                throw new DatasetException("Unsupported data source type: " + dataSourceType);
+                        strDataSourceType);
+                throw new DatasetException("Unsupported data source type: " + strDataSourceType);
             }
 
-            if (!dataSourceProcessor.isSupportUploadChunkData()) {
+            if (!DataSourceType.isUploadDataSource(strDataSourceType)) {
                 logger.error(
                         "the data source does not support chunks upload, datasetId: {}, dataSourceType: {}",
                         datasetId,
-                        dataSourceType);
+                        strDataSourceType);
                 throw new DatasetException(
                         "the data source does not support chunks upload, data source type: "
-                                + dataSourceType);
+                                + strDataSourceType);
             }
 
             // transfer mergeChunkRequest to UploadChunkDataSource
@@ -247,12 +251,22 @@ public class ChunkUploadController {
                                         .fileStorage(fileStorage)
                                         .build();
 
-                        dataSourceProcessor.processData(context);
+                        try {
+                            dataSourceProcessor.setContext(context);
+                            dataSourceProcessor.processData(context);
+                            dataset.setStatus(DatasetStatus.Success.getCode());
+                            dataset.setStatusDesc(DatasetStatus.Success.getMessage());
 
-                        boolean success = context.isSuccess();
-                        if (success) {
-                            // sync to others
                             datasetSyncer.syncCreateDataset(userInfo, dataset);
+                        } catch (Exception e) {
+                            dataset.setStatus(DatasetStatus.Failure.getCode());
+                            dataset.setStatusDesc(
+                                    DatasetStatus.Failure.getMessage() + ":" + e.getMessage());
+                        } finally {
+                            try {
+                                datasetWrapper.updateMeta2DB(dataset);
+                            } catch (DatasetException ignore) {
+                            }
                         }
                     });
 

@@ -1,7 +1,7 @@
 package com.webank.wedpr.components.dataset.datasource.processor;
 
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
-import com.webank.wedpr.components.dataset.datasource.category.UploadChunkDataSource;
+import com.webank.wedpr.components.dataset.dao.Dataset;
 import com.webank.wedpr.components.dataset.exception.DatasetException;
 import com.webank.wedpr.components.dataset.utils.CsvUtils;
 import java.io.File;
@@ -21,9 +21,7 @@ public class XlsxDataSourceProcessor extends CsvDataSourceProcessor {
 
         DatasetConfig datasetConfig = dataSourceProcessorContext.getDatasetConfig();
         String mergedFilePath = dataSourceProcessorContext.getMergedFilePath();
-
-        UploadChunkDataSource uploadChunkDataSource =
-                (UploadChunkDataSource) dataSourceProcessorContext.getDataSourceMeta();
+        Dataset dataset = dataSourceProcessorContext.getDataset();
 
         File file = new File(mergedFilePath);
         String directoryPath = file.getParent();
@@ -36,7 +34,7 @@ public class XlsxDataSourceProcessor extends CsvDataSourceProcessor {
 
         dataSourceProcessorContext.setCvsFilePath(cvsFilePath);
 
-        String datasetId = uploadChunkDataSource.getDatasetId();
+        String datasetId = dataset.getDatasetId();
         long endTimeMillis = System.currentTimeMillis();
         logger.info(
                 " ==> data source processor stage prepare data end merge chunk data, datasetId: {}, mergedFilePath: {}, cvsFilePath: {}, cost(ms): {}",

@@ -29,7 +29,6 @@
                 OR (
                     permission_scope = 'agency' and permission_subject_id = #{agency}
                 )
-<!--        // TODO:-->
                 OR (
                     permission_scope = 'user_group' and permission_subject_id LIKE CONCAT(#{agency}, '%')
                 )

@@ -15,6 +15,9 @@
 */
 package com.webank.wedpr.components.dataset.config;
 
+import static com.webank.wedpr.components.dataset.service.ChunkUploadImpl.UPLOAD_CHUNK_FILE_NAME_PREFIX;
+
+import com.webank.wedpr.components.dataset.common.DatasetConstant;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -42,4 +45,27 @@ public class DatasetConfig {
 
     @Value("${wedpr.storage.download.shardSize: 20971520}")
     int shardSize;
+
+    // ${largeFileDataDir}/dataset/
+    public String getDatasetBaseDir() {
+        return String.format("%s/%s", largeFileDataDir, DatasetConstant.DATASET_LABEL);
+    }
+
+    // ${largeFileDataDir}/dataset/${datasetId}
+    public String getDatasetDir(String datasetId) {
+        String datasetBaseDir = getDatasetBaseDir();
+        return String.format("%s/%s", datasetBaseDir, datasetId);
+    }
+
+    // ${largeFileDataDir}/dataset/chunks/
+    public String getDatasetChunksBaseDir() {
+        String datasetBaseDir = getDatasetBaseDir();
+        return String.format("%s/%s", datasetBaseDir, UPLOAD_CHUNK_FILE_NAME_PREFIX);
+    }
+
+    // ${largeFileDataDir}/dataset/chunks/${datasetId}
+    public String getDatasetChunksDir(String datasetId) {
+        String datasetChunksBaseDir = getDatasetChunksBaseDir();
+        return String.format("%s/%s", datasetChunksBaseDir, datasetId);
+    }
 }
