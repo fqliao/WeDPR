@@ -43,7 +43,8 @@ public class Constant {
     /** @Fields DEFAULT_PAGE_SIZE:分页的每页记录数 */
     public static final int DEFAULT_PAGE_SIZE = 5;
 
-    public static final String LOGIN_URL = WEDPR_API_PREFIX + "/login";
+    public static final String SITE_END_LOGIN_URL = WEDPR_API_PREFIX + "/login";
+    public static final String ADMIN_END_LOGIN_URL = WEDPR_API_PREFIX + "/admin/login";
     public static final String REGISTER_URL = WEDPR_API_PREFIX + "/register";
     public static final String USER_PUBLICKEY_URL = WEDPR_API_PREFIX + "/pub";
     public static final String IMAGE_CODE_URL = WEDPR_API_PREFIX + "/image-code";

@@ -51,22 +51,25 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
     private final WedprGroupDetailService wedprGroupDetailService;
     private final WedprGroupService wedprGroupService;
     private final WedprUserService wedprUserService;
+    private final String loginUrl;
 
     public JwtLoginFilter(
             AuthenticationManager authenticationManager,
             UserJwtConfig userJwtConfig,
             WedprGroupDetailService wedprGroupDetailService,
             WedprGroupService wedprGroupService,
-            WedprUserService wedprUserService) {
-        super.setFilterProcessesUrl(Constant.LOGIN_URL);
+            WedprUserService wedprUserService,
+            String loginUrl) {
+        super.setFilterProcessesUrl(loginUrl);
         this.authenticationManager = authenticationManager;
         this.userJwtConfig = userJwtConfig;
         this.wedprGroupDetailService = wedprGroupDetailService;
         this.wedprGroupService = wedprGroupService;
         this.wedprUserService = wedprUserService;
+        this.loginUrl = loginUrl;
     }
 
-    String getBodyString(HttpServletRequest request) throws Exception {
+    String getRequestBodyString(HttpServletRequest request) throws Exception {
         BufferedReader br = request.getReader();
         String tmp;
         StringBuilder ret = new StringBuilder();
@@ -83,12 +86,12 @@ public class JwtLoginFilter extends UsernamePasswordAuthenticationFilter {
             throws AuthenticationException {
         String username = null;
         try {
-            String requestParams = getBodyString(request);
+            String requestParams = getRequestBodyString(request);
             LoginRequest loginRequest = objectMapper.readValue(requestParams, LoginRequest.class);
             username = loginRequest.getUsername();
-            // 验证普通用户登录request
+            // 检查登录请求
             wedprUserService.checkWedprUserLoginReturn(loginRequest, userJwtConfig);
-            // 验证密码
+            // 解密前端加密传输过来的密码，给到security验证
             String password =
                     PasswordHelper.decryptPassword(
                             loginRequest.getPassword(), userJwtConfig.getPrivateKey());
