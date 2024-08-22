@@ -1,7 +1,6 @@
 package com.webank.wedpr.components.dataset.service;
 
 import com.alibaba.druid.util.HexBin;
-import com.webank.wedpr.components.dataset.common.DatasetConstant;
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
 import com.webank.wedpr.components.dataset.dao.FileChunk;
 import com.webank.wedpr.components.dataset.dao.MergeChunkResult;
@@ -38,30 +37,23 @@ public class ChunkUploadImpl implements ChunkUploadApi {
 
     @Autowired private DatasetConfig datasetConfig;
 
-    // ${baseDir}/dataset/chunks/${datasetId}
-    public static String getUploadDatasetDir(String baseDir, String datasetId) {
-        return String.format(
-                "%s/%s/%s/%s",
-                baseDir, DatasetConstant.DATASET_LABEL, UPLOAD_CHUNK_FILE_NAME_PREFIX, datasetId);
+    // ${dir}/chunks/${datasetId}/${identifier}
+    public String getUploadFileDirPath(String datasetId, String identifier) {
+        String datasetChunksDir = datasetConfig.getDatasetChunksDir(datasetId);
+        return String.format("%s/%s", datasetChunksDir, identifier);
     }
 
-    // ${baseDir}/dataset/chunks/${datasetId}/${identifier}
-    public static String getUploadFileDirPath(String baseDir, String datasetId, String identifier) {
-        String uploadDatasetDir = getUploadDatasetDir(baseDir, datasetId);
-        return String.format("%s/%s", uploadDatasetDir, identifier);
-    }
-
-    // ${baseDir}/dataset/chunks/${datasetId}/${identifier}/merged-${identifier}
-    public static String getMergedFilePath(String baseDir, String datasetId, String identifier) {
-        String uploadFilePath = getUploadFileDirPath(baseDir, datasetId, identifier);
+    // ${dir}/dataset/chunks/${datasetId}/${identifier}/merged-${identifier}
+    public String getMergedFilePath(String datasetId, String identifier) {
+        String uploadFilePath = getUploadFileDirPath(datasetId, identifier);
         return String.format(
                 "%s/%s-%s", uploadFilePath, UPLOAD_MERGED_FILE_NAME_PREFIX, identifier);
     }
 
-    // ${baseDir}/dataset/chunks/${datasetId}/${identifier}/${count}-${index}
-    public static String getUploadChunkFilePath(
-            String baseDir, String datasetId, String identifier, int chunkCount, int index) {
-        String uploadFilePath = getUploadFileDirPath(baseDir, datasetId, identifier);
+    // ${dir}/chunks/${datasetId}/${identifier}/${count}-${index}
+    public String getUploadChunkFilePath(
+            String datasetId, String identifier, int chunkCount, int index) {
+        String uploadFilePath = getUploadFileDirPath(datasetId, identifier);
         return String.format("%s/%d-%d", uploadFilePath, chunkCount, index);
     }
 
@@ -99,10 +91,8 @@ public class ChunkUploadImpl implements ChunkUploadApi {
         int totalCount = fileChunk.getTotalCount();
         int index = fileChunk.getIndex();
 
-        String largeFileDataDir = datasetConfig.getLargeFileDataDir();
-
         // 文件存储的目录
-        String uploadFileDirPath = getUploadFileDirPath(largeFileDataDir, datasetId, identifier);
+        String uploadFileDirPath = getUploadFileDirPath(datasetId, identifier);
 
         boolean fileExistence = checkFileExistence(uploadFileDirPath);
         if (!fileExistence) {
@@ -119,7 +109,7 @@ public class ChunkUploadImpl implements ChunkUploadApi {
 
         // 分片数据存储的路径
         String uploadChunkDataFilePath =
-                getUploadChunkFilePath(largeFileDataDir, datasetId, identifier, totalCount, index);
+                getUploadChunkFilePath(datasetId, identifier, totalCount, index);
 
         // 写入分片
         try (InputStream inputStream = fileChunk.getFilesChunk().getInputStream();
@@ -175,10 +165,8 @@ public class ChunkUploadImpl implements ChunkUploadApi {
             throw new DatasetException(datasetVersionHashAlg + " algorithm is not supported");
         }
 
-        String largeFileDataDir = datasetConfig.getLargeFileDataDir();
-
         // 文件存储的目录
-        String mergedFilePath = getMergedFilePath(largeFileDataDir, datasetId, identifier);
+        String mergedFilePath = getMergedFilePath(datasetId, identifier);
 
         // 文件锁
         FileLock fileLock = null;
@@ -188,8 +176,7 @@ public class ChunkUploadImpl implements ChunkUploadApi {
             // 检查分片是否完整
             for (int index = 0; index < totalChunkCount; ++index) {
                 String chunkFilePath =
-                        getUploadChunkFilePath(
-                                largeFileDataDir, datasetId, identifier, totalChunkCount, index);
+                        getUploadChunkFilePath(datasetId, identifier, totalChunkCount, index);
                 if (!checkFileExistence(chunkFilePath)) {
                     logger.error(
                             "missing upload chunk data, identifier:{}, totalCount: {}, index:{}",
@@ -220,8 +207,7 @@ public class ChunkUploadImpl implements ChunkUploadApi {
 
             for (int index = 0; index < totalChunkCount; ++index) {
                 String uploadChunkDataFilePath =
-                        getUploadChunkFilePath(
-                                largeFileDataDir, datasetId, identifier, totalChunkCount, index);
+                        getUploadChunkFilePath(datasetId, identifier, totalChunkCount, index);
                 byte[] readBytes = Files.readAllBytes(Paths.get(uploadChunkDataFilePath));
                 identifierMessageDigest.update(readBytes);
                 datasetVersionMessageDigest.update(readBytes);
@@ -281,9 +267,8 @@ public class ChunkUploadImpl implements ChunkUploadApi {
 
     @Override
     public void cleanChunkData(String datasetId, String identifier) {
-        String largeFileDataDir = datasetConfig.getLargeFileDataDir();
 
-        String dirPath = getUploadDatasetDir(largeFileDataDir, datasetId);
+        String dirPath = datasetConfig.getDatasetChunksDir(datasetId);
 
         try {
             FileUtils.deleteDirectory(new File(dirPath));

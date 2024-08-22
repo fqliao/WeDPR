@@ -4,18 +4,40 @@ plugins {
     id 'com.github.sherter.google-java-format'
 }
 
+// Additional attribute definition
+ext {
+    dmVersion = "8.1.2.192"
+    postgresqlVersion = "42.5.6"
+    kingVersion = "8.6.0"
+}
+
 dependencies {
     compile project(":wedpr-core-utils")
     compile project(":wedpr-components-uuid")
     compile project(":wedpr-components-mybatis")
     compile project(":wedpr-components-storage")
     compile project(":wedpr-components-authorization")
-//    compile project(":wedpr-components-initializer")
     compile project(":wedpr-components-token-auth")
 
     compile "org.apache.poi:poi:${poiVersion}"
     compile "org.apache.poi:poi-excelant:${poiVersion}"
     compile "com.opencsv:opencsv:${opencsvVersion}"
+
+    // da meng
+    compile "com.dameng:DmJdbcDriver18:${dmVersion}"
+//    compile "com.dameng:DmDialect-for-hibernate5.0:${dmVersion}"
+//    compile 'org.hibernate:hibernate-core:5.3.20.Final'
+
+    // gauss
+    compile "org.postgresql:postgresql:${postgresqlVersion}"
+
+    // king
+    compile "cn.com.kingbase:kingbase8:${kingVersion}"
+//    compile files('libs/hibernate-4.dialect.jar')
+
+    // shen tong
+    compile files('libs/oscarJDBC8.jar')
+//    compile files('libs/oscarHibernate54.jar')
 }
 
 googleJavaFormat {

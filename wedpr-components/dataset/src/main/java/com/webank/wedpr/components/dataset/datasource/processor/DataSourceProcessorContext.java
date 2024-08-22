@@ -25,6 +25,4 @@ public class DataSourceProcessorContext {
     // intermediate state
     private String cvsFilePath;
     private String mergedFilePath;
-    private boolean isSuccess;
-    private String errorMsg;
 }

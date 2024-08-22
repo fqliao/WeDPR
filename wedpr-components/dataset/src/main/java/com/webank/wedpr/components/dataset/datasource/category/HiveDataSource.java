@@ -7,5 +7,10 @@ import lombok.Data;
 public class HiveDataSource implements DataSourceMeta {
     private String sql;
     // Data is loaded once when a data source is created, or on each access
-    boolean dynamicDataSource = false;
+    Boolean dynamicDataSource = false;
+
+    @Override
+    public boolean dynamicDataSource() {
+        return dynamicDataSource;
+    }
 }

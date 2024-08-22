@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +19,8 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "wedpr.dataset")
 @Getter
 public class DataSourceTypeConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataSourceTypeConfig.class);
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -36,7 +40,7 @@ public class DataSourceTypeConfig {
 
             String label = labelValue.getLabel();
             String value = labelValue.getValue();
-            // boolean supportDynamicType = labelValue.isSupportDynamicType();
+
             Common.requireNonEmpty("label", label);
             Common.requireNonEmpty("value", value);
 
@@ -48,7 +52,8 @@ public class DataSourceTypeConfig {
 
             // check db types
             for (LabelValue childLabelValue : labelValue.getChildren()) {
-                DBType.isSupportedDBType(childLabelValue.getValue());
+                DBType dbType = DBType.fromStrType(childLabelValue.getValue());
+                logger.info(" add one db type: {}", dbType);
             }
         }
     }

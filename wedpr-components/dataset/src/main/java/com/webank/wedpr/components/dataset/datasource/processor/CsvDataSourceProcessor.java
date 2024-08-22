@@ -1,7 +1,5 @@
 package com.webank.wedpr.components.dataset.datasource.processor;
 
-import com.webank.wedpr.components.dataset.common.DatasetCode;
-import com.webank.wedpr.components.dataset.common.DatasetStatus;
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
 import com.webank.wedpr.components.dataset.dao.Dataset;
 import com.webank.wedpr.components.dataset.dao.MergeChunkResult;
@@ -9,7 +7,6 @@ import com.webank.wedpr.components.dataset.dao.UserInfo;
 import com.webank.wedpr.components.dataset.datasource.DataSourceMeta;
 import com.webank.wedpr.components.dataset.datasource.category.UploadChunkDataSource;
 import com.webank.wedpr.components.dataset.exception.DatasetException;
-import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.message.MergeChunkRequest;
 import com.webank.wedpr.components.dataset.service.ChunkUploadApi;
 import com.webank.wedpr.components.dataset.utils.CsvUtils;
@@ -36,12 +33,11 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
     protected DataSourceProcessorContext dataSourceProcessorContext;
 
     @Override
-    public boolean isSupportUploadChunkData() {
-        return true;
-    }
-
-    @Override
     public DataSourceMeta parseDataSourceMeta(String strDataSourceMeta) throws DatasetException {
+
+        if (strDataSourceMeta == null || strDataSourceMeta.trim().isEmpty()) {
+            return null;
+        }
 
         long startTimeMillis = System.currentTimeMillis();
         UploadChunkDataSource uploadChunkDataSource =
@@ -121,11 +117,8 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
     @Override
     public void analyzeData() throws DatasetException {
         // analyze csv file
-
-        UploadChunkDataSource uploadChunkDataSource =
-                (UploadChunkDataSource) dataSourceProcessorContext.getDataSourceMeta();
-
         String cvsFilePath = dataSourceProcessorContext.getCvsFilePath();
+        Dataset dataset = dataSourceProcessorContext.getDataset();
 
         long startTimeMillis = System.currentTimeMillis();
 
@@ -149,30 +142,25 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
         this.dataSourceProcessorContext.getDataset().setDatasetColumnCount(columnNum);
         this.dataSourceProcessorContext.getDataset().setDatasetRecordCount(rowNum);
 
-        String datasetId = uploadChunkDataSource.getDatasetId();
-        String identifier = uploadChunkDataSource.getDatasetIdentifier();
+        String datasetId = dataset.getDatasetId();
 
         long endTimeMillis = System.currentTimeMillis();
         logger.info(
-                " => data source processor stage analyze data end, datasetId: {}, identifier: {}, fieldString: {}, columnNum: {}, rowNum: {}, cost(ms): {}",
+                " => data source processor stage analyze data end, datasetId: {}, fieldString: {}, columnNum: {}, rowNum: {}, cost(ms): {}",
                 datasetId,
                 fieldString,
-                identifier,
                 columnNum,
                 rowNum,
                 endTimeMillis - startTimeMillis);
     }
 
     @Override
-    public void uploadData2Storage() throws DatasetException {
+    public void uploadData() throws DatasetException {
 
         long startTimeMillis = System.currentTimeMillis();
 
-        UploadChunkDataSource uploadChunkDataSource =
-                (UploadChunkDataSource) dataSourceProcessorContext.getDataSourceMeta();
-
-        String datasetId = uploadChunkDataSource.getDatasetId();
-        String datasetIdentifier = uploadChunkDataSource.getDatasetIdentifier();
+        Dataset dataset = dataSourceProcessorContext.getDataset();
+        String datasetId = dataset.getDatasetId();
 
         String csvFilePath = dataSourceProcessorContext.getCvsFilePath();
         UserInfo userInfo = dataSourceProcessorContext.getUserInfo();
@@ -212,9 +200,8 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
 
         long endTimeMillis = System.currentTimeMillis();
         logger.info(
-                " => data source processor stage upload data end, datasetId: {}, identifier: {}, localPath: {}, cost(ms): {}",
+                " => data source processor stage upload data end, datasetId: {}, localPath: {}, cost(ms): {}",
                 datasetId,
-                datasetIdentifier,
                 csvFilePath,
                 endTimeMillis - startTimeMillis);
     }
@@ -238,60 +225,6 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
                 " => data source processor stage cleanup data end, datasetId: {}, identifier: {}, cost(ms): {}",
                 datasetId,
                 datasetIdentifier,
-                endTimeMillis - startTimeMillis);
-    }
-
-    @Override
-    public void updateMeta2DB() throws DatasetException {
-        long startTimeMillis = System.currentTimeMillis();
-
-        Dataset dataset = dataSourceProcessorContext.getDataset();
-        DatasetMapper datasetMapper =
-                dataSourceProcessorContext.getDatasetTransactionalWrapper().getDatasetMapper();
-
-        String datasetId = dataset.getDatasetId();
-        boolean success = dataSourceProcessorContext.isSuccess();
-        String errorMsg = dataSourceProcessorContext.getErrorMsg();
-
-        int updateCount = 0;
-        try {
-            if (success) {
-                dataset.setStatus(DatasetStatus.Success.getCode());
-                dataset.setStatusDesc(DatasetStatus.Success.getMessage());
-                updateCount = datasetMapper.updateDatasetMetaInfo(dataset);
-            } else {
-                updateCount =
-                        datasetMapper.updateDatasetStatus(
-                                datasetId,
-                                DatasetStatus.Failure.getCode(),
-                                DatasetStatus.Failure.getMessage() + ":" + errorMsg);
-            }
-
-            if (updateCount != 1) {
-                // update failed ??
-                logger.warn(
-                        "update dataset meta info failed, datasetId: {}, updateCount: {}, success: {}",
-                        datasetId,
-                        updateCount,
-                        success);
-            } else {
-                logger.info(
-                        "update dataset meta info success, datasetId: {}, updateCount: {}, success: {}",
-                        datasetId,
-                        updateCount,
-                        success);
-            }
-        } catch (Exception e) {
-            logger.error("update dataset meta info exception, datasetId: {}, e: ", datasetId, e);
-            throw new DatasetException(
-                    DatasetCode.DB_ERROR.getCode(), DatasetCode.DB_ERROR.getMessage());
-        }
-
-        long endTimeMillis = System.currentTimeMillis();
-
-        logger.info(
-                " => data source processor stage update db meta end, datasetId: {}, cost(ms): {}",
-                datasetId,
                 endTimeMillis - startTimeMillis);
     }
 }
