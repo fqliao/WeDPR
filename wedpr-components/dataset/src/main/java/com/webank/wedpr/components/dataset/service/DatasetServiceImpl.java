@@ -171,6 +171,8 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                     "Unsupported data source type, dataSourceType: " + strDataSourceType);
         }
 
+        dataSourceProcessor.setContext(
+                DataSourceProcessorContext.builder().fileStorage(fileStorage).build());
         boolean dynamicDataSource = false;
 
         // parse datasource meta
