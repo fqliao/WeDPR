@@ -13,7 +13,7 @@ import java.util.List;
 /** Created by caryliao on 2024/7/15 20:26 */
 public class GenerateCodeMain {
     public static void main(String[] args) {
-        String moduleName = "user";
+        String moduleName = "admin";
         String tableName = "wedpr*";
         String prefixName = "";
 
@@ -23,10 +23,10 @@ public class GenerateCodeMain {
         // 数据源配置
         com.baomidou.mybatisplus.generator.config.DataSourceConfig dsc = new DataSourceConfig();
         dsc.setUrl(
-                "jdbc:mysql://127.0.0.1:3306/wedpr3?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&");
+                "jdbc:mysql://127.0.0.1:3306/wedpr?characterEncoding=utf8&useSSL=false&serverTimezone=UTC");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
-        dsc.setUsername("root");
-        dsc.setPassword("Wedpr2023");
+        dsc.setUsername("");
+        dsc.setPassword("");
         mpg.setDataSource(dsc);
 
         // 全局配置
@@ -55,7 +55,7 @@ public class GenerateCodeMain {
         // 业务逻辑类接口名
         gc.setServiceName("%sService");
         // 业务逻辑类实现类名
-        gc.setServiceImplName("%sImplService");
+        gc.setServiceImplName("%sServiceImpl");
         // 将全局配置设置到AutoGenerator
         mpg.setGlobalConfig(gc);
 

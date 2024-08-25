@@ -62,6 +62,9 @@ project(":wedpr-components-security").projectDir=file("wedpr-components/security
 include "wedpr-components-user"
 project(":wedpr-components-user").projectDir=file("wedpr-components/user")
 
+include "wedpr-components-admin"
+project(":wedpr-components-admin").projectDir=file("wedpr-components/admin")
+
 include ":wedpr-components-initializer"
 project(":wedpr-components-initializer").projectDir=file("wedpr-components/initializer")
 
