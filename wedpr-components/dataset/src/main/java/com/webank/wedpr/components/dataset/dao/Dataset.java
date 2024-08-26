@@ -41,15 +41,14 @@ public class Dataset {
     @JsonDeserialize(using = Json2StringDeserializer.class)
     private String dataSourceMeta;
 
-    private String ownerAgencyId;
     private String ownerAgencyName;
-
-    private String ownerUserId;
     private String ownerUserName;
 
     private int visibility;
 
     private String visibilityDetails;
+
+    private String approvalChain;
 
     // status, 0：valid
     private int status;

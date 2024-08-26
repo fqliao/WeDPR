@@ -17,14 +17,13 @@
         <result property="datasetColumnCount" column="dataset_column_count" />
         <result property="datasetStorageType" column="dataset_storage_type" />
         <result property="datasetStoragePath" column="dataset_storage_path" />
-        <result property="ownerAgencyId" column="owner_agency_id" />
         <result property="ownerAgencyName" column="owner_agency_name" />
-        <result property="ownerUserId" column="owner_user_id" />
         <result property="ownerUserName" column="owner_user_name" />
         <result property="dataSourceType" column="data_source_type" />
         <result property="dataSourceMeta" column="data_source_meta" />
         <result property="visibility" column="visibility" />
         <result property="visibilityDetails" column="visibility_details" />
+        <result property="approvalChain" column="approval_chain" />
         <result property="status" column="status" />
         <result property="statusDesc" column="status_desc" />
         <result property="createAt" column="create_at" />
@@ -44,14 +43,13 @@
             dataset_column_count,
             dataset_storage_type,
             dataset_storage_path,
-            owner_agency_id,
             owner_agency_name,
-            owner_user_id,
             owner_user_name,
             data_source_type,
             data_source_meta,
             visibility,
             visibility_details,
+            approval_chain,
             status,
             status_desc,
             create_at,
@@ -139,9 +137,7 @@
             dataset_title,
             dataset_label,
             dataset_desc,
-            owner_agency_id,
             owner_agency_name,
-            owner_user_id,
             owner_user_name,
             dataset_fields,
             dataset_version_hash,
@@ -154,6 +150,7 @@
             data_source_meta,
             visibility,
             visibility_details,
+            approval_chain,
             status,
             status_desc
         )
@@ -162,9 +159,7 @@
             #{datasetTitle},
             #{datasetLabel},
             #{datasetDesc},
-            #{ownerAgencyId},
             #{ownerAgencyName},
-            #{ownerUserId},
             #{ownerUserName},
             #{datasetFields},
             #{datasetVersionHash},
@@ -177,6 +172,7 @@
             #{dataSourceMeta},
             #{visibility},
             #{visibilityDetails},
+            #{approvalChain},
             #{status},
             #{statusDesc}
         )
@@ -190,7 +186,8 @@
             dataset_label = #{datasetLabel},
             dataset_desc = #{datasetDesc},
             visibility = #{visibility},
-            visibility_details = #{visibilityDetails}
+            visibility_details = #{visibilityDetails},
+            approval_chain = #{approvalChain}
         WHERE
             dataset_id = #{datasetId}
     </update>

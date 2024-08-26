@@ -21,4 +21,8 @@ public class UpdateDatasetRequest {
     // dataset visibility description
     @JsonDeserialize(using = Json2StringDeserializer.class)
     private String datasetVisibilityDetails;
+
+    // approval chain, ["user1", "user2", "user3"]
+    @JsonDeserialize(using = Json2StringDeserializer.class)
+    private String approvalChain;
 }
