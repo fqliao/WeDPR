@@ -116,8 +116,11 @@ public class DatasetServiceImpl implements DatasetServiceApi {
         dataset.setDatasetColumnCount(0);
         dataset.setVisibility(createDatasetRequest.getDatasetVisibility());
         dataset.setVisibilityDetails(datasetVisibilityDetails);
+
         dataset.setOwnerAgencyName(userInfo.getAgency());
         dataset.setOwnerUserName(userInfo.getUser());
+
+        dataset.setApprovalChain(createDatasetRequest.getApprovalChain());
 
         if (dynamicDataSource) {
             dataset.setStatus(DatasetStatus.Success.getCode());
@@ -347,6 +350,7 @@ public class DatasetServiceImpl implements DatasetServiceApi {
         dataset.setDatasetDesc(updateDatasetRequest.getDatasetDesc());
         dataset.setVisibility(updateDatasetRequest.getDatasetVisibility());
         dataset.setVisibilityDetails(datasetVisibilityDetails);
+        dataset.setApprovalChain(updateDatasetRequest.getApprovalChain());
 
         return dataset;
     }

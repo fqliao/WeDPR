@@ -122,6 +122,10 @@ public class DatasetController {
             Common.requireNonEmpty("dataSourceType", dataSourceType);
             DataSourceType.isValidDataSourceType(dataSourceType);
 
+            // approval chain info
+            String approvalChain = createDatasetRequest.getApprovalChain();
+            Common.requireNonEmpty("approvalChain", approvalChain);
+
             CreateDatasetResponse data =
                     datasetService.createDataset(userInfo, createDatasetRequest);
             weDPRResponse.setData(data);
@@ -398,6 +402,8 @@ public class DatasetController {
                 String datasetLabel = updateDatasetRequest.getDatasetLabel();
                 String datasetDesc = updateDatasetRequest.getDatasetDesc();
                 String datasetId = updateDatasetRequest.getDatasetId();
+                String approvalChain = updateDatasetRequest.getApprovalChain();
+
                 Common.requireNonEmpty("datasetId", datasetId);
                 Common.requireNonEmpty("datasetTitle", datasetTitle);
                 Common.requireNonEmpty("datasetLabel", datasetLabel);
@@ -412,6 +418,8 @@ public class DatasetController {
                     JsonUtils.jsonString2Object(
                             datasetVisibilityDetails, DatasetVisibilityDetails.class);
                 }
+
+                Common.requireNonEmpty("approvalChain", approvalChain);
             }
 
             UserInfo userInfo = UserTokenUtils.getUserInfo(datasetConfig, httpServletRequest);

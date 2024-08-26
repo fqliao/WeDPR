@@ -168,6 +168,7 @@ CREATE TABLE if not exists `wedpr_dataset` (
     `data_source_meta` TEXT NOT NULL COMMENT '数据源参数信息，JSON字符串',
     `visibility` int(8) NOT NULL COMMENT '数据集可见性, 0: 私有，1: 公开可见',
     `visibility_details` TEXT NOT NULL COMMENT '数据源可见范围描述, visibility 为1时有效',
+    `approval_chain` TEXT NOT NULL COMMENT '审批链信息',
     `status` tinyint(4) NOT NULL COMMENT '数据集状态, 0: 有效，其他无效',
     `status_desc` VARCHAR(1024) NOT NULL COMMENT '数据集状态描述',
     `create_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -20,7 +20,11 @@ public class CreateDatasetRequest {
 
     // datasource type
     private String dataSourceType;
-    // datasource meta info,ie params
+    // datasource meta info
     @JsonDeserialize(using = Json2StringDeserializer.class)
     private String dataSourceMeta;
+
+    // approval chain, ["user1", "user2", "user3"]
+    @JsonDeserialize(using = Json2StringDeserializer.class)
+    private String approvalChain;
 }

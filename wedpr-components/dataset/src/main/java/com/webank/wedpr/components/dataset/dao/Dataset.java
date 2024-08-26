@@ -48,6 +48,8 @@ public class Dataset {
 
     private String visibilityDetails;
 
+    private String approvalChain;
+
     // status, 0：valid
     private int status;
 

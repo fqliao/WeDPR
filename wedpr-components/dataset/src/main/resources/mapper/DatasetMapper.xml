@@ -23,6 +23,7 @@
         <result property="dataSourceMeta" column="data_source_meta" />
         <result property="visibility" column="visibility" />
         <result property="visibilityDetails" column="visibility_details" />
+        <result property="approvalChain" column="approval_chain" />
         <result property="status" column="status" />
         <result property="statusDesc" column="status_desc" />
         <result property="createAt" column="create_at" />
@@ -48,6 +49,7 @@
             data_source_meta,
             visibility,
             visibility_details,
+            approval_chain,
             status,
             status_desc,
             create_at,
@@ -148,6 +150,7 @@
             data_source_meta,
             visibility,
             visibility_details,
+            approval_chain,
             status,
             status_desc
         )
@@ -169,6 +172,7 @@
             #{dataSourceMeta},
             #{visibility},
             #{visibilityDetails},
+            #{approvalChain},
             #{status},
             #{statusDesc}
         )
@@ -182,7 +186,8 @@
             dataset_label = #{datasetLabel},
             dataset_desc = #{datasetDesc},
             visibility = #{visibility},
-            visibility_details = #{visibilityDetails}
+            visibility_details = #{visibilityDetails},
+            approval_chain = #{approvalChain}
         WHERE
             dataset_id = #{datasetId}
     </update>
