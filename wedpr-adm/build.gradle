@@ -16,6 +16,7 @@ dependencies {
     compile project(":wedpr-components-dataset")
     compile project(":wedpr-components-agency")
     compile project(":wedpr-components-security")
+    compile project(":wedpr-components-report")
 }
 googleJavaFormat {
     //toolVersion = '1.7'
