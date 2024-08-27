@@ -150,11 +150,17 @@ public class ProjectMapperWrapper {
 
     @Transactional(rollbackFor = Exception.class)
     public void insertJob(JobDO jobDO) {
+        String id = jobDO.getId();
         this.projectMapper.insertJobInfo(jobDO);
         if (jobDO.getTaskParties() == null || jobDO.getTaskParties().isEmpty()) {
             return;
         }
         this.followerMapper.batchInsert(jobDO.getTaskParties());
+
+        List<String> datasetList = jobDO.getDatasetList();
+        if (datasetList != null && !datasetList.isEmpty()) {
+            // TODO:
+        }
     }
 
     public void updateFinalJobResult(JobDO job, JobStatus status, String result) {

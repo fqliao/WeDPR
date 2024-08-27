@@ -209,6 +209,7 @@ public class JobDO extends TimeRange {
     @JsonIgnore private transient Object jobRequest;
     private String status;
     @JsonIgnore private String result;
+    private List<String> datasetList;
 
     @JsonProperty("jobStatusInfo")
     private JobResult jobResult = new JobResult();
@@ -497,6 +498,14 @@ public class JobDO extends TimeRange {
                 && Objects.equals(ownerAgency, jobDO.ownerAgency)
                 && Objects.equals(projectName, jobDO.projectName)
                 && Objects.equals(status, jobDO.status);
+    }
+
+    public List<String> getDatasetList() {
+        return datasetList;
+    }
+
+    public void setDatasetList(List<String> datasetList) {
+        this.datasetList = datasetList;
     }
 
     @Override
