@@ -39,6 +39,9 @@ public interface ProjectService {
     public abstract WeDPRResponse submitJob(String user, JobRequest request);
     // query job by condition
     public abstract WeDPRResponse queryJobByCondition(String user, JobRequest request);
+    // query job list by dataset id
+    public abstract WeDPRResponse queryJobsByDatasetID(
+            String user, String datasetID, Integer pageNum, Integer pageSize);
 
     public abstract WeDPRResponse queryFollowerJobByCondition(String user, JobRequest request);
 

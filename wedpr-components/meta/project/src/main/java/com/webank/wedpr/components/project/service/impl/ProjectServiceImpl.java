@@ -15,7 +15,9 @@
 
 package com.webank.wedpr.components.project.service.impl;
 
+import com.github.pagehelper.Page;
 import com.github.pagehelper.PageInfo;
+import com.github.pagehelper.page.PageMethod;
 import com.webank.wedpr.components.dataset.dao.DatasetUserPermissions;
 import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.mapper.DatasetPermissionMapper;
@@ -354,6 +356,78 @@ public class ProjectServiceImpl implements ProjectService {
                             + e.getMessage());
         }
         return response;
+    }
+
+    // query job list by dataset id
+    @Override
+    public WeDPRResponse queryJobsByDatasetID(
+            String user, String datasetID, Integer pageNum, Integer pageSize) {
+
+        long startTimeMillis = System.currentTimeMillis();
+
+        logger.info(
+                "query jobs by dataset id begin, user: {}, datasetID: {}, pageNum: {}, pageSize: {}",
+                user,
+                datasetID,
+                pageNum,
+                pageSize);
+
+        if (pageNum == null || pageNum < 1) {
+            pageNum = 1;
+        }
+
+        // limit pageSize
+        if (pageSize == null || pageSize < 0) {
+            // TODO: 配置项
+            pageSize = 15;
+        }
+
+        try {
+            try (Page<Object> objectPage = PageMethod.startPage(pageNum, pageSize)) {
+
+                List<JobDO> jobDOs =
+                        this.projectMapperWrapper
+                                .getProjectMapper()
+                                .queryJobsByDatasetID(datasetID);
+
+                long totalCount = new PageInfo<>(jobDOs).getTotal();
+                long pageEndOffset = (long) pageNum * pageSize;
+                boolean isLast = (pageEndOffset >= totalCount);
+
+                long endTimeMillis = System.currentTimeMillis();
+
+                QueryJobsByDatasetIDResponse queryJobsByDatasetIDResponse =
+                        QueryJobsByDatasetIDResponse.builder()
+                                .totalCount(totalCount)
+                                .isLast(isLast)
+                                .content(jobDOs)
+                                .build();
+
+                WeDPRResponse response =
+                        new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
+                response.setData(queryJobsByDatasetIDResponse);
+
+                logger.info(
+                        "query jobs by dataset id end, datasetID: {}, totalCount: {}, isLast: {}, cost(ms): {}",
+                        datasetID,
+                        totalCount,
+                        isLast,
+                        (endTimeMillis - startTimeMillis));
+
+                return response;
+            }
+        } catch (Exception e) {
+
+            long endTimeMillis = System.currentTimeMillis();
+            logger.error(
+                    "query jobs by dataset id exception, datasetID:{}, cost(ms): {}, e: ",
+                    datasetID,
+                    (endTimeMillis - startTimeMillis),
+                    e);
+
+            WeDPRResponse response = new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+            return response;
+        }
     }
 
     // query follower job by condition

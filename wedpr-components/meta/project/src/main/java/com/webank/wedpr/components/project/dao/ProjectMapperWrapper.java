@@ -151,16 +151,29 @@ public class ProjectMapperWrapper {
     @Transactional(rollbackFor = Exception.class)
     public void insertJob(JobDO jobDO) {
         String id = jobDO.getId();
+
+        logger.info(" => insert job, jobID: {}", id);
+
         this.projectMapper.insertJobInfo(jobDO);
+
+        int insertC = -1;
+        List<String> datasetList = jobDO.getDatasetList();
+        if (datasetList != null && !datasetList.isEmpty()) {
+            insertC = this.projectMapper.batchInsertJobDatasetRelationInfo(id, datasetList);
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(
+                    "batch insert job datasets relation, jobID: {}, datasetIDs: {}, insertCount: {}",
+                    id,
+                    datasetList,
+                    insertC);
+        }
+
         if (jobDO.getTaskParties() == null || jobDO.getTaskParties().isEmpty()) {
             return;
         }
         this.followerMapper.batchInsert(jobDO.getTaskParties());
-
-        List<String> datasetList = jobDO.getDatasetList();
-        if (datasetList != null && !datasetList.isEmpty()) {
-            // TODO:
-        }
     }
 
     public void updateFinalJobResult(JobDO job, JobStatus status, String result) {

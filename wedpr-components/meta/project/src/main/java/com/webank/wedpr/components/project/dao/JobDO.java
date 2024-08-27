@@ -453,6 +453,15 @@ public class JobDO extends TimeRange {
         return Boolean.FALSE;
     }
 
+    // TODO: verify dataset
+    public boolean isJobDataset(String datasetId) {
+        if (datasetList == null) {
+            return false;
+        }
+
+        return datasetList.contains(datasetId);
+    }
+
     public Object getJobRequest() {
         return jobRequest;
     }

@@ -49,14 +49,6 @@ public class JobRequest extends PageRequest {
         checkAndConfigTaskParities(taskParties);
     }
 
-    public boolean isJobDataset(String datasetId) {
-        if (datasetList == null) {
-            return false;
-        }
-
-        return datasetList.contains(datasetId);
-    }
-
     @SneakyThrows(WeDPRException.class)
     private void checkAndConfigTaskParities(List<FollowerDO> taskParties) {
         if (taskParties == null || taskParties.isEmpty()) {
