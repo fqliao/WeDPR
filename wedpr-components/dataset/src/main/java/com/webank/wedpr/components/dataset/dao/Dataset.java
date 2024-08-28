@@ -1,11 +1,16 @@
 package com.webank.wedpr.components.dataset.dao;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.webank.wedpr.components.dataset.json.Json2StringDeserializer;
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 /** Dataset */
+@TableName("wedpr_dataset")
+@ApiModel(value = "WedprDataset对象", description = "数据集记录表")
 @Data
 public class Dataset {
 
@@ -55,11 +60,14 @@ public class Dataset {
 
     private String statusDesc;
 
+    private String reportStatus;
+
     // create time
     private String createAt;
     // last update time
     private String updateAt;
-    //
+
+    @TableField(exist = false)
     private DatasetUserPermissions permissions;
 
     public void resetMeta() {
