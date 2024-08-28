@@ -47,6 +47,9 @@ public interface ProjectMapper {
 
     public int batchUpdateJobInfo(@Param("jobDOList") List<JobDO> jobDOList);
 
+    public int batchInsertJobDatasetRelationInfo(
+            @Param("jobID") String jobID, @Param("datasetIDs") List<String> datasetIDs);
+
     public List<JobDO> queryJobs(
             @Param("onlyMeta") Boolean onlyMeta,
             @Param("condition") JobDO condition,
@@ -57,4 +60,6 @@ public interface ProjectMapper {
             @Param("followerUser") String followerUser,
             @Param("followerAgency") String followerAgency,
             @Param("condition") JobDO condition);
+
+    public List<JobDO> queryJobsByDatasetID(@Param("datasetID") String datasetID);
 }

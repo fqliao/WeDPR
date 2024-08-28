@@ -152,6 +152,13 @@
         (#{jobDO.id}, #{jobDO.name}, #{jobDO.jobType}, #{jobDO.projectName}, #{jobDO.parties}, #{jobDO.owner},
          #{jobDO.ownerAgency}, #{jobDO.param},#{jobDO.status}, #{jobDO.result}, NOW())
     </insert>
+    <insert id="batchInsertJobDatasetRelationInfo">
+        INSERT INTO `wedpr_job_dataset_relation` (`job_id`, `dataset_id`)
+        VALUES
+        <foreach collection="datasetIDs" item="datasetID" separator=",">
+            (#{jobID}, #{datasetID})
+        </foreach>
+    </insert>
     <select id="queryJobs" resultMap="JobDOMap">
         select
         <choose>
@@ -204,6 +211,20 @@
         <if test="condition.limitItems != -1 and condition.limitItems !=''">
             limit #{condition.limitItems}
         </if>
+    </select>
+
+    <select id="queryJobsByDatasetID" resultMap="JobDOMap">
+        SELECT t.*
+            FROM `wedpr_job_table` t
+        INNER JOIN (
+            SELECT
+                DISTINCT job_id
+            FROM
+                `wedpr_job_dataset_relation`
+            WHERE
+                dataset_id = #{datasetID}
+        ) temp ON t.id = temp.job_id
+        ORDER BY create_time DESC
     </select>
 
     <select id="queryJobCount" resultType="java.lang.Long">

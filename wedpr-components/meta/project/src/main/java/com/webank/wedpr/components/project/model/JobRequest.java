@@ -25,6 +25,7 @@ import lombok.SneakyThrows;
 public class JobRequest extends PageRequest {
     private JobDO job = new JobDO(true);
     private List<FollowerDO> taskParties;
+    private List<String> datasetList;
 
     public JobRequest() {}
 
@@ -63,8 +64,23 @@ public class JobRequest extends PageRequest {
         }
     }
 
+    public List<String> getDatasetList() {
+        return datasetList;
+    }
+
+    public void setDatasetList(List<String> datasetList) {
+        this.datasetList = datasetList;
+    }
+
     @Override
     public String toString() {
-        return "JobRequest{" + "job=" + job + ", taskParties=" + taskParties + '}';
+        return "JobRequest{"
+                + "job="
+                + job
+                + ", taskParties="
+                + taskParties
+                + ", datasetList="
+                + datasetList
+                + '}';
     }
 }

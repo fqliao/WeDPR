@@ -25,6 +25,30 @@ public class DatasetUserPermissionValidator {
      * confirm user’s dataset permissions
      *
      * @param datasetId
+     * @param userName
+     * @param agencyName
+     * @param datasetPermissionMapper
+     * @param isTx
+     * @return
+     * @throws DatasetException
+     */
+    public static DatasetUserPermissions confirmUserDatasetPermissions(
+            String datasetId,
+            String userName,
+            String agencyName,
+            DatasetPermissionMapper datasetPermissionMapper,
+            boolean isTx)
+            throws DatasetException {
+
+        UserInfo userInfo =
+                UserInfo.builder().user(userName).agency(agencyName).groupInfos(null).build();
+        return confirmUserDatasetPermissions(datasetId, userInfo, datasetPermissionMapper, isTx);
+    }
+
+    /**
+     * confirm user’s dataset permissions
+     *
+     * @param datasetId
      * @param userInfo
      * @param datasetPermissionMapper
      * @param isTx

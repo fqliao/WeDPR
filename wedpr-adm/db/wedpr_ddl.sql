@@ -134,6 +134,15 @@ create table if not exists `wedpr_job_table`(
     index status_index(`status`(128))
 )ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
+-- job dataset relationship table
+create table if not exists `wedpr_job_dataset_relation`(
+    `job_id` varchar(64) not null comment "任务ID",
+    `dataset_id` varchar(64) not null comment "数据集ID",
+    `create_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "任务创建时间",
+    index job_id_index(`job_id`),
+    index dataset_id_index(`dataset_id`)
+)ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
+
 -- the algorithm_setting template
 create table if not exists `wedpr_setting_template`(
     `id` varchar(64) not null comment "配置模板ID",

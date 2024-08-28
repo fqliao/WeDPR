@@ -15,7 +15,13 @@
 
 package com.webank.wedpr.components.project.service.impl;
 
+import com.github.pagehelper.Page;
 import com.github.pagehelper.PageInfo;
+import com.github.pagehelper.page.PageMethod;
+import com.webank.wedpr.components.dataset.dao.DatasetUserPermissions;
+import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
+import com.webank.wedpr.components.dataset.mapper.DatasetPermissionMapper;
+import com.webank.wedpr.components.dataset.permission.DatasetUserPermissionValidator;
 import com.webank.wedpr.components.mybatis.PageHelperWrapper;
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.JobDO;
@@ -42,6 +48,9 @@ public class ProjectServiceImpl implements ProjectService {
     private static final Logger logger = LoggerFactory.getLogger(ProjectServiceImpl.class);
     @Autowired private ProjectMapperWrapper projectMapperWrapper;
     @Autowired private JobChecker jobChecker;
+
+    @Autowired private DatasetMapper datasetMapper;
+    @Autowired private DatasetPermissionMapper datasetPermissionMapper;
 
     // create a new project
     @Override
@@ -230,27 +239,80 @@ public class ProjectServiceImpl implements ProjectService {
         return response;
     }
 
+    // verify datasets permission
+    public void validateUserPermissionToDatasets(
+            String userName, String agencyName, List<String> datasetList) throws WeDPRException {
+
+        if (datasetList == null) {
+            return;
+        }
+
+        for (String dataset : datasetList) {
+            DatasetUserPermissions datasetUserPermissions =
+                    DatasetUserPermissionValidator.confirmUserDatasetPermissions(
+                            dataset, userName, agencyName, datasetPermissionMapper, false);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug(
+                        "user: {}, agency: {}, dataset: {}, permissions: {}",
+                        userName,
+                        agencyName,
+                        dataset,
+                        datasetUserPermissions);
+            }
+
+            if (!datasetUserPermissions.isUsable()) {
+                logger.error(
+                        "the user has no dataset usable permission, user: {}, agency: {}, dataset: {}, permissions: {}",
+                        userName,
+                        agencyName,
+                        dataset,
+                        datasetUserPermissions);
+                throw new WeDPRException(
+                        String.format(
+                                "the user has no dataset usable permission, user: %s, agency: %s, dataset: %s",
+                                userName, agencyName, dataset));
+            }
+        }
+    }
+
     // submit a job
     @Override
     public WeDPRResponse submitJob(String user, JobRequest request) {
         WeDPRResponse response =
                 new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
+
+        // String userName = user;
+        String agency = WeDPRCommonConfig.getAgency();
+
+        List<String> datasetList = request.getDatasetList();
         try {
             request.getJob().setOwner(user);
-            request.getJob().setOwnerAgency(WeDPRCommonConfig.getAgency());
+            request.getJob().setOwnerAgency(agency);
             request.getJob().setTaskParties(request.getTaskParties());
             request.getJob().checkCreate();
+            request.getJob().setDatasetList(datasetList);
             // check the job param
             jobChecker.checkAndParseParam(request.getJob());
 
             request.getJob().setStatus(JobStatus.Submitted.getStatus());
+
+            // verify dataset permissions
+            validateUserPermissionToDatasets(user, agency, datasetList);
+
             this.projectMapperWrapper.insertJob(request.getJob());
-            logger.info("submitJob, user: {}, detail: {}", user, request.getJob().toString());
+            logger.info(
+                    "submitJob, user: {}, agency: {}, datasetIds: {}, detail: {}",
+                    user,
+                    agency,
+                    datasetList,
+                    request.getJob().toString());
             response.setData(request.getJob().getId());
         } catch (Exception e) {
             logger.warn(
-                    "submitJob failed, user: {}, detail: {}, error: ",
+                    "submitJob failed, user: {}, agency: {}, detail: {}, error: ",
                     user,
+                    agency,
                     request.getJob().toString(),
                     e);
             response.setCode(Constant.WEDPR_FAILED);
@@ -294,6 +356,78 @@ public class ProjectServiceImpl implements ProjectService {
                             + e.getMessage());
         }
         return response;
+    }
+
+    // query job list by dataset id
+    @Override
+    public WeDPRResponse queryJobsByDatasetID(
+            String user, String datasetID, Integer pageNum, Integer pageSize) {
+
+        long startTimeMillis = System.currentTimeMillis();
+
+        logger.info(
+                "query jobs by dataset id begin, user: {}, datasetID: {}, pageNum: {}, pageSize: {}",
+                user,
+                datasetID,
+                pageNum,
+                pageSize);
+
+        if (pageNum == null || pageNum < 1) {
+            pageNum = 1;
+        }
+
+        // limit pageSize
+        if (pageSize == null || pageSize < 0) {
+            // TODO: 配置项
+            pageSize = 15;
+        }
+
+        try {
+            try (Page<Object> objectPage = PageMethod.startPage(pageNum, pageSize)) {
+
+                List<JobDO> jobDOs =
+                        this.projectMapperWrapper
+                                .getProjectMapper()
+                                .queryJobsByDatasetID(datasetID);
+
+                long totalCount = new PageInfo<>(jobDOs).getTotal();
+                long pageEndOffset = (long) pageNum * pageSize;
+                boolean isLast = (pageEndOffset >= totalCount);
+
+                long endTimeMillis = System.currentTimeMillis();
+
+                QueryJobsByDatasetIDResponse queryJobsByDatasetIDResponse =
+                        QueryJobsByDatasetIDResponse.builder()
+                                .totalCount(totalCount)
+                                .isLast(isLast)
+                                .content(jobDOs)
+                                .build();
+
+                WeDPRResponse response =
+                        new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
+                response.setData(queryJobsByDatasetIDResponse);
+
+                logger.info(
+                        "query jobs by dataset id end, datasetID: {}, totalCount: {}, isLast: {}, cost(ms): {}",
+                        datasetID,
+                        totalCount,
+                        isLast,
+                        (endTimeMillis - startTimeMillis));
+
+                return response;
+            }
+        } catch (Exception e) {
+
+            long endTimeMillis = System.currentTimeMillis();
+            logger.error(
+                    "query jobs by dataset id exception, datasetID:{}, cost(ms): {}, e: ",
+                    datasetID,
+                    (endTimeMillis - startTimeMillis),
+                    e);
+
+            WeDPRResponse response = new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+            return response;
+        }
     }
 
     // query follower job by condition

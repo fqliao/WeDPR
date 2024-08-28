@@ -25,9 +25,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -137,6 +139,23 @@ public class ProjectController {
                     e);
             return new WeDPRResponse(
                     Constant.WEDPR_FAILED, "queryJobByCondition failed for " + e.getMessage());
+        }
+    }
+
+    // query job by condition
+    @GetMapping("/queryJobsByDatasetID")
+    public WeDPRResponse queryJobsByDatasetID(
+            HttpServletRequest request,
+            @RequestParam(value = "datasetID", required = true) String datasetID,
+            @RequestParam(value = "pageNum", required = false) Integer pageNum,
+            @RequestParam(value = "pageSize", required = false) Integer pageSize) {
+        try {
+            return projectService.queryJobsByDatasetID(
+                    TokenUtils.getLoginUser(request).getUsername(), datasetID, pageNum, pageSize);
+        } catch (Exception e) {
+            logger.warn("queryJobsByDatasetID exception, condition: {}, error: ", null, e);
+            return new WeDPRResponse(
+                    Constant.WEDPR_FAILED, "queryJobsByDatasetID failed for " + e.getMessage());
         }
     }
 

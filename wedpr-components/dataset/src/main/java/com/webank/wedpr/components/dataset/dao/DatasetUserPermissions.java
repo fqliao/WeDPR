@@ -18,4 +18,20 @@ public class DatasetUserPermissions {
                 || ((permissionType == DatasetPermissionType.WRITABLE.getType()) && writable)
                 || ((permissionType == DatasetPermissionType.READABLE.getType()) && readable);
     }
+
+    public boolean isReadable() {
+        return hasPermission(DatasetPermissionType.READABLE.getType());
+    }
+
+    public boolean isVisible() {
+        return hasPermission(DatasetPermissionType.VISIBLE.getType());
+    }
+
+    public boolean isUsable() {
+        return hasPermission(DatasetPermissionType.USABLE.getType());
+    }
+
+    public boolean isWritable() {
+        return hasPermission(DatasetPermissionType.WRITABLE.getType());
+    }
 }
