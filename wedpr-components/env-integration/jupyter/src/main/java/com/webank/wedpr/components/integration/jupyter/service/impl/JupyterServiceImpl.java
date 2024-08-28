@@ -15,8 +15,12 @@
 
 package com.webank.wedpr.components.integration.jupyter.service.impl;
 
+import com.webank.wedpr.components.hook.UserHook;
+import com.webank.wedpr.components.integration.jupyter.core.JupyterConfig;
+import com.webank.wedpr.components.integration.jupyter.core.JupyterManager;
 import com.webank.wedpr.components.integration.jupyter.dao.JupyterInfoDO;
 import com.webank.wedpr.components.integration.jupyter.dao.JupyterMapper;
+import com.webank.wedpr.components.integration.jupyter.hook.JupyterUserCallback;
 import com.webank.wedpr.components.integration.jupyter.service.JupyterService;
 import com.webank.wedpr.components.meta.sys.config.dao.SysConfigMapper;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
@@ -33,11 +37,14 @@ public class JupyterServiceImpl implements JupyterService {
 
     private @Autowired SysConfigMapper sysConfigMapper;
     private @Autowired JupyterMapper jupyterMapper;
+    private @Autowired UserHook userHook;
     private JupyterManager jupyterManager;
 
     @PostConstruct
     public void init() {
         this.jupyterManager = new JupyterManager(sysConfigMapper, jupyterMapper);
+        userHook.registerUserCallback(
+                JupyterConfig.getJupyterModule(), new JupyterUserCallback(this.jupyterManager));
     }
     /**
      * allocate the jupyter environment for given user
@@ -46,6 +53,7 @@ public class JupyterServiceImpl implements JupyterService {
      * @param agency the agency of the person
      * @return success or failed
      */
+    @Override
     public String allocate(String user, String agency) throws Exception {
         return this.jupyterManager.allocateJupyter(user, agency);
     }
@@ -56,6 +64,7 @@ public class JupyterServiceImpl implements JupyterService {
      * @param condition
      * @return
      */
+    @Override
     public List<JupyterInfoDO> queryJupyters(
             boolean admin, String queryUser, JupyterInfoDO condition) throws Exception {
         if (!admin) {
@@ -71,6 +80,7 @@ public class JupyterServiceImpl implements JupyterService {
      * @param id specify the jupyter to destory
      * @return success/failed
      */
+    @Override
     public boolean destroy(boolean admin, String currentUser, String id) {
         // the admin can delete all jupyter
         if (admin) {
@@ -85,6 +95,7 @@ public class JupyterServiceImpl implements JupyterService {
      * @param id the jupyter id
      * @return success/failed
      */
+    @Override
     public JupyterInfoDO open(String currentUser, String id) throws Exception {
         return this.jupyterManager.openJupyter(currentUser, id);
     }
@@ -95,6 +106,7 @@ public class JupyterServiceImpl implements JupyterService {
      * @param id specify the jupyter to close
      * @return success/failed
      */
+    @Override
     public JupyterInfoDO close(String currentUser, String id) throws Exception {
         return this.jupyterManager.closeJupyter(currentUser, id);
     }
