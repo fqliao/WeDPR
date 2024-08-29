@@ -60,8 +60,6 @@ public class Dataset {
 
     private String statusDesc;
 
-    private String reportStatus;
-
     // create time
     private String createAt;
     // last update time

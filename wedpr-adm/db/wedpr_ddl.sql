@@ -180,7 +180,6 @@ CREATE TABLE if not exists `wedpr_dataset` (
     `approval_chain` TEXT NOT NULL COMMENT '审批链信息',
     `status` tinyint(4) NOT NULL COMMENT '数据集状态, 0: 有效，其他无效',
     `status_desc` VARCHAR(1024) NOT NULL COMMENT '数据集状态描述',
-    `report_status` tinyint(4) DEFAULT 0 COMMENT '上报状态, 0:未上报, 1:已上报',
     `create_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`dataset_id`),
