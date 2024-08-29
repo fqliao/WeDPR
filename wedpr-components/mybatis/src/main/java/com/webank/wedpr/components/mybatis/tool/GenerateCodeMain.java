@@ -13,7 +13,7 @@ import java.util.List;
 /** Created by caryliao on 2024/7/15 20:26 */
 public class GenerateCodeMain {
     public static void main(String[] args) {
-        String moduleName = "report";
+        String moduleName = "admin";
         String tableName = "wedpr_dataset";
         String prefixName = "";
 

@@ -12,7 +12,7 @@
         <result property="datasetDesc" column="dataset_desc" />
         <result property="datasetFields" column="dataset_fields" />
         <result property="datasetVersionHash" column="dataset_version_hash" />
-        <result property="datasetSize" column="dataset_data_size" />
+        <result property="datasetSize" column="dataset_size" />
         <result property="datasetRecordCount" column="dataset_record_count" />
         <result property="datasetColumnCount" column="dataset_column_count" />
         <result property="datasetStorageType" column="dataset_storage_type" />
@@ -26,6 +26,7 @@
         <result property="approvalChain" column="approval_chain" />
         <result property="status" column="status" />
         <result property="statusDesc" column="status_desc" />
+        <result property="reportStatus" column="report_status" />
         <result property="createAt" column="create_at" />
         <result property="updateAt" column="update_at" />
     </resultMap>
@@ -38,7 +39,7 @@
             dataset_desc,
             dataset_fields,
             dataset_version_hash,
-            dataset_data_size,
+            dataset_size,
             dataset_record_count,
             dataset_column_count,
             dataset_storage_type,
@@ -141,7 +142,7 @@
             owner_user_name,
             dataset_fields,
             dataset_version_hash,
-            dataset_data_size,
+            dataset_size,
             dataset_record_count,
             dataset_column_count,
             dataset_storage_type,
@@ -206,7 +207,7 @@
         SET
             dataset_fields = #{datasetFields},
             dataset_version_hash = #{datasetVersionHash},
-            dataset_data_size = #{datasetSize},
+            dataset_size = #{datasetSize},
             dataset_record_count = #{datasetRecordCount},
             dataset_column_count = #{datasetColumnCount},
             dataset_storage_type = #{datasetStorageType},

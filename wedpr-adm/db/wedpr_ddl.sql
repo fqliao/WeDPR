@@ -166,7 +166,7 @@ CREATE TABLE if not exists `wedpr_dataset` (
     `dataset_desc` TEXT NOT NULL COMMENT '数据集描述',
     `dataset_fields` TEXT COMMENT '数据源字段以及预览信息',
     `dataset_version_hash` VARCHAR(64) DEFAULT '' COMMENT '数据集hash',
-    `dataset_data_size` bigint DEFAULT 0 COMMENT '数据集大小',
+    `dataset_size` bigint DEFAULT 0 COMMENT '数据集大小',
     `dataset_record_count` bigint DEFAULT 0 COMMENT '数据集记录数目',
     `dataset_column_count` int DEFAULT 0 COMMENT '数据集列数目',
     `dataset_storage_type` VARCHAR(255) DEFAULT '' COMMENT '数据集存储类型',
