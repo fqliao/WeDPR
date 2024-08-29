@@ -1,6 +1,7 @@
 package com.webank.wedpr.components.dataset.dao;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -14,6 +15,7 @@ import lombok.Data;
 @Data
 public class Dataset {
 
+    @TableId("dataset_id")
     private String datasetId;
 
     private String datasetLabel;

@@ -23,10 +23,10 @@ public class GenerateCodeMain {
         // 数据源配置
         com.baomidou.mybatisplus.generator.config.DataSourceConfig dsc = new DataSourceConfig();
         dsc.setUrl(
-                "jdbc:mysql://139.159.202.235:3306/cary?characterEncoding=utf8&useSSL=false&serverTimezone=UTC");
+                "jdbc:mysql://127.0.0.1:3306/wedpr?characterEncoding=utf8&useSSL=false&serverTimezone=UTC");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
-        dsc.setUsername("root");
-        dsc.setPassword("Wedpr2023");
+        dsc.setUsername("");
+        dsc.setPassword("");
         mpg.setDataSource(dsc);
 
         // 全局配置
