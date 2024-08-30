@@ -12,18 +12,16 @@
  * the License.
  *
  */
-package com.webank.wedpr.components.security.cache;
+package com.webank.wedpr.core.utils;
 
-import com.webank.wedpr.components.token.auth.model.UserToken;
-import com.webank.wedpr.components.user.config.UserInfoUpdateEvent;
-import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.lang3.tuple.Pair;
+public class NoValueInCacheException extends Exception {
+    public NoValueInCacheException(String msg) {
+        super(msg);
+    }
 
-public interface UserCache {
-    Pair<Boolean, UserToken> getUserToken(HttpServletRequest request) throws Exception;
-
-    UserToken getUserToken(String userName) throws Exception;
-
-    void invalidateAll(UserInfoUpdateEvent<List> userInfoUpdateEvent);
+    // No need to careful the stacktrace information
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
+    }
 }

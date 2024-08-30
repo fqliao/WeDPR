@@ -14,15 +14,10 @@
  */
 package com.webank.wedpr.components.api.credential.core;
 
-import com.webank.wedpr.components.api.credential.dao.ApiCredentialMapper;
-import com.webank.wedpr.components.crypto.CryptoToolkit;
+import com.webank.wedpr.components.api.credential.dao.ApiCredentialDO;
+import javax.servlet.http.HttpServletRequest;
 
-public class CredentialVerifier {
-    private final CryptoToolkit cryptoToolkit;
-    private final ApiCredentialMapper credentialMapper;
-
-    public CredentialVerifier(CryptoToolkit cryptoToolkit, ApiCredentialMapper credentialMapper) {
-        this.cryptoToolkit = cryptoToolkit;
-        this.credentialMapper = credentialMapper;
-    }
+public interface CredentialVerifier {
+    // verify the request
+    ApiCredentialDO verify(HttpServletRequest request) throws Exception;
 }
