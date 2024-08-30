@@ -15,9 +15,7 @@ public interface DataSourceProcessor {
     default void setContext(DataSourceProcessorContext context) {}
 
     // prepare data
-    // ie:
-    //  merge chunk data
-    //  convert excel to csv
+    // ie: merge chunk data 、convert excel to csv
     void prepareData() throws DatasetException;
 
     // analyze data
@@ -32,9 +30,9 @@ public interface DataSourceProcessor {
     // process
     default void processData(DataSourceProcessorContext context) throws DatasetException {
         try {
+            // init context
             setContext(context);
             // preprocess data
-            // ie: convert data to .cvs format, and other operations
             prepareData();
             // data analysis, reading data fields and data volume
             analyzeData();

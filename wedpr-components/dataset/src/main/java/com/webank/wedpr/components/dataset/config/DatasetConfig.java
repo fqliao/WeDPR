@@ -18,6 +18,8 @@ package com.webank.wedpr.components.dataset.config;
 import static com.webank.wedpr.components.dataset.service.ChunkUploadImpl.UPLOAD_CHUNK_FILE_NAME_PREFIX;
 
 import com.webank.wedpr.components.dataset.common.DatasetConstant;
+import com.webank.wedpr.core.utils.Common;
+import java.io.File;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -67,5 +69,22 @@ public class DatasetConfig {
     public String getDatasetChunksDir(String datasetId) {
         String datasetChunksBaseDir = getDatasetChunksBaseDir();
         return String.format("%s/%s", datasetChunksBaseDir, datasetId);
+    }
+
+    public String getDatasetStoragePath(String user, String datasetId, boolean dynamic) {
+        if (dynamic) {
+            // ${user}/dy/${currentTimeMillis}/${datasetId}
+            long currentTimeMillis = System.currentTimeMillis();
+            return user
+                    + File.separator
+                    + "dy"
+                    + File.separator
+                    + currentTimeMillis
+                    + File.separator
+                    + datasetId;
+        } else {
+            // ${user}/${datasetId}
+            return Common.joinPath(user, datasetId);
+        }
     }
 }

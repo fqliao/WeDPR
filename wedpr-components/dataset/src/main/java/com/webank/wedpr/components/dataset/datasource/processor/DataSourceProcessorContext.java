@@ -7,6 +7,7 @@ import com.webank.wedpr.components.dataset.datasource.DataSourceMeta;
 import com.webank.wedpr.components.dataset.mapper.wapper.DatasetTransactionalWrapper;
 import com.webank.wedpr.components.dataset.service.ChunkUploadApi;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
+import com.webank.wedpr.components.storage.api.StoragePath;
 import lombok.Builder;
 import lombok.Data;
 
@@ -25,4 +26,5 @@ public class DataSourceProcessorContext {
     // intermediate state
     private String cvsFilePath;
     private String mergedFilePath;
+    private StoragePath storagePath;
 }
