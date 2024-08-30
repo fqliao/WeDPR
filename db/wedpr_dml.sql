@@ -12,7 +12,14 @@ values("9112736673759237", "wedpr_data_auth", "数据审批模板", '{"name":"we
 
 insert into wedpr_group (group_id, group_name, admin_name, status) values('1000000000000000', '初始用户组', 'admin', 0);
 insert into wedpr_group_detail (group_id, username, status) values('1000000000000000', 'admin', 0);
+
+-- 站点端初始化
 insert into wedpr_user (username, password, status) values('admin', '{bcrypt}$2a$10$9ZhDOBp.sRKat4l14ygu/.LscxrMUcDAfeVOEPiYwbcRkoB09gCmi', 0);
 insert into wedpr_user_role(username, role_id) values ('admin', '1');
 insert into wedpr_role_permission (role_id, role_name, permission_id) values ('1', 'admin_user', '1')
 insert into wedpr_role_permission (role_id, role_name, permission_id) values ('2', 'original_user', '2')
+
+-- 管理端初始化
+insert into wedpr_user (username, password, status) values('admin', '{bcrypt}$2a$10$XuiuKLg23kxtC/ldvYN0/evt0Y3aoBC9iV29srhIBMMDORzCQiYA.', 0);
+insert into wedpr_user_role(username, role_id) values ('admin', '10');
+insert into wedpr_role_permission (role_id, role_name, permission_id) values ('10', 'admin_user', '1')
