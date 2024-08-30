@@ -250,25 +250,4 @@ public class SQLExecutor {
             throw new DatasetException("execute sql Exception, e: " + e.getMessage());
         }
     }
-
-    // TODO:
-    public static void main(String[] args) throws DatasetException {
-
-        DBDataSource dbDataSource = new DBDataSource();
-        dbDataSource.setSql("select * from t_ucl_c_user_missed_record");
-        dbDataSource.setDatabase("ppcs_integ");
-        dbDataSource.setDbIp("127.0.0.1");
-        dbDataSource.setDbPort(3306);
-        dbDataSource.setUserName("root");
-        dbDataSource.setPassword("123456");
-
-        SQLExecutor sqlExecutor = new SQLExecutor();
-        sqlExecutor.executeSQL(
-                DBType.MYSQL,
-                dbDataSource,
-                (fields, rowValues) -> {
-                    System.out.println(fields);
-                    System.out.println(rowValues);
-                });
-    }
 }
