@@ -1,12 +1,13 @@
 package com.webank.wedpr.components.dataset.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.webank.wedpr.components.dataset.dao.Dataset;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
-public interface DatasetMapper {
+public interface DatasetMapper extends BaseMapper<Dataset> {
 
     /**
      * query dataset by dataset_id

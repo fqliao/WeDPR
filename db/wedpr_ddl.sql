@@ -306,6 +306,42 @@ create table if not exists `wedpr_jupyter_table`(
     index access_entrypoint_index(`access_entrypoint`(128))
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
+-- 创建机构表
+CREATE TABLE IF NOT EXISTS wedpr_agency (
+    agency_id VARCHAR(64) NOT NULL comment "机构编号",
+    agency_name VARCHAR(64) NOT NULL comment "机构名",
+    agency_desc text NOT NULL comment "机构描述",
+    agency_contact VARCHAR(64) NOT NULL comment "机构联系人",
+    contact_phone VARCHAR(64) NOT NULL comment "联系电话",
+    gateway_endpoint VARCHAR(64) NOT NULL comment "网关地址",
+    agency_status TINYINT DEFAULT 0 NOT NULL comment "机构状态(0:启用，1:禁用)",
+    user_count INT DEFAULT 0 comment "机构用户数",
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_by VARCHAR(20) NOT NULL DEFAULT '',
+    update_by VARCHAR(20) NOT NULL DEFAULT '',
+    PRIMARY KEY (agency_id),
+    INDEX idx_agency_name (agency_name)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
+
+-- 创建机构证书表
+CREATE TABLE IF NOT EXISTS wedpr_cert (
+    cert_id VARCHAR(64) NOT NULL comment "证书id",
+    agency_id VARCHAR(64) NOT NULL comment "机构编号",
+    agency_name VARCHAR(64) NOT NULL comment "机构名",
+    csr_file_name VARCHAR(64) NOT NULL comment "机构证书请求文件名",
+    csr_file_text text NOT NULL comment "机构证书请求文件内容",
+    cert_file_text text NOT NULL comment "机构证书文件内容",
+    expire_time DATETIME NOT NULL comment "过期时间",
+    cert_status TINYINT DEFAULT 0 NOT NULL comment "证书状态(0：无证书，1：有效，2：过期，3：禁用)",
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_by VARCHAR(20) NOT NULL DEFAULT '',
+    update_by VARCHAR(20) NOT NULL DEFAULT '',
+    PRIMARY KEY (cert_id),
+    INDEX idx_agency_name (agency_name),
+    INDEX idx_cert_status (cert_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 -- the api credential table
 create table if not exists `wedpr_api_credential_table`(
     `id` varchar(64) not null comment "id",
