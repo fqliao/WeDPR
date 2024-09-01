@@ -12,10 +12,10 @@
  * the License.
  *
  */
-package com.webank.wedpr.components.crypto.config;
 
-import com.webank.wedpr.components.crypto.CryptoToolkit;
-import com.webank.wedpr.components.crypto.CryptoToolkitFactory;
+package com.webank.wedpr.components.hook.config;
+
+import com.webank.wedpr.components.hook.UserHook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -25,14 +25,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 @Configuration
-public class CryptoToolkitConfig {
-    private static final Logger logger = LoggerFactory.getLogger(CryptoToolkitConfig.class);
+public class UserHookConfig {
+    private static final Logger logger = LoggerFactory.getLogger(UserHookConfig.class);
 
-    @Bean(name = "cryptoToolkit")
+    @Bean(name = "userHook")
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     @ConditionalOnMissingBean
-    public CryptoToolkit cryptoToolkit() throws Exception {
-        logger.info("create cryptoToolkit");
-        return CryptoToolkitFactory.build();
+    public UserHook userHook() {
+        return new UserHook();
     }
 }

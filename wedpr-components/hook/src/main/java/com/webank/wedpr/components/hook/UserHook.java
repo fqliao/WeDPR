@@ -15,6 +15,7 @@
 
 package com.webank.wedpr.components.hook;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class UserHook {
         DELETE_USER
     }
 
-    private Map<String, UserCallback> callbacks;
+    private Map<String, UserCallback> callbacks = new HashMap<>();
 
     public synchronized void registerUserCallback(String module, UserCallback callback) {
         callbacks.put(module, callback);

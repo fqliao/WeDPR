@@ -84,6 +84,9 @@ public class MybatisConfig {
             WeDPRConfig.apply("wedpr.mybatis.configLocation", "classpath:mybatis-config.xml");
     private static final String MYBATIS_BASEPACKAGE =
             WeDPRConfig.apply("wedpr.mybatis.BasePackage", "");
+    public static final String MYBATIS_FILTERS = WeDPRConfig.apply("wedpr.mybatis.filters", null);
+    public static final String MYBATIS_CONNECTION_PROPERTIES =
+            WeDPRConfig.apply("wedpr.mybatis.connection.properties", null);
 
     static {
         // load configuration from the config file is the file exists

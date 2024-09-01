@@ -17,6 +17,7 @@ package com.webank.wedpr.components.mybatis;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.webank.wedpr.core.utils.WeDPRException;
+import java.util.Map;
 import java.util.Properties;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
@@ -37,7 +38,7 @@ public class DataSourceBuilder {
         }
     }
 
-    public static DataSource build() {
+    public static DataSource build() throws Exception {
         logger.info(
                 "Begin Build DataSource, url: {}, user: {}",
                 MybatisConfig.WEDPR_MYBATIS_DATASOURCE_URL,
@@ -63,10 +64,19 @@ public class DataSourceBuilder {
         dataSource.setRemoveAbandoned(MybatisConfig.WEDPR_MYBATIS_REMOVE_ABANDONED_ENABLE);
         dataSource.setRemoveAbandonedTimeoutMillis(
                 MybatisConfig.WEDPR_MYBATIS_REMOVE_ABANDONED_TIMEOUT);
+        if (MybatisConfig.MYBATIS_CONNECTION_PROPERTIES != null) {
+            dataSource.setConnectionProperties(MybatisConfig.MYBATIS_CONNECTION_PROPERTIES);
+        }
+        if (MybatisConfig.MYBATIS_FILTERS != null) {
+            dataSource.setFilters(MybatisConfig.MYBATIS_FILTERS);
+        }
+        dataSource.init();
+        Map<String, Object> statData = dataSource.getStatData();
         logger.info(
-                "Build DataSource success, url: {}, user: {}",
+                "Build DataSource success, url: {}, user: {}, statData: {}",
                 MybatisConfig.WEDPR_MYBATIS_DATASOURCE_URL,
-                MybatisConfig.WEDPR_MYBATIS_USER_NAME);
+                MybatisConfig.WEDPR_MYBATIS_USER_NAME,
+                statData);
         return dataSource;
     }
 }
