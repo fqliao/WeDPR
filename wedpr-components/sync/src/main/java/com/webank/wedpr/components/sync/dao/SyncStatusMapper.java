@@ -15,12 +15,13 @@
 
 package com.webank.wedpr.components.sync.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
-public interface SyncStatusMapper {
+public interface SyncStatusMapper extends BaseMapper<ResourceActionDO> {
     public int insertResourceRecordMeta(@Param("record") ResourceActionDO record);
 
     public int updateResourceRecordMeta(@Param("record") ResourceActionDO record);
