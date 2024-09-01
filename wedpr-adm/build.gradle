@@ -10,6 +10,7 @@ dependencies {
     compile project(":wedpr-components-token-auth")
     compile project(":wedpr-components-initializer")
     compile project(":wedpr-components-project")
+    compile project(":wedpr-components-service-publish")
     compile project(":wedpr-components-scheduler")
     compile project(":wedpr-components-user")
     compile project(":wedpr-components-dataset")

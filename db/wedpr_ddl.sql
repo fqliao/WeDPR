@@ -384,7 +384,7 @@ create table if not exists wedpr_service_auth_table(
     `apply_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "申请时间",
     `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "更新时间",
     primary key (`id`),
-    index service_id_index(`service_id`(128)),
+    index service_id_index(`service_id`(64)),
     index access_key_id_index(`access_key_id`(128))
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
@@ -393,6 +393,7 @@ create table if not exists wedpr_service_invoke_table(
     `service_id` varchar(64) not null comment "调用的服务ID",
     `invoke_user` varchar(1024) not null comment "调用者",
     `invoke_agency` varchar(1024) not null comment "调用方所属机构",
+    `invoke_status` varchar(64) comment "调用的服务状态",
     `invoke_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "调用时间",
     `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "更新时间",
     primary key (`invoke_id`),
