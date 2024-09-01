@@ -20,10 +20,12 @@ import com.webank.wedpr.components.api.credential.core.impl.CredentialStatus;
 import com.webank.wedpr.components.uuid.generator.WeDPRUuidGenerator;
 import com.webank.wedpr.core.utils.TimeRange;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @Data
 @ToString
+@EqualsAndHashCode(callSuper = false)
 public class ApiCredentialDO extends TimeRange {
     private String id = WeDPRUuidGenerator.generateID();
     private String accessKeyID;
