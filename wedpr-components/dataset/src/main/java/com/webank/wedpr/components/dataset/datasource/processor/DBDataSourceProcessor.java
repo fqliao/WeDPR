@@ -13,7 +13,6 @@ import com.webank.wedpr.components.dataset.utils.FileUtils;
 import com.webank.wedpr.components.dataset.utils.JsonUtils;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.storage.api.StoragePath;
-import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.utils.Common;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import java.io.File;
@@ -57,8 +56,12 @@ public class DBDataSourceProcessor extends CsvDataSourceProcessor {
 
         // check if single select
         SQLUtils.isSingleSelectStatement(sql);
-        // validate parameters, test db connectivity, validate SQL syntax
-        SQLUtils.validateDataSourceParameters(dbType, dbDataSource);
+
+        boolean verifySqlSyntaxAndTestCon = dbDataSource.isVerifySqlSyntaxAndTestCon();
+        if (verifySqlSyntaxAndTestCon) {
+            // validate parameters, test db connectivity, validate SQL syntax
+            SQLUtils.validateDataSourceParameters(dbType, dbDataSource);
+        }
 
         long endTimeMillis = System.currentTimeMillis();
         logger.info(
@@ -91,7 +94,7 @@ public class DBDataSourceProcessor extends CsvDataSourceProcessor {
 
         long endTimeMillis = System.currentTimeMillis();
         logger.info(
-                " ==> data source processor stage prepare data end merge chunk data, datasetId: {}, cvsFilePath: {}, cost(ms): {}",
+                " ==> data source processor stage prepare data end, datasetId: {}, cvsFilePath: {}, cost(ms): {}",
                 datasetId,
                 cvsFilePath,
                 endTimeMillis - startTimeMillis);
@@ -149,12 +152,15 @@ public class DBDataSourceProcessor extends CsvDataSourceProcessor {
 
         String csvFilePath = dataSourceProcessorContext.getCvsFilePath();
         UserInfo userInfo = dataSourceProcessorContext.getUserInfo();
+        DataSourceMeta dataSourceMeta = dataSourceProcessorContext.getDataSourceMeta();
+        DatasetConfig datasetConfig = dataSourceProcessorContext.getDatasetConfig();
 
         FileStorageInterface fileStorage = dataSourceProcessorContext.getFileStorage();
 
         try {
             String userDatasetPath =
-                    WeDPRCommonConfig.getUserDatasetPath(userInfo.getUser(), datasetId);
+                    datasetConfig.getDatasetStoragePath(
+                            userInfo.getUser(), datasetId, dataSourceMeta.dynamicDataSource());
 
             StoragePath storagePath = fileStorage.upload(true, csvFilePath, userDatasetPath, false);
 
@@ -164,6 +170,7 @@ public class DBDataSourceProcessor extends CsvDataSourceProcessor {
                     .getDataset()
                     .setDatasetStorageType(fileStorage.type().toString());
             this.dataSourceProcessorContext.getDataset().setDatasetStoragePath(storagePathStr);
+            this.dataSourceProcessorContext.setStoragePath(storagePath);
 
             long endTimeMillis = System.currentTimeMillis();
             logger.info(

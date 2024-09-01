@@ -7,6 +7,7 @@ import com.webank.wedpr.components.dataset.message.CreateDatasetRequest;
 import com.webank.wedpr.components.dataset.message.CreateDatasetResponse;
 import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
 import com.webank.wedpr.components.dataset.message.UpdateDatasetRequest;
+import com.webank.wedpr.components.storage.api.StoragePath;
 import java.util.List;
 
 public interface DatasetServiceApi {
@@ -88,4 +89,13 @@ public interface DatasetServiceApi {
             Integer pageOffset,
             Integer pageSize)
             throws DatasetException;
+
+    /**
+     * get dataset storage path
+     *
+     * @param datasetID
+     * @return
+     * @throws DatasetException
+     */
+    StoragePath getDatasetStoragePath(String datasetID) throws DatasetException;
 }

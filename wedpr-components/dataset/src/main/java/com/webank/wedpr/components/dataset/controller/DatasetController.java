@@ -25,6 +25,7 @@ import com.webank.wedpr.components.dataset.utils.JsonUtils;
 import com.webank.wedpr.components.dataset.utils.TimeUtils;
 import com.webank.wedpr.components.dataset.utils.UserTokenUtils;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
+import com.webank.wedpr.components.storage.api.StoragePath;
 import com.webank.wedpr.core.utils.Common;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRResponse;
@@ -452,6 +453,42 @@ public class DatasetController {
 
             weDPRResponse.setCode(Constant.WEDPR_FAILED);
             weDPRResponse.setMsg(e.getMessage());
+        }
+
+        return weDPRResponse;
+    }
+
+    @GetMapping(value = "getDatasetStoragePath")
+    public WeDPRResponse getDatasetStoragePath(
+            HttpServletRequest httpServletRequest,
+            @RequestParam(value = "datasetID", required = true) String datasetID) {
+
+        long startTimeMillis = System.currentTimeMillis();
+        logger.info("get dataset storage path begin, datasetID: {}", datasetID);
+
+        WeDPRResponse weDPRResponse =
+                new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
+
+        try {
+            StoragePath storagePath = datasetService.getDatasetStoragePath(datasetID);
+            weDPRResponse.setData(storagePath);
+
+            long endTimeMillis = System.currentTimeMillis();
+            logger.info(
+                    "get dataset storage path  success, datasetID: {}, cost(ms): {}",
+                    datasetID,
+                    (endTimeMillis - startTimeMillis));
+        } catch (Exception e) {
+
+            weDPRResponse.setCode(Constant.WEDPR_FAILED);
+            weDPRResponse.setMsg(e.getMessage());
+
+            long endTimeMillis = System.currentTimeMillis();
+            logger.error(
+                    "get dataset storage path failed, datasetID: {}, cost(ms): {}, e: ",
+                    datasetID,
+                    (endTimeMillis - startTimeMillis),
+                    e);
         }
 
         return weDPRResponse;

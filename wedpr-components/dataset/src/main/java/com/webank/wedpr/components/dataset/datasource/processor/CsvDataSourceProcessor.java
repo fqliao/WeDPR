@@ -14,7 +14,6 @@ import com.webank.wedpr.components.dataset.utils.FileUtils;
 import com.webank.wedpr.components.dataset.utils.JsonUtils;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.storage.api.StoragePath;
-import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.utils.Common;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import java.util.Arrays;
@@ -164,12 +163,13 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
 
         String csvFilePath = dataSourceProcessorContext.getCvsFilePath();
         UserInfo userInfo = dataSourceProcessorContext.getUserInfo();
+        DatasetConfig datasetConfig = dataSourceProcessorContext.getDatasetConfig();
 
         FileStorageInterface fileStorage = dataSourceProcessorContext.getFileStorage();
 
         try {
             String userDatasetPath =
-                    WeDPRCommonConfig.getUserDatasetPath(userInfo.getUser(), datasetId);
+                    datasetConfig.getDatasetStoragePath(userInfo.getUser(), datasetId, false);
 
             StoragePath storagePath = fileStorage.upload(true, csvFilePath, userDatasetPath, false);
 
@@ -179,6 +179,7 @@ public class CsvDataSourceProcessor implements DataSourceProcessor {
                     .getDataset()
                     .setDatasetStorageType(fileStorage.type().toString());
             this.dataSourceProcessorContext.getDataset().setDatasetStoragePath(storagePathStr);
+            this.dataSourceProcessorContext.setStoragePath(storagePath);
 
             long endTimeMillis = System.currentTimeMillis();
             logger.info(

@@ -40,7 +40,12 @@ public class LocalFileStorage implements FileStorageInterface {
     public void createDirIfNotExist(String dir) throws IOException {
         File baseDirFile = new File(dir);
         if (!baseDirFile.exists()) {
-            Files.createDirectory(baseDirFile.toPath());
+            // Files.createDirectory(baseDirFile.toPath());
+            boolean mkdirs = baseDirFile.mkdirs();
+            if (!mkdirs) {
+                logger.error("failed to create directory, dir: {}, mkdir: {}", dir, mkdirs);
+                throw new IOException("failed to create directory, dir: " + dir);
+            }
             logger.info("create directory {}", dir);
         }
     }

@@ -15,6 +15,7 @@ import com.webank.wedpr.components.dataset.datasource.DataSourceType;
 import com.webank.wedpr.components.dataset.datasource.dispatch.DataSourceProcessorDispatcher;
 import com.webank.wedpr.components.dataset.datasource.processor.DataSourceProcessor;
 import com.webank.wedpr.components.dataset.datasource.processor.DataSourceProcessorContext;
+import com.webank.wedpr.components.dataset.datasource.storage.DatasetStoragePathRetriever;
 import com.webank.wedpr.components.dataset.exception.DatasetException;
 import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.mapper.DatasetPermissionMapper;
@@ -57,6 +58,7 @@ public class DatasetServiceImpl implements DatasetServiceApi {
     @Autowired private DatasetTransactionalWrapper datasetTransactionalWrapper;
     @Autowired private DataSourceProcessorDispatcher dataSourceProcessorDispatcher;
     @Autowired private DatasetWrapper datasetWrapper;
+    @Autowired private DatasetStoragePathRetriever datasetStoragePathRetriever;
 
     @Qualifier("fileStorage")
     @Autowired
@@ -169,6 +171,8 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                     "Unsupported data source type, dataSourceType: " + strDataSourceType);
         }
 
+        dataSourceProcessor.setContext(
+                DataSourceProcessorContext.builder().fileStorage(fileStorage).build());
         boolean dynamicDataSource = false;
 
         // parse datasource meta
@@ -551,5 +555,17 @@ public class DatasetServiceImpl implements DatasetServiceApi {
             throw new DatasetException(
                     "query visible datasets for user db operation exception, " + e.getMessage());
         }
+    }
+
+    /**
+     * get dataset storage path
+     *
+     * @param datasetID
+     * @return
+     * @throws DatasetException
+     */
+    @Override
+    public StoragePath getDatasetStoragePath(String datasetID) throws DatasetException {
+        return datasetStoragePathRetriever.getDatasetStoragePath(datasetID);
     }
 }
