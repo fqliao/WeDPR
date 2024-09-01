@@ -28,13 +28,13 @@
         <result column="create_time" property="createTime"/>
         <result column="last_update_time" property="lastUpdateTime"/>
     </resultMap>
-    <insert id="insertJupyterInfo" parameterType="JupyterInfoDO">
+    <insert id="insertJupyterInfo" parameterType="com.webank.wedpr.components.integration.jupyter.dao.JupyterInfoDO">
         insert into wedpr_jupyter_table(`id`, `owner`,
               `agency`, `access_entrypoint`, `setting`, `status`, `create_time`) values
                (#{jupyterInfo.id}, #{jupyterInfo.owner}, #{jupyterInfo.agency}, #{jupyterInfo.accessEntry},
                 #{jupyterInfo.setting}, #{jupyterInfo.status}, NOW())
     </insert>
-    <update id="updateJupyterInfo" parameterType="JupyterInfoDO">
+    <update id="updateJupyterInfo" parameterType="com.webank.wedpr.components.integration.jupyter.dao.JupyterInfoDO">
         update `wedpr_jupyter_table`
         <set>
             <if test="updatedInfo.accessEntry != null and updatedInfo.accessEntry !=''">
