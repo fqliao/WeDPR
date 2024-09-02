@@ -128,8 +128,8 @@ public class DatasetServiceImpl implements DatasetServiceApi {
             dataset.setStatus(DatasetStatus.Success.getCode());
             dataset.setStatusDesc(DatasetStatus.Success.getMessage());
         } else {
-            dataset.setStatus(DatasetStatus.InitialState.getCode());
-            dataset.setStatusDesc(DatasetStatus.InitialState.getMessage());
+            dataset.setStatus(DatasetStatus.Created.getCode());
+            dataset.setStatusDesc(DatasetStatus.Created.getMessage());
         }
 
         return dataset;
