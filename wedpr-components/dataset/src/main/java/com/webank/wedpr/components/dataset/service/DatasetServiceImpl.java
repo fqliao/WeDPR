@@ -532,6 +532,16 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                                 startTime,
                                 endTime);
 
+                if (!datasetList.isEmpty()) {
+                    for (Dataset dataset : datasetList) {
+                        String datasetId = dataset.getDatasetId();
+                        DatasetUserPermissions datasetUserPermissions =
+                                DatasetUserPermissionValidator.confirmUserDatasetPermissions(
+                                        datasetId, userInfo, datasetPermissionMapper, false);
+                        dataset.setPermissions(datasetUserPermissions);
+                    }
+                }
+
                 long totalCount = new PageInfo<>(datasetList).getTotal();
                 long pageEndOffset = (long) pageNum * pageSize;
                 boolean isLast = (pageEndOffset >= totalCount);
