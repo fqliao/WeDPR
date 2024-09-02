@@ -17,14 +17,13 @@ import org.apache.ibatis.annotations.Select;
 public interface WedprServiceInvokeTableMapper extends BaseMapper<WedprServiceInvokeTable> {
 
     @Select(
-            "SELECT t.invoke_id,t.invoke_user,t.invoke_agency,t.invoke_status,t.invoke_time,s.expire_time,s.apply_time "
+            "<script> SELECT t.invoke_id,t.invoke_user,t.invoke_agency,t.invoke_status,t.invoke_time,s.expire_time,s.apply_time "
                     + "FROM wedpr_service_invoke_table t , wedpr_service_auth_table s WHERE s.service_id = t.service_id AND s.service_id = #{serviceId} "
-                    + "<where> "
-                    + "<if test='invokeAgency != \"\"'> AND t.invoke_agency = #{invokeAgency} </if> "
-                    + "<if test='invokeStatus != \"\"'> AND t.invoke_status = #{invokeStatus} </if> "
-                    + "<if test='invokeDate != \"\"'> AND DATE_FORMAT(t.invoke_time, '%Y-%m-%d') = #{invokeDate} </if> "
-                    + "<if test='expireDate != \"\"'> AND DATE_FORMAT(s.expire_time, '%Y-%m-%d') = #{expireDate} </if> "
-                    + "</where>")
+                    + "<if test='invokeAgency != null and invokeAgency != \"\"'> AND t.invoke_agency = #{invokeAgency} </if> "
+                    + "<if test='invokeStatus != null and invokeStatus != \"\"'> AND t.invoke_status = #{invokeStatus} </if> "
+                    + "<if test='invokeDate != null and invokeDate != \"\"'> AND DATE_FORMAT(t.invoke_time, '%Y-%m-%d') = #{invokeDate} </if> "
+                    + "<if test='expireDate != null and expireDate != \"\"'> AND DATE_FORMAT(s.expire_time, '%Y-%m-%d') = #{expireDate} </if> "
+                    + " </script>")
     List<WedprServiceInvokeResult> selectWedprPublishInvokeOnCondition(
             Page<WedprServiceInvokeResult> page,
             @Param("serviceId") String serviceId,

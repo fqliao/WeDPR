@@ -24,6 +24,8 @@ import com.webank.wedpr.core.utils.WeDPRException;
 import com.webank.wedpr.core.utils.WeDPRResponse;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Objects;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -45,7 +47,7 @@ public class WedprPublishedServiceServiceImpl
 
     @Qualifier("publishSyncer")
     @Autowired
-    PublishSyncerApi publishSyncer;
+    private PublishSyncerApi publishSyncer;
 
     @Override
     @Transactional(rollbackFor = WeDPRException.class)
@@ -91,6 +93,7 @@ public class WedprPublishedServiceServiceImpl
 
         wedprPublishedService.setServiceDesc(publishCreate.getServiceDesc());
         wedprPublishedService.setServiceConfig(publishCreate.getServiceConfig());
+        wedprPublishedService.setLastUpdateTime(LocalDateTime.now());
         boolean updated = this.update(wedprPublishedService, lambdaQueryWrapper);
         if (updated) {
             publishSyncer.publishSync(wedprPublishedService.serialize());
@@ -104,14 +107,17 @@ public class WedprPublishedServiceServiceImpl
     @Override
     @Transactional(rollbackFor = WeDPRException.class)
     public WeDPRResponse revokePublishService(String username, String serviceId) {
-        if (getPublishService(serviceId) == null) {
-            return new WeDPRResponse(Constant.WEDPR_FAILED, serviceId + "无法撤销，不属于用户" + username);
-        }
         LambdaQueryWrapper<WedprPublishedService> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper
                 .eq(WedprPublishedService::getServiceId, serviceId)
                 .eq(WedprPublishedService::getOwner, username)
                 .eq(WedprPublishedService::getAgency, WeDPRCommonConfig.getAgency());
+        WedprPublishedService one = this.getOne(lambdaQueryWrapper);
+        if( Objects.isNull(one)){
+            return new WeDPRResponse(Constant.WEDPR_FAILED, serviceId + "服务用户无权撤回");
+
+        }
+
         boolean removed = this.remove(lambdaQueryWrapper);
         if (removed) {
             WedprPublishedService wedprPublish = new WedprPublishedService();
@@ -144,7 +150,7 @@ public class WedprPublishedServiceServiceImpl
             lambdaQueryWrapper.eq(WedprPublishedService::getServiceType, serviceType);
         }
         if (StringUtils.isNotBlank(createDate)) {
-            lambdaQueryWrapper.apply("DATE_FORMAT(publish_time, '%Y-%m-%d') = {0}", createDate);
+            lambdaQueryWrapper.apply("DATE_FORMAT(create_time, '%Y-%m-%d') = {0}", createDate);
         }
 
         Page<WedprPublishedService> wedprPublishPage =

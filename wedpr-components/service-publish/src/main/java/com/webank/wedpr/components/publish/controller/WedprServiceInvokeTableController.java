@@ -34,10 +34,10 @@ public class WedprServiceInvokeTableController {
 
     @GetMapping("/search/{serviceId}")
     public WeDPRResponse searchPublishRecord(
-            @PathVariable String publishId, PublishInvokeSearchRequest publishInvokeRequest) {
+            @PathVariable String serviceId, PublishInvokeSearchRequest publishInvokeRequest) {
         try {
             return wedprPublishInvokeService.seachPublishInvokeService(
-                    publishId, publishInvokeRequest);
+                    serviceId, publishInvokeRequest);
         } catch (Exception e) {
             logger.warn("发起方搜索申报记录 exception, error: ", e);
             return new WeDPRResponse(

@@ -71,7 +71,7 @@ public class WedprPublishedServiceController {
         }
     }
 
-    @DeleteMapping("/revoke/{publishId}")
+    @DeleteMapping("/revoke/{serviceId}")
     public WeDPRResponse revokePublish(@PathVariable String serviceId, HttpServletRequest request) {
         try {
             return wedprPublishService.revokePublishService(
@@ -82,10 +82,10 @@ public class WedprPublishedServiceController {
         }
     }
 
-    @GetMapping("/search/{publishId}")
-    public WeDPRResponse searchPublish(@PathVariable String publishId) {
+    @GetMapping("/search/{serviceId}")
+    public WeDPRResponse searchPublish(@PathVariable String serviceId) {
         try {
-            return wedprPublishService.searchPublishService(publishId);
+            return wedprPublishService.searchPublishService(serviceId);
         } catch (Exception e) {
             logger.warn("searchPublish exception, error: ", e);
             return new WeDPRResponse(

@@ -11,11 +11,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author zachma
  * @date 2024/8/31
  */
+@Configuration
 public class PublishSyncConfig {
     private static final Logger logger = LoggerFactory.getLogger(PublishSyncConfig.class);
 
