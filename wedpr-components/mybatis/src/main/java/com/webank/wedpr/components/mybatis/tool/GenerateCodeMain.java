@@ -13,8 +13,8 @@ import java.util.List;
 /** Created by caryliao on 2024/7/15 20:26 */
 public class GenerateCodeMain {
     public static void main(String[] args) {
-        String moduleName = "service-publish";
-        String tableName = "wedpr_service_auth_table";
+        String moduleName = "";
+        String tableName = "";
         String prefixName = "";
 
         // 代码生成器
@@ -23,10 +23,10 @@ public class GenerateCodeMain {
         // 数据源配置
         com.baomidou.mybatisplus.generator.config.DataSourceConfig dsc = new DataSourceConfig();
         dsc.setUrl(
-                "jdbc:mysql://139.159.202.235:3306/wedpr_sgd?characterEncoding=utf8&useSSL=false&serverTimezone=UTC");
+                "jdbc:mysql://xxxxxxxxxx:3306/xxxxxxx?characterEncoding=utf8&useSSL=false&serverTimezone=UTC");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
-        dsc.setUsername("root");
-        dsc.setPassword("Wedpr2023");
+        dsc.setUsername("xxx");
+        dsc.setPassword("xxxxxx");
         mpg.setDataSource(dsc);
 
         // 全局配置
