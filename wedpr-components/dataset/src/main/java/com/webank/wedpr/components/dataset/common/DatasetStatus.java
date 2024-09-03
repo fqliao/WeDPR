@@ -7,14 +7,18 @@ import lombok.Getter;
 @Getter
 public enum DatasetStatus {
     Success(0, "Success"),
-    Failure(-1, "Failure"),
-    Fatal(-2, "Fatal"),
-    InitialState(1, "InitialState"),
-    WaitingForUploadData(2, "WaitingForUploadData"),
-    WaitingForLoadDBData(3, "WaitingForLoadDBData"),
-    DataUploading(4, "DataUploading"),
-    DataAnalyzing(5, "DataAnalyzing"),
-    UploadingDataToStorage(6, "UploadingDataToStorage");
+    Failure(-1, "Failure"), // dataset is in failure and can be processed by retrying
+    Fatal(-2, "Fatal"), // dataset is in failure and can not be processed by retrying
+    Created(1, "Created"), // dataset is created and waiting for data source processing
+    DataAnalyzing(2, "DataAnalyzing"), // data analyzing
+    DataUploading(3, "UploadingDataToStorage"), // upload data to storage
+    UpdateDatasetMetaState(
+            4,
+            "UpdateDatasetMetaState"), // update dataset meta info, ie: dataset,column num,data hash
+    UploadingChunkData(5, "UploadingChunkData"), // chunk data is being uploaded
+    LoadingDBData(6, "LoadingDBData"), // upload database data
+    LoadingExcelData(7, "LoadingExcelData"), // loading excel data
+    MergingChunkData(8, "MergingChunkData"); // merge chunk data
 
     private final Integer code;
     private final String message;
