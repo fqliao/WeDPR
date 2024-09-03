@@ -16,14 +16,21 @@
 
 package com.webank.wedpr.components.sync.dao;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.webank.wedpr.components.sync.core.ResourceActionRecord;
 
+@TableName("wedpr_sync_status_table")
 public class ResourceActionDO extends ResourceActionRecord {
     private String status;
     private String createTime;
     private String lastUpdateTime;
     private String statusMsg;
+
+    @TableField(exist = false)
     private String startTime;
+
+    @TableField(exist = false)
     private String endTime;
 
     public ResourceActionDO() {}
@@ -80,22 +87,18 @@ public class ResourceActionDO extends ResourceActionRecord {
         this.statusMsg = statusMsg;
     }
 
-    @Override
     public String getStartTime() {
         return startTime;
     }
 
-    @Override
     public void setStartTime(String startTime) {
         this.startTime = startTime;
     }
 
-    @Override
     public String getEndTime() {
         return endTime;
     }
 
-    @Override
     public void setEndTime(String endTime) {
         this.endTime = endTime;
     }

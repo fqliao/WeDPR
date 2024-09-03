@@ -15,10 +15,11 @@
 
 package com.webank.wedpr.components.sync.core;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.webank.wedpr.components.uuid.generator.WeDPRUuidGenerator;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
-import com.webank.wedpr.core.utils.TimeRange;
 import java.math.BigInteger;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,9 +29,11 @@ import lombok.SneakyThrows;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class ResourceActionRecord extends TimeRange {
+public class ResourceActionRecord {
+    @TableField(exist = false)
     protected String user;
     // the id
+    @TableId("resource_id")
     protected String resourceID = WeDPRUuidGenerator.generateID();
     // the request initiator
     protected String agency;
@@ -41,6 +44,7 @@ public class ResourceActionRecord extends TimeRange {
     // the resourceAction
     protected String resourceAction;
     // the resourceContent
+    @TableField(exist = false)
     protected String resourceContent;
     // the recordIndex
     protected BigInteger index;
@@ -50,6 +54,9 @@ public class ResourceActionRecord extends TimeRange {
     protected String transactionHash;
     // Note: the index should not be null
     protected String trigger = "";
+
+    @TableField(exist = false)
+    protected Integer step = 1;
 
     public String getResourceID() {
         return resourceID;
