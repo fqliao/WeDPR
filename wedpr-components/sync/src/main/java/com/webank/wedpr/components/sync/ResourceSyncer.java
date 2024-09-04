@@ -25,7 +25,8 @@ public interface ResourceSyncer {
     public static enum ResourceType {
         Authorization("Authorization"),
         Job("Job"),
-        Dataset("Dataset");
+        Dataset("Dataset"),
+        Publish("Publish");
         private final String type;
 
         ResourceType(String type) {

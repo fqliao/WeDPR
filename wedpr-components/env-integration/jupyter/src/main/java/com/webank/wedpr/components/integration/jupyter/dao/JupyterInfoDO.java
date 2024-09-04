@@ -20,8 +20,10 @@ import com.webank.wedpr.components.integration.jupyter.core.JupyterStatus;
 import com.webank.wedpr.components.uuid.generator.WeDPRUuidGenerator;
 import com.webank.wedpr.core.utils.TimeRange;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
 public class JupyterInfoDO extends TimeRange {

@@ -17,8 +17,10 @@ package com.webank.wedpr.adm.controller.request;
 import com.webank.wedpr.components.integration.jupyter.dao.JupyterInfoDO;
 import com.webank.wedpr.core.utils.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
 public class JupyterRequest extends PageRequest {
