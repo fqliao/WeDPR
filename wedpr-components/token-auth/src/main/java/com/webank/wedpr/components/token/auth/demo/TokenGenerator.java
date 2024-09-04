@@ -26,7 +26,7 @@ import java.util.List;
 
 public class TokenGenerator {
     public static void main(String[] args) throws Exception {
-        String user = "yujiechen";
+        String user = "zachma";
         if (args.length > 0) {
             user = args[0];
         }
@@ -34,7 +34,7 @@ public class TokenGenerator {
         if (args.length > 1) {
             secret = args[1];
         }
-        String groupId = "SGD";
+        String groupId = "9159243068155909";
         if (args.length > 2) {
             groupId = args[2];
         }
@@ -42,6 +42,7 @@ public class TokenGenerator {
         TokenContents tokenContents = new TokenContents();
         UserToken userToken = new UserToken();
         userToken.setUsername(user);
+        userToken.setRoleName("admin_user");
         List<GroupInfo> groupInfos = new ArrayList<>();
         GroupInfo groupInfo = new GroupInfo();
         groupInfo.setGroupId(groupId);

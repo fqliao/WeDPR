@@ -1,21 +1,17 @@
 package com.webank.wedpr.components.publish.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.time.LocalDateTime;
-import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
- * <p>
- *
- * </p>
- *
  * @author caryliao
  * @since 2024-08-31
  */
 @TableName("wedpr_service_auth_table")
-@ApiModel(value="WedprServiceAuthTable对象", description="")
+@ApiModel(value = "WedprServiceAuthTable对象", description = "")
 public class WedprServiceAuthTable implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -37,7 +33,6 @@ public class WedprServiceAuthTable implements Serializable {
 
     @ApiModelProperty(value = "更新时间")
     private LocalDateTime lastUpdateTime;
-
 
     public String getId() {
         return id;
@@ -89,13 +84,19 @@ public class WedprServiceAuthTable implements Serializable {
 
     @Override
     public String toString() {
-        return "WedprServiceAuthTable{" +
-        "id=" + id +
-        ", serviceId=" + serviceId +
-        ", accessKeyId=" + accessKeyId +
-        ", expireTime=" + expireTime +
-        ", applyTime=" + applyTime +
-        ", lastUpdateTime=" + lastUpdateTime +
-        "}";
+        return "WedprServiceAuthTable{"
+                + "id="
+                + id
+                + ", serviceId="
+                + serviceId
+                + ", accessKeyId="
+                + accessKeyId
+                + ", expireTime="
+                + expireTime
+                + ", applyTime="
+                + applyTime
+                + ", lastUpdateTime="
+                + lastUpdateTime
+                + "}";
     }
 }

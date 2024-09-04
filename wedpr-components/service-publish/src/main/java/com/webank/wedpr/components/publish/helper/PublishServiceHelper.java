@@ -36,4 +36,7 @@ public class PublishServiceHelper {
         return PUBLISH_ID_PREFIX + WeDPRUuidGenerator.generateID();
     }
 
+    public static final String PIR_TEMP_DIR = "pir";
+
+    public static final String PIR_TEMP_TABLE_PREFIX = "wedpr_pir_";
 }
