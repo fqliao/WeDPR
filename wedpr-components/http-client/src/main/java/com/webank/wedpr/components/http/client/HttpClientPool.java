@@ -17,11 +17,17 @@ package com.webank.wedpr.components.http.client;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContextBuilder;
 
 public class HttpClientPool {
     private static final PoolingHttpClientConnectionManager poolingHttpClientConnectionManager =
@@ -34,6 +40,28 @@ public class HttpClientPool {
                 .setMaxConnPerRoute((maxConnTotal / 2 > 0 ? maxConnTotal / 2 : 1))
                 .setDefaultRequestConfig(requestConfig)
                 .build();
+    }
+
+    public static CloseableHttpClient getHttpsClient(
+            int maxConnTotal, RequestConfig requestConfig) {
+        CloseableHttpClient build = null;
+        try {
+            build =
+                    HttpClients.custom()
+                            .setSSLContext(
+                                    SSLContextBuilder.create()
+                                            .loadTrustMaterial(new TrustSelfSignedStrategy())
+                                            .build())
+                            .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                            .setConnectionManager(poolingHttpClientConnectionManager)
+                            .setMaxConnTotal(maxConnTotal)
+                            .setMaxConnPerRoute((maxConnTotal / 2 > 0 ? maxConnTotal / 2 : 1))
+                            .setDefaultRequestConfig(requestConfig)
+                            .build();
+        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+            e.printStackTrace();
+        }
+        return build;
     }
 
     public static void consume(HttpEntity entity) throws IOException {
@@ -50,7 +78,7 @@ public class HttpClientPool {
     }
 
     public static String getUrl(String url) {
-        if (url.startsWith("http://")) {
+        if (url.startsWith("http://") || url.startsWith("https://")) {
             return url;
         }
         return String.format("http://%s", url);

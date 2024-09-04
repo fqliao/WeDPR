@@ -93,6 +93,44 @@ public class HttpClientImpl {
         }
     }
 
+    public String executeHttpsPostAndGetString(
+            BaseRequest request, Integer successCode, String token) throws Exception {
+        StringEntity requestEntity = null;
+        CloseableHttpResponse response = null;
+        try {
+            CloseableHttpClient httpClient =
+                    HttpClientPool.getHttpsClient(this.maxConnTotal, this.requestConfig);
+            HttpPost httpPost = new HttpPost(this.url);
+            requestEntity = new StringEntity(request.serialize());
+            httpPost.setEntity(requestEntity);
+            httpPost.setHeader(CONTENT_TYPE_KEY, DEFAULT_CONTENT_TYPE);
+            if (token != null) {
+                httpPost.setHeader("token", token);
+            }
+            response = httpClient.execute(httpPost);
+            if (successCode != null) {
+                if (response.getStatusLine().getStatusCode() != successCode) {
+                    throw new WeDPRException(
+                            "send request: "
+                                    + request.serialize()
+                                    + " failed, status: "
+                                    + response.getStatusLine().toString()
+                                    + ", detail: "
+                                    + EntityUtils.toString(response.getEntity()));
+                }
+            }
+            String result = EntityUtils.toString(response.getEntity());
+            logger.info(
+                    "##### executeHttpsPostAndGetString, request: {}, response: {}, response: {}",
+                    request.serialize(),
+                    result,
+                    response.toString());
+            return result;
+        } finally {
+            releaseResource(response, requestEntity);
+        }
+    }
+
     private void releaseResource(CloseableHttpResponse response, StringEntity requestEntity)
             throws Exception {
         HttpClientPool.consume(requestEntity);
