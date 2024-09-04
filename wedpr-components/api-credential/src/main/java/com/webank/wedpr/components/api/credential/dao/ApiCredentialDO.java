@@ -26,7 +26,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-@EqualsAndHashCode(callSuper = false)
 public class ApiCredentialDO extends TimeRange {
     private String id = WeDPRUuidGenerator.generateID();
     private String accessKeyID;
