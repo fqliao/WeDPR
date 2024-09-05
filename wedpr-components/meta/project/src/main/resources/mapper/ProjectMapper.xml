@@ -26,6 +26,7 @@
         <result column="owner_agency" property="ownerAgency"/>
         <result column="project_type" property="type"/>
         <result column="label" property="label"/>
+        <result column="report_status" property="reportStatus"/>
         <result column="create_time" property="createTime"/>
         <result column="last_update_time" property="lastUpdateTime"/>
     </resultMap>
@@ -117,6 +118,11 @@
         </choose>
         order by `last_update_time` desc
     </select>
+
+    <select id="queryProjectForAdmin" resultMap="ProjectDOMap">
+        select * from `wedpr_project_table` where `report_status` = 0
+    </select>
+
     <select id="queryProjectCount" resultType="java.lang.Long">
         select count(1) from `wedpr_project_table` where 1 = 1
         <choose>
@@ -351,6 +357,10 @@
         and (`owner` != #{followerUser} or `owner_agency` != #{followerAgency})
         )as job_table
         on job_table.id = follower_table.resource_id where job_table.owner is not NULL
+    </select>
+
+    <select id="queryProjectById" resultMap="ProjectDOMap">
+        select * from `wedpr_project_table` where `id` = #{id}
     </select>
 
 

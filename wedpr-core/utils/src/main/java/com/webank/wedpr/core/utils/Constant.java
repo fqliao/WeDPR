@@ -50,6 +50,8 @@ public class Constant {
     /** @Fields DEFAULT_PAGE_SIZE:分页的每页记录数 */
     public static final int DEFAULT_PAGE_SIZE = 5;
 
+    public static final int DEFAULT_REPORT_PAGE_SIZE = 1000;
+
     public static final String SITE_END_LOGIN_URL = WEDPR_API_PREFIX + "/login";
     public static final String ADMIN_END_LOGIN_URL = WEDPR_API_PREFIX + "/admin/login";
 

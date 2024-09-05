@@ -103,13 +103,15 @@ create table if not exists `wedpr_project_table`(
     `owner_agency` varchar(255) not null comment "项目所属机构",
     `project_type` varchar(255) not null comment "项目类型(Export/Wizard)",
     `label` varchar(1024) comment "项目标签",
+    `report_status` tinyint default 0 comment "上报状态",
     `create_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "项目创建时间",
     `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "项目更新时间",
     primary key (`id`),
     unique index name_index(`name`(128)),
     index owner_index(`owner`(128), `owner_agency`(128)),
     index project_type_index(`project_type`(128)),
-    index label_index(`label`(128))
+    index label_index(`label`(128)),
+    index report_status_index(`report_status`)
 )ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 -- the job table
@@ -124,6 +126,7 @@ create table if not exists `wedpr_job_table`(
     `param` longtext comment "任务参数(json)",
     `status` varchar(255) comment "任务状态",
     `job_result` longtext comment "任务执行结果(json)",
+    `report_status` tinyint default 0 comment "上报状态",
     `create_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "任务创建时间",
     `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "任务更新时间",
     primary key(`id`),
@@ -131,7 +134,8 @@ create table if not exists `wedpr_job_table`(
     index owner_index(`owner`(128)),
     index owner_agency_index(`owner_agency`(128)),
     index project_index(`project_name`(128)),
-    index status_index(`status`(128))
+    index status_index(`status`(128)),
+    index report_status_index(`report_status`)
 )ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 -- job dataset relationship table
