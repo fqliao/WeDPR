@@ -31,10 +31,7 @@ import com.webank.wedpr.components.project.model.*;
 import com.webank.wedpr.components.project.service.ProjectService;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.protocol.JobStatus;
-import com.webank.wedpr.core.utils.Constant;
-import com.webank.wedpr.core.utils.TimeRange;
-import com.webank.wedpr.core.utils.WeDPRException;
-import com.webank.wedpr.core.utils.WeDPRResponse;
+import com.webank.wedpr.core.utils.*;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ibatis.reflection.ArrayUtil;
@@ -42,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
@@ -59,12 +57,15 @@ public class ProjectServiceImpl implements ProjectService {
                 new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
         try {
             // set the user
-            projectDetail.getProject().setOwner(user);
-            projectDetail.getProject().setOwnerAgency(WeDPRCommonConfig.getAgency());
+            ProjectDO project = projectDetail.getProject();
+            project.setOwner(user);
+            if (StringUtils.isEmpty(project.getOwnerAgency())) {
+                project.setOwnerAgency(WeDPRCommonConfig.getAgency());
+            }
             // check
-            projectDetail.getProject().checkCreate();
+            project.checkCreate();
             // check the existence
-            ProjectDO condition = new ProjectDO(projectDetail.getProject().getName());
+            ProjectDO condition = new ProjectDO(project.getName());
             condition.setId(null);
             List<ProjectDO> existedProjects =
                     this.projectMapperWrapper
@@ -73,15 +74,13 @@ public class ProjectServiceImpl implements ProjectService {
             if (existedProjects != null && !existedProjects.isEmpty()) {
                 throw new WeDPRException(
                         "createProject failed for the project "
-                                + projectDetail.getProject().getName()
+                                + project.getName()
                                 + " already exists, please try another project name!");
             }
-            this.projectMapperWrapper
-                    .getProjectMapper()
-                    .insertProjectInfo(projectDetail.getProject());
+            this.projectMapperWrapper.getProjectMapper().insertProjectInfo(project);
             // TODO: init the project resource
             logger.info("createProject success, detail: {}", projectDetail.toString());
-            response.setData(projectDetail.getProject().getId());
+            response.setData(project.getId());
         } catch (Exception e) {
             logger.warn(
                     "createProject failed, user: {}, detail: {}, error: ",
@@ -478,6 +477,24 @@ public class ProjectServiceImpl implements ProjectService {
     public WeDPRResponse killJobs(String user, JobListRequest request) {
         return this.projectMapperWrapper.updateJobStatus(
                 user, WeDPRCommonConfig.getAgency(), request.getJobs(), JobStatus.WaitToKill);
+    }
+
+    @Override
+    public List<ProjectDO> queryProjectForReport() throws WeDPRException {
+        PageRequest pageRequest = new PageRequest();
+        pageRequest.setPageNum(Constant.DEFAULT_PAGE_NUM);
+        pageRequest.setPageSize(Constant.DEFAULT_REPORT_PAGE_SIZE);
+        try (PageHelperWrapper pageHelperWrapper = new PageHelperWrapper(pageRequest)) {
+            return this.projectMapperWrapper.getProjectMapper().queryProjectForAdmin();
+        } catch (Exception e) {
+            logger.warn("queryProjectForAdmin exception, error: ", e);
+            throw new WeDPRException(e);
+        }
+    }
+
+    @Override
+    public ProjectDO queryProjectById(String id) {
+        return this.projectMapperWrapper.getProjectMapper().queryProjectById(id);
     }
 
     @Override

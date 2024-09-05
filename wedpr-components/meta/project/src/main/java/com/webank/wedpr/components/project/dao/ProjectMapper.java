@@ -62,4 +62,8 @@ public interface ProjectMapper {
             @Param("condition") JobDO condition);
 
     public List<JobDO> queryJobsByDatasetID(@Param("datasetID") String datasetID);
+
+    List<ProjectDO> queryProjectForAdmin();
+
+    ProjectDO queryProjectById(@Param("id") String id);
 }

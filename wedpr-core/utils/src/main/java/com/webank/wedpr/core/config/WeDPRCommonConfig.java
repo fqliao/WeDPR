@@ -34,6 +34,8 @@ public class WeDPRCommonConfig {
             WeDPRConfig.apply("wedpr.auth.cache.size", 10000);
     private static final Integer AUTH_CACHE_EXPIRE_TIME =
             WeDPRConfig.apply("wedpr.auth.cache.expire.minutes", 30);
+    private static final Integer REPORT_TIMEOUT =
+            WeDPRConfig.apply("wedpr.report.timeout.seconds", 30);
 
     public static String getAgency() {
         return AGENCY;
@@ -77,5 +79,9 @@ public class WeDPRCommonConfig {
 
     public static Integer getAuthCacheExpireTime() {
         return AUTH_CACHE_EXPIRE_TIME;
+    }
+
+    public static Integer getReportTimeout() {
+        return REPORT_TIMEOUT;
     }
 }

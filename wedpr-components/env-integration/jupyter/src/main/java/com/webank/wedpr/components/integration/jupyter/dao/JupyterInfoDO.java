@@ -26,6 +26,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
+@EqualsAndHashCode(callSuper = false)
 public class JupyterInfoDO extends TimeRange {
     private String id = WeDPRUuidGenerator.generateID();
     private String owner;

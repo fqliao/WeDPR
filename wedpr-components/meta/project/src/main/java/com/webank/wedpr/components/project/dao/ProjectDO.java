@@ -54,6 +54,16 @@ public class ProjectDO extends TimeRange {
     private String owner;
     private String ownerAgency;
     private String label = "";
+
+    public Integer getReportStatus() {
+        return reportStatus;
+    }
+
+    public void setReportStatus(Integer reportStatus) {
+        this.reportStatus = reportStatus;
+    }
+
+    private Integer reportStatus;
     private String type;
     private ProjectType projectType;
 
@@ -188,8 +198,18 @@ public class ProjectDO extends TimeRange {
                 + ", label='"
                 + label
                 + '\''
+                + ", reportStatus="
+                + reportStatus
                 + ", type='"
                 + type
+                + '\''
+                + ", projectType="
+                + projectType
+                + ", createTime='"
+                + createTime
+                + '\''
+                + ", lastUpdateTime='"
+                + lastUpdateTime
                 + '\''
                 + '}';
     }

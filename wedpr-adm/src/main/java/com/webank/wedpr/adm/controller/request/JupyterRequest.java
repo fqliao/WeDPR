@@ -23,6 +23,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
+@EqualsAndHashCode(callSuper = false)
 public class JupyterRequest extends PageRequest {
     private JupyterInfoDO condition = new JupyterInfoDO(true);
 }
