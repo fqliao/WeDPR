@@ -480,24 +480,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public List<ProjectDO> queryProjectForReport() throws WeDPRException {
-        PageRequest pageRequest = new PageRequest();
-        pageRequest.setPageNum(Constant.DEFAULT_PAGE_NUM);
-        pageRequest.setPageSize(Constant.DEFAULT_REPORT_PAGE_SIZE);
-        try (PageHelperWrapper pageHelperWrapper = new PageHelperWrapper(pageRequest)) {
-            return this.projectMapperWrapper.getProjectMapper().queryProjectForAdmin();
-        } catch (Exception e) {
-            logger.warn("queryProjectForAdmin exception, error: ", e);
-            throw new WeDPRException(e);
-        }
-    }
-
-    @Override
-    public ProjectDO queryProjectById(String id) {
-        return this.projectMapperWrapper.getProjectMapper().queryProjectById(id);
-    }
-
-    @Override
     public Object queryJobOverview(String user, JobOverviewRequest jobOverviewRequest)
             throws Exception {
         JobOverviewResponse jobOverviewResponse = new JobOverviewResponse();

@@ -23,7 +23,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-@EqualsAndHashCode(callSuper = false)
 public class CredentialRequest extends PageRequest {
     private ApiCredentialDO condition = new ApiCredentialDO(true);
 }
