@@ -1,27 +1,28 @@
 <template>
-  <el-dialog width="462px" title="申请调用" @close="handleClose" :visible="showApplyModal">
+  <el-dialog width="632px" title="申请调用" @close="handleClose" :visible="showApplyModal">
     <div class="form-con">
-      <el-form label-position="right" size="small" :model="dataForm" :rules="dataFormRules" ref="dataForm" :label-width="formLabelWidth">
+      <div class="key-info" v-if="selectedAccessKey && selectedAccessKey.accessKeyID">
+        <ul>
+          <li>AccessID：</li>
+          <li>{{ selectedAccessKey.accessKeyID }}</li>
+        </ul>
+        <ul>
+          <li>Access Secret：</li>
+          <li>{{ selectedAccessKey.accessKeySecret }}</li>
+        </ul>
+      </div>
+      <el-form v-else label-position="right" size="small" :model="dataForm" :rules="dataFormRules" ref="dataForm" :label-width="formLabelWidth">
         <el-form-item label="绑定AccessKey：" prop="accessKey">
-          <el-select style="width: 280px" v-model="dataForm.accessKey" placeholder="请选择该服务所绑定的AccessKey" clearable>
+          <el-select value-key="accessKeyID" style="width: 450px" v-model="dataForm.accessKey" placeholder="请选择该服务所绑定的AccessKey" clearable>
             <el-option :label="item.label" :value="item.value" :key="item.label" v-for="item in accessKeyList"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
-      <div class="key-info" v-if="selectedAccessKey">
-        <ul>
-          <li>AccessID：</li>
-          <li>{{ accessInfo.accessKeyID }}</li>
-        </ul>
-        <ul>
-          <li>Access Secret：</li>
-          <li>{{ accessInfo.accessKeySecret }}</li>
-        </ul>
-      </div>
     </div>
     <div slot="footer" class="dialog-footer">
       <el-button @click="handleClose">取 消</el-button>
-      <el-button :loading="loading" type="primary" @click="handleOk">确 定</el-button>
+      <el-button v-if="selectedAccessKey && selectedAccessKey.accessKeyID" :loading="loading" type="primary" @click="copy">复制</el-button>
+      <el-button v-else :loading="loading" type="primary" @click="handleOk">确 定</el-button>
     </div>
   </el-dialog>
 </template>
@@ -42,7 +43,7 @@ export default {
   data() {
     return {
       dataForm: {
-        accessKey: ''
+        accessKey: {}
       },
       dataFormRules: {
         accessKey: [{ required: true, message: '绑定AccessKey不能为空', trigger: 'blur' }]
@@ -51,7 +52,7 @@ export default {
       loading: false,
       accessKeyList: [],
       accessInfo: {},
-      selectedAccessKey: '',
+      selectedAccessKey: null,
       pageData: {
         page_offset: 1,
         page_size: 999
@@ -65,6 +66,24 @@ export default {
     handleClose() {
       this.$emit('closeModal')
     },
+    copy() {
+      const { accessKeyID, accessKeySecret } = this.selectedAccessKey
+      // 模拟 输入框
+      const val = `accessKeyID：${accessKeyID}\naccessKeySecret：${accessKeySecret}`
+      const cInput = document.createElement('textarea')
+      cInput.value = val
+      document.body.appendChild(cInput)
+      cInput.select() // 选取文本框内容
+      // 执行浏览器复制命令
+      // 复制命令会将当前选中的内容复制到剪切板中（这里就是创建的input标签）
+      // Input要在正常的编辑状态下原生复制方法才会生效
+      document.execCommand('copy')
+      this.$message.success('内容已复制到剪贴板')
+      // 复制成功后再将构造的标签 移除
+      document.body.removeChild(cInput)
+      this.selectedAccessKey = null
+      this.$emit('closeModal')
+    },
     // 获取账户列表
     async queryAccessKeyList() {
       const { page_offset, page_size } = this.pageData
@@ -76,7 +95,7 @@ export default {
         this.accessKeyList = credentials.map((v) => {
           return {
             label: v.accessKeyID,
-            value: v.accessKeyID
+            value: v
           }
         })
       }

@@ -16,9 +16,6 @@
         </el-form-item>
       </formCard>
     </el-form>
-    <div v-if="false" style="width: 100%; height: 500px">
-      <editorCom />
-    </div>
     <div>
       <el-button size="medium" icon="el-icon-plus" type="primary" @click="submit"> 确认创建 </el-button>
     </div>
@@ -26,12 +23,8 @@
 </template>
 <script>
 import { projectManageServer } from 'Api'
-import editorCom from '@/components/editorCom.vue'
 export default {
   name: 'projectCreate',
-  components: {
-    editorCom
-  },
   data() {
     return {
       dataForm: {

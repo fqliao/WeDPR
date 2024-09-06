@@ -122,6 +122,40 @@
           </el-form-item>
         </el-form>
       </formCard>
+      <formCard v-if="selectedAlg === jobEnum.SQL" key="3" title="配置并运行">
+        <el-form label-width="200px" :model="sqlForm" ref="sqlForm" :rules="sqlFormRules">
+          <div class="participates data-container">
+            <p>已选数据</p>
+            <div class="area table-area">
+              <el-table size="small" :data="xgbSettingForm.selectedData" :border="true" class="table-wrap">
+                <el-table-column label="角色" prop="ownerAgencyName" show-overflow-tooltip>
+                  <template>
+                    <el-tag color="#4CA9EC" style="color: white" size="small">参与方</el-tag>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
+                <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
+                <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
+                <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
+                <el-table-column label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
+              </el-table>
+            </div>
+          </div>
+          <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
+            <el-select size="small" style="width: 360px" v-model="sqlForm.receiver" multiple placeholder="请选择">
+              <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="请设置参数：" prop="sql" label-width="120px">
+            <div class="sql-container">
+              <div style="width: 60%; height: 500px">
+                <editorCom v-model="sqlForm.sql" />
+              </div>
+            </div>
+          </el-form-item>
+        </el-form>
+      </formCard>
       <div v-if="selectedAlg === jobEnum.PSI">
         <el-form label-width="200px" :model="psiForm" ref="psiForm" :rules="psiFormRules">
           <div class="participates data-container">
@@ -156,6 +190,7 @@
       <el-button size="medium" v-if="active < 2" type="primary" @click="next" :disabled="nextDisabaled"> 下一步 </el-button>
       <el-button size="medium" v-if="active === 2 && selectedAlg === jobEnum.PSI" type="primary" @click="runPSIJob" :disabled="runDisabaled"> 运行 </el-button>
       <el-button size="medium" v-if="active === 2 && selectedAlg === jobEnum.XGB_TRAINING" type="primary" @click="runXGBJob" :disabled="runXGBTrainDisabaled"> 运行 </el-button>
+      <el-button size="medium" v-if="active === 2 && selectedAlg === jobEnum.SQL" type="primary" @click="runSQLJob" :disabled="runSQLDisabaled"> 运行 </el-button>
     </div>
     <tagSelect :showTagsModal="showTagsModal" @closeModal="closeModal" @tagSelected="tagSelected"></tagSelect>
     <participateSelect :showParticipateModal="showParticipateModal" @closeModal="closeModal" @participateSelected="participateSelected"></participateSelect>
@@ -169,12 +204,15 @@ import tagSelect from './tagSelect/index.vue'
 import participateSelect from './participateSelect/index.vue'
 import { mapGetters } from 'vuex'
 import { algListFull, jobEnum } from 'Utils/constant.js'
+import editorCom from '@/components/editorCom.vue'
+
 export default {
   name: 'leadMode',
   components: {
     formCard,
     tagSelect,
-    participateSelect
+    participateSelect,
+    editorCom
     // dataCard
   },
   data() {
@@ -200,6 +238,16 @@ export default {
       psiFormRules: {
         receiver: [{ required: true, message: '结果接收方不能为空', trigger: 'blur' }],
         selectedData: [{ required: true, message: '参与方不能为空', trigger: 'blur' }]
+      },
+      sqlForm: {
+        receiver: [],
+        selectedData: [],
+        sql: ''
+      },
+      sqlFormRules: {
+        receiver: [{ required: true, message: '结果接收方不能为空', trigger: 'blur' }],
+        selectedData: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
+        sql: [{ required: true, message: 'sql内容不能为空', trigger: 'blur' }]
       },
       modelModule: [
         {
@@ -272,6 +320,11 @@ export default {
           return { ...v }
         })
       }
+      if (this.selectedAlg === jobEnum.SQL) {
+        this.sqlForm.selectedData = v.map((v) => {
+          return { ...v }
+        })
+      }
     }
   },
   computed: {
@@ -303,6 +356,9 @@ export default {
     },
     runXGBTrainDisabaled() {
       return !this.xgbSettingForm.receiver.length
+    },
+    runSQLDisabaled() {
+      return !this.sqlForm.receiver.length || !this.sqlForm.selectedData.length
     }
   },
   methods: {
@@ -322,6 +378,15 @@ export default {
         }
       })
     },
+    checkSQLData() {
+      console.log(this.sqlForm, 'console.log(this.sqlForm)')
+      this.$refs.sqlForm.validate((valid) => {
+        if (valid) {
+          console.log(valid)
+          console.log(this.sqlForm)
+        }
+      })
+    },
     runPSIJob() {
       console.log('run start')
       this.checkPSIData()
@@ -329,6 +394,10 @@ export default {
     runXGBJob() {
       console.log('run start')
       this.checkXGBData()
+    },
+    runSQLJob() {
+      console.log('run start')
+      this.checkSQLData()
     },
     // 获取项目详情
     async queryProject() {

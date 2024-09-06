@@ -72,7 +72,8 @@ export const dataStatusEnum = {
 export const jobEnum = {
   XGB_TRAINING: 'XGB_TRAINING',
   XGB_PREDICTING: 'XGB_PREDICTING',
-  PSI: 'PSI'
+  PSI: 'PSI',
+  SQL: 'SQL'
 }
 export const agencyStatusEnum = {
   OPEN: 0,

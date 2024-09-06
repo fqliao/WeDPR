@@ -13,7 +13,14 @@
           </el-select>
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
-          <el-date-picker value-format="yyyy-MM-dd" v-model="searchForm.createTime" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期">
+          <el-date-picker
+            value-format="yyyy-MM-dd hh:mm:ss"
+            v-model="searchForm.createTime"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+          >
           </el-date-picker>
         </el-form-item>
         <el-form-item>
@@ -127,10 +134,10 @@ export default {
         this.projectNameSelectList = []
         return
       }
-      const res = await projectManageServer.queryProject({ project: { id: '', name: projectName }, onlyMeta: true, pageNum: 1, pageSize: 9999 })
+      const res = await projectManageServer.adminQueryProject({ pageNum: 1, pageSize: 9999 })
       if (res.code === 0 && res.data) {
-        const { dataList = [] } = res.data
-        this.projectNameSelectList = dataList.map((v) => {
+        const { projectList = [] } = res.data
+        this.projectNameSelectList = projectList.map((v) => {
           return {
             label: v.name,
             value: v.name
@@ -158,11 +165,11 @@ export default {
       this.loadingFlag = true
       console.log(params)
       // FIXME:
-      const res = await projectManageServer.adminQueryProject({ project: { id: '', ...params }, onlyMeta: false, pageNum: page_offset, pageSize: page_size })
+      const res = await projectManageServer.adminQueryProject({ ...params, pageNum: page_offset, pageSize: page_size })
       this.loadingFlag = false
       if (res.code === 0 && res.data) {
-        const { dataList = [], total } = res.data
-        this.tableData = dataList
+        const { projectList = [], total } = res.data
+        this.tableData = projectList
         this.total = total
       } else {
         this.tableData = []

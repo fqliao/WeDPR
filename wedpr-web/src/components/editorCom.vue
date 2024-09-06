@@ -1,12 +1,14 @@
 <template>
   <div class="editor-container">
-    <div>
-      <el-select size="small" v-model="editorTheme" placeholder="设置主题" @change="handleTheme">
+    <div v-if="false">
+      设置主题:
+      <el-select size="small" @change="handleChangeTheme" v-model="theme" placeholder="设置主题">
         <el-option label="Visual Studio Dark" value="vs-dark"></el-option>
         <el-option label="Visual Studio" value="vs"></el-option>
         <el-option label="High Contrast Dark" value="hc-black"></el-option>
       </el-select>
-      <el-select size="small" v-model="language" placeholder="选择语言" @change="handleLanguage">
+      选择语言:
+      <el-select size="small" v-model="language" @change="handleChangeLanguage" placeholder="选择语言">
         <el-option v-for="(languageItem, key) in languageOptions" :key="key" :label="languageItem" :value="languageItem"> </el-option>
       </el-select>
     </div>
@@ -25,9 +27,14 @@ export default {
       type: String
     }
   },
+  model: {
+    prop: 'value'
+  },
   data() {
     return {
       languageOptions: ['python', 'sql'],
+      theme: 'vs-dark',
+      language: 'sql',
       // 主要配置
       defaultOpts: {
         // // 编辑器的值
@@ -92,7 +99,8 @@ export default {
       this.monacoEditor = monaco.editor.create(this.$refs.container, editorOptions)
       // 编辑器内容发生改变时触发
       this.monacoEditor.onDidChangeModelContent(() => {
-        this.$emit('change', this.monacoEditor.getValue())
+        // this.$emit('change', this.monacoEditor.getValue())
+        this.$emit('input', this.monacoEditor.getValue())
       })
       this.addSqlTips()
     },
@@ -168,6 +176,7 @@ div.editor-container {
   div.monaco-editor {
     width: 100%;
     height: calc(100% - 30px);
+    margin-top: 10px;
   }
 }
 </style>
