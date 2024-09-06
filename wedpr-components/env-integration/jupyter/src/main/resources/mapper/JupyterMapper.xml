@@ -49,13 +49,13 @@
         </set>
         where 1=1
         <if test="updatedInfo.id != null and updatedInfo.id !=''">
-            and `id` = #{updatedInfo.id},
+            and `id` = #{updatedInfo.id}
         </if>
         <if test="updatedInfo.owner != null and updatedInfo.owner !=''">
-            and `owner` = #{updatedInfo.owner},
+            and `owner` = #{updatedInfo.owner}
         </if>
         <if test="updatedInfo.agency != null and updatedInfo.agency !=''">
-            and `agency` = #{updatedInfo.agency},
+            and `agency` = #{updatedInfo.agency}
         </if>
     </update>
     <delete id="deleteJupyterInfo">
