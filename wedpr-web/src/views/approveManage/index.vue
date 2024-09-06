@@ -27,6 +27,34 @@
       </el-form>
     </div>
     <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+      <el-tab-pane label="我的待办" name="todo">
+        <span slot="label"
+          ><span class="todo" v-if="todoNum"></span> 我的待办</span
+        >
+        <div class="tableContent autoTableWrap" v-if="total">
+          <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
+            <el-table-column label="申请表单ID" prop="id" show-overflow-tooltip />
+            <el-table-column label="表单名称" prop="applyTitle" show-overflow-tooltip />
+            <el-table-column label="申请机构" prop="applicantAgency" show-overflow-tooltip />
+            <el-table-column label="申请用户" prop="applicant" show-overflow-tooltip />
+            <el-table-column label="申请时间" prop="createTime" />
+            <el-table-column label="状态" prop="status">
+              <template v-slot="scope">
+                <el-tag size="small" v-if="SuccessStatus.includes(scope.row.status)" effect="dark" color="#52B81F">{{ approveStatusMap[scope.row.status] }}</el-tag>
+                <el-tag size="small" v-else-if="FailStatus.includes(scope.row.status)" effect="dark" color="#FF4D4F">{{ approveStatusMap[scope.row.status] }}</el-tag>
+                <el-tag size="small" v-else-if="PendingStatus.includes(scope.row.status)" effect="dark" color="#3071F2">{{ approveStatusMap[scope.row.status] }}</el-tag>
+                <el-tag size="small" v-else effect="dark" color="#3071F2">{{ approveStatusMap[scope.row.status] }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="180px">
+              <template v-slot="scope">
+                <el-button @click="openDetail(scope.row)" size="small" type="text">查看详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
+        </div>
+      </el-tab-pane>
       <el-tab-pane label="我的审批" name="first">
         <div class="tableContent autoTableWrap" v-if="total">
           <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
@@ -114,6 +142,8 @@ import wePagination from '@/components/wePagination.vue'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import { approveStatusList, approveStatusMap } from 'Utils/constant.js'
 import { handleParamsValid } from 'Utils/index.js'
+import { mapGetters, mapMutations } from 'vuex'
+import { SET_TODONUM } from 'Store/mutation-types.js'
 export default {
   name: 'approveManage',
   mixins: [tableHeightHandle],
@@ -144,22 +174,38 @@ export default {
       tableData: [],
       loadingFlag: false,
       showAddModal: false,
-      activeName: 'first',
+      activeName: 'todo',
       approveStatusList,
       approveStatusMap
     }
   },
   created() {
-    this.queryFollowerAuthList()
+    this.queryTODOList()
+  },
+  computed: {
+    ...mapGetters(['todoNum'])
   },
   watch: {
-    activeName(nv) {
+    activeName() {
       this.$refs.searchForm.resetFields()
       this.pageData = {
         page_offset: 1,
         page_size: 20
       }
-      switch (nv) {
+      this.query()
+    }
+  },
+  methods: {
+    ...mapMutations([SET_TODONUM]),
+    openDetail(row) {
+      this.$router.push({ path: '/approveDetail', query: { authID: row.id } })
+    },
+    query() {
+      const { activeName } = this
+      switch (activeName) {
+        case 'todo':
+          this.queryTODOList()
+          break
         case 'first':
           this.queryFollowerAuthList()
           break
@@ -170,36 +216,57 @@ export default {
           this.queryMyFollowList()
           break
       }
-    }
-  },
-  methods: {
-    openDetail(row) {
-      this.$router.push({ path: '/approveDetail', query: { authID: row.id } })
     },
     // 查询
     queryHandle() {
       this.searchQuery = { ...this.searchForm }
       this.pageData.page_offset = 1
-      const { activeName } = this
-      switch (activeName) {
-        case 'first':
-          this.queryFollowerAuthList()
-          break
-        case 'second':
-          this.queryMyApplyList()
-          break
-        case 'third':
-          this.queryMyFollowList()
-          break
-      }
+      this.query()
     },
     // 分页切换
     paginationHandle(pageData) {
       console.log(pageData, 'pagData')
       this.pageData = { ...pageData }
-      this.queryFollowerAuthList()
+      this.query()
     },
 
+    // 获取我的待办列表
+    async queryTODOList() {
+      const { page_offset, page_size } = this.pageData
+      const { status = '', applyTitle = '', createTime = '' } = this.searchQuery
+      this.tableData = []
+      let params = handleParamsValid({ applyTitle })
+      if (createTime && createTime.length) {
+        params.startTime = createTime[0]
+        params.endTime = createTime[1]
+      }
+      if (status) {
+        if (status === 'ApproveFailed') {
+          params.authStatusList = ['ApproveFailed', 'ProgressFailed']
+        } else {
+          params.authStatusList = [status]
+        }
+      }
+      params = {
+        authorizationDO: { id: '', ...params },
+        pageOffset: page_offset,
+        pageSize: page_size
+      }
+      this.loadingFlag = true
+      const res = await authManageServer.queryTODOList(params)
+      this.loadingFlag = false
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { dataList = [], total } = res.data
+        this.tableData = dataList
+        console.log(this.tableData)
+        this.total = total
+        this.SET_TODONUM(total)
+      } else {
+        this.tableData = []
+        this.total = 0
+      }
+    },
     // 获取我的审批列表
     async queryFollowerAuthList() {
       const { page_offset, page_size } = this.pageData
@@ -330,6 +397,15 @@ export default {
     padding: 0 12px;
     border: none;
     line-height: 24px;
+  }
+  span.todo {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ff5f4a;
+    right: 4px;
+    top: 4px;
   }
 }
 </style>

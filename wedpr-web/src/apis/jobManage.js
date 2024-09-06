@@ -10,5 +10,7 @@ const deleteProject = (params) => http.post('/project/deleteProject', params)
 const queryFollowerJobByCondition = (params) => http.post('/project/queryFollowerJobByCondition', params)
 // 查询任务进展
 const queryJobDetail = (params) => http.get('/scheduler/queryJobDetail', params)
+// 管理员查询列表
+const adminQueryJobByCondition = (params) => http.post('/project/admin/queryJobByCondition', params)
 
-export default { queryJobByCondition, queryProject, deleteProject, queryFollowerJobByCondition, queryJobDetail }
+export default { adminQueryJobByCondition, queryJobByCondition, queryProject, deleteProject, queryFollowerJobByCondition, queryJobDetail }

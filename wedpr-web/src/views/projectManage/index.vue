@@ -1,5 +1,5 @@
 <template>
-  <div class="group-manage" style="position: relative; height: 100%">
+  <div class="project-manage" style="position: relative; height: 100%">
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
         <el-form-item prop="name" label="项目名称：">
@@ -28,8 +28,8 @@
             <img src="~Assets/images/cover.png" alt="" />
           </div>
           <div class="info">
-            <div class="title">
-              <span>{{ item.name }}</span>
+            <div class="project-title">
+              <span :title="item.name">{{ item.name }}</span>
             </div>
             <div class="count-detail" v-if="false">
               <dl>
@@ -46,7 +46,7 @@
               </dl>
             </div>
             <ul>
-              <li>
+              <li class="ell">
                 发起人： <span>{{ item.owner }}</span>
               </li>
               <li>
@@ -176,97 +176,96 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-div.card-container {
-  overflow: hidden;
-  margin-left: -16px;
-  margin-right: -16px;
-  div.card {
-    float: left;
-    background: #f6fcf9;
-    height: auto;
-    border: 1px solid #e0e4ed;
-    border-radius: 12px;
-    margin: 16px;
-    width: calc(25% - 32px);
-    box-sizing: border-box;
-    min-width: 220px;
-    position: relative;
-    div.bg {
-      img {
-        width: 100%;
-        height: auto;
-      }
-    }
-    div.info {
-      padding: 20px;
-    }
-    div.title {
-      font-size: 16px;
-      line-height: 24px;
-      font-family: PingFang SC;
-      display: flex;
-      align-items: center;
-      margin-bottom: 24px;
-      color: #262a32;
-      img {
-        width: 24px;
-        height: 24px;
-      }
-      span {
-        text-align: left;
-        flex: 1;
-        font-weight: bold;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-    div.count-detail {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      dl {
-        color: #787b84;
-        dt {
-          font-size: 12px;
-          line-height: 20px;
-        }
-        dd {
-          color: #262a32;
-          font-size: 16px;
-          line-height: 24px;
-          font-weight: 500;
+.project-manage {
+  div.card-container {
+    overflow: hidden;
+    margin-left: -16px;
+    margin-right: -16px;
+    div.card {
+      float: left;
+      background: #f6fcf9;
+      height: auto;
+      border: 1px solid #e0e4ed;
+      border-radius: 12px;
+      margin: 16px;
+      width: calc(25% - 32px);
+      box-sizing: border-box;
+      min-width: 220px;
+      position: relative;
+      div.bg {
+        img {
+          width: 100%;
+          height: auto;
         }
       }
-    }
-    ul {
-      li {
-        font-size: 12px;
-        line-height: 20px;
-        margin-bottom: 4px;
-        color: #787b84;
-        display: flex;
-        align-items: center;
+      div.info {
+        padding: 20px;
+      }
+      div.project-title {
+        font-size: 16px;
+        line-height: 24px;
+        font-family: PingFang SC;
+        margin-bottom: 24px;
+        color: #262a32;
         span {
-          text-align: right;
-          color: #262a32;
-          flex: 1;
-          text-overflow: ellipsis;
+          display: inline-block;
+          width: 100%;
+          text-align: left;
+          font-weight: bold;
           overflow: hidden;
           white-space: nowrap;
+          text-overflow: ellipsis;
         }
-        span.data-size {
-          i {
-            font-size: 28px;
-            font-style: normal;
+      }
+      div.count-detail {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        dl {
+          color: #787b84;
+          dt {
+            font-size: 12px;
+            line-height: 20px;
+          }
+          dd {
+            color: #262a32;
+            font-size: 16px;
+            line-height: 24px;
+            font-weight: 500;
           }
         }
       }
-      li:first-child {
-        line-height: 28px;
+      ul {
+        li {
+          font-size: 12px;
+          line-height: 20px;
+          margin-bottom: 4px;
+          color: #787b84;
+          display: flex;
+          align-items: center;
+          span {
+            text-align: right;
+            color: #262a32;
+            flex: 1;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+          }
+          span.data-size {
+            i {
+              font-size: 28px;
+              font-style: normal;
+            }
+          }
+        }
+        li:first-child {
+          line-height: 28px;
+        }
       }
     }
   }
 }
+
 div.card:hover {
   box-shadow: 0px 2px 10px 2px #00000014;
   cursor: pointer;

@@ -63,16 +63,40 @@ export const actionStatus = {
   CommitFailed: '操作失败'
 }
 
+export const dataStatusEnum = {
+  Success: 0,
+  Failure: -1,
+  Fatal: -2,
+  Created: 1
+}
 export const jobEnum = {
   XGB_TRAINING: 'XGB_TRAINING',
   XGB_PREDICTING: 'XGB_PREDICTING',
   PSI: 'PSI'
+}
+export const agencyStatusEnum = {
+  OPEN: 0,
+  CLOSE: 1
+}
+export const certStatusEnum = {
+  NO_CERT: 0,
+  OPEND: 1,
+  OUTDATE: 2,
+  CLOSED: 3
 }
 export const certStatusMap = {
   0: '无证书',
   1: '有效',
   2: '过期',
   3: '禁用'
+}
+export const certUseStatusEnum = {
+  OPEN: 0,
+  CLOSE: 1
+}
+export const certUseStatusMap = {
+  1: '禁用',
+  0: '启用'
 }
 
 export function mapToList(mapObject) {
@@ -176,3 +200,4 @@ export const dataActionMapList = mapToList(dataActionMap)
 export const approveActionMapList = mapToList(approveActionMap)
 export const jobActionMapList = mapToList(jobActionMap)
 export const certStatusMapList = mapToList(certStatusMap)
+export const certUseMapList = mapToList(certUseStatusMap)

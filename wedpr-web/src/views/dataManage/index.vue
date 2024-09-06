@@ -2,20 +2,25 @@
   <div class="group-manage">
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item prop="ownerAgencyId" label="所属机构：">
-          <el-select size="small" style="width: 160px" v-model="searchForm.ownerAgencyId" placeholder="请选择">
+        <el-form-item prop="ownerAgencyName" label="所属机构：">
+          <el-select size="small" style="width: 160px" v-model="searchForm.ownerAgencyName" placeholder="请选择">
             <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item prop="ownerUserId" label="所属用户：" v-if="searchForm.ownerAgencyId !== agencyId">
-          <el-input style="width: 120px" v-model="searchForm.ownerUserId" placeholder="请输入"> </el-input>
+        <el-form-item prop="type" label="数据类型：">
+          <el-select size="small" style="width: 120px" v-model="searchForm.dataSourceType" placeholder="请选择">
+            <el-option :key="item" v-for="item in typeList" :label="item.label" :value="item.value"></el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item label="所属用户：" prop="ownerUserId" v-if="searchForm.ownerAgencyId === agencyId">
+        <el-form-item prop="ownerUserName" label="所属用户：" v-if="searchForm.ownerAgencyName !== agencyId">
+          <el-input style="width: 120px" v-model="searchForm.ownerUserName" placeholder="请输入"> </el-input>
+        </el-form-item>
+        <el-form-item label="所属用户：" prop="ownerUserName" v-if="searchForm.ownerAgencyName === agencyId">
           <el-select
             loading-text="搜索中"
             filterable
             style="width: 120px"
-            v-model="searchForm.ownerUserId"
+            v-model="searchForm.ownerUserName"
             remote
             :remote-method="getUserNameSelect"
             placeholder="请选择"
@@ -27,11 +32,7 @@
         <el-form-item prop="datasetTitle" label="资源名称：">
           <el-input style="width: 120px" v-model="searchForm.datasetTitle" placeholder="请输入"> </el-input>
         </el-form-item>
-        <el-form-item prop="type" label="资源来源：">
-          <el-select size="small" style="width: 120px" v-model="searchForm.dataSourceType" placeholder="请选择">
-            <el-option :key="item" v-for="item in typeList" :label="item.label" :value="item.value"></el-option>
-          </el-select>
-        </el-form-item>
+
         <el-form-item prop="status" label="上传状态：">
           <el-select size="small" style="width: 120px" v-model="searchForm.status" placeholder="请选择">
             <el-option label="成功" :value="0"></el-option>
@@ -76,6 +77,7 @@
     </div>
     <div class="card-container" v-if="total">
       <dataCard
+        @deleteDataset="showDelModal(item)"
         @getDetail="getDetail(item)"
         @deleteData="showDelModal(item)"
         @dataApply="dataApply(item)"
@@ -109,6 +111,7 @@ import { mapGetters, mapMutations } from 'vuex'
 import { SET_FILEUPLOADTASK } from 'Store/mutation-types.js'
 import { userSelect } from 'Mixin/userSelect.js'
 import { handleParamsValid } from 'Utils/index.js'
+import { dataStatusEnum } from 'Utils/constant.js'
 export default {
   name: 'dataManage',
   mixins: [uploadFile, userSelect],
@@ -119,18 +122,18 @@ export default {
   data() {
     return {
       searchForm: {
-        ownerAgencyId: '',
+        ownerAgencyName: '',
         ownerUserGroupId: '',
-        ownerUserId: '',
+        ownerUserName: '',
         datasetTitle: '',
         createTime: '',
         dataSourceType: '',
         status: ''
       },
       searchQuery: {
-        ownerAgencyId: '',
+        ownerAgencyName: '',
         ownerUserGroupId: '',
-        ownerUserId: '',
+        ownerUserName: '',
         datasetTitle: '',
         createTime: '',
         dataSourceType: '',
@@ -148,36 +151,15 @@ export default {
       selectdDataList: [],
       showApplySelect: false,
       showDeleteSelect: false,
-      typeList: []
+      typeList: [],
+      timer: ''
     }
   },
   created() {
-    const that = this
     this.getListDataset()
     this.getDataUploadType()
-    const { fileUploadTask } = this
-    if (!fileUploadTask) {
-      return
-    }
-    const { dataFile, datasetId, status } = fileUploadTask
-    if (datasetId && status === 'waitting') {
-      this.handleFile({
-        userData: dataFile,
-        datasetId,
-        onFail() {
-          console.log('upload Fail')
-          that.$message.error('上传文件失败')
-          that.getListDataset()
-        },
-        onSuccess() {
-          console.log('upload success')
-          that.$message.success('上传文件成功')
-          that.getListDataset()
-          that.SET_FILEUPLOADTASK(null)
-        }
-      })
-      console.log(fileUploadTask, this.agencyList)
-    }
+    this.checkTask()
+    this.updateDataStatusInterver()
   },
   computed: {
     ...mapGetters(['fileUploadTask', 'agencyList', 'userId', 'agencyId', 'groupList']),
@@ -192,6 +174,40 @@ export default {
   },
   methods: {
     ...mapMutations([SET_FILEUPLOADTASK]),
+    checkTask() {
+      const { fileUploadTask } = this
+      const that = this
+      if (!fileUploadTask) {
+        return
+      }
+      const { dataFile, datasetId, status } = fileUploadTask
+      if (datasetId && status === 'waitting') {
+        this.handleFile({
+          userData: dataFile,
+          datasetId,
+          onFail() {
+            console.log('upload Fail')
+            that.$message.error('上传文件失败')
+            that.getListDataset()
+          },
+          onSuccess() {
+            console.log('upload success')
+            that.$message.success('上传文件成功')
+            that.getListDataset()
+            that.SET_FILEUPLOADTASK(null)
+          }
+        })
+      }
+    },
+    // 存在非终态数据轮询
+    updateDataStatusInterver() {
+      this.timer = setInterval(() => {
+        const hasNotFinish = this.dataList.filter((v) => {
+          return ![dataStatusEnum.Success, dataStatusEnum.Failure, dataStatusEnum.Fatal].includes(v.status)
+        })
+        hasNotFinish && this.getListDataset()
+      }, 5000)
+    },
     async getDataUploadType() {
       const res = await dataManageServer.getDataUploadType()
       console.log(res)
@@ -274,8 +290,8 @@ export default {
     // 获取数据集列表
     async getListDataset() {
       const { page_offset, page_size } = this.pageData
-      const { ownerAgencyId = '', ownerUserGroupId = '', ownerUserId = '', datasetTitle = '', createTime = '', dataSourceType = '', status = '' } = this.searchQuery
-      let params = handleParamsValid({ ownerAgencyId, ownerUserGroupId, ownerUserId, datasetTitle, dataSourceType, status })
+      const { ownerAgencyName = '', ownerUserGroupId = '', ownerUserName = '', datasetTitle = '', createTime = '', dataSourceType = '', status = '' } = this.searchQuery
+      let params = handleParamsValid({ ownerAgencyName, ownerUserGroupId, ownerUserName, datasetTitle, dataSourceType, status })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
@@ -290,7 +306,7 @@ export default {
         this.dataList = content.map((v) => {
           return {
             ...v,
-            isOwner: v.ownerAgencyId === this.agencyId && v.ownerUserId === this.userId,
+            isOwner: v.ownerAgencyName === this.agencyId && v.ownerUserName === this.userId,
             showSelect: false
           }
         })
@@ -372,6 +388,9 @@ export default {
       this.showAddModal = false
       this.getListDataset()
     }
+  },
+  beforeDestroy() {
+    this.timer && clearInterval(this.timer)
   }
 }
 </script>

@@ -222,9 +222,11 @@
         </el-card>
       </el-tab-pane>
     </el-tabs>
-    <el-row type="flex" justify="center" style="margin-top: 20px; padding-bottom: 20px">
-      <el-button type="primary" @click="reBuild"> 调参重跑 </el-button>
-    </el-row>
+    <div style="margin-top: 20px; padding-bottom: 20px">
+      <el-button type="primary" @click="saveModelConf"> 保存配置 </el-button>
+      <el-button @click="reBuild"> 调参重跑 </el-button>
+    </div>
+    <div class="tips">* 保存配置：后续可选择基于该配置进行建模与调参重跑</div>
   </div>
 </template>
 
@@ -359,6 +361,9 @@ export default {
       this[name] && (this[name].columns = [...data])
     },
     downloadFileResult() {},
+    saveModelConf() {
+      this.$emit('saveModelConf')
+    },
     reBuild() {
       const { jobID = '' } = this
       this.$router.push({
@@ -402,5 +407,8 @@ div.img-con {
   width: 50%;
   float: left;
   text-align: center;
+}
+.tips {
+  color: #b3b5b9;
 }
 </style>

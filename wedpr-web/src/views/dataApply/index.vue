@@ -110,7 +110,7 @@ export default {
         this.userNameSelectList = []
       }
     },
-    // 获取数据集详情
+    // 获取数据集列表详情
     async getListDetail(params) {
       this.loadingFlag = true
       const res = await dataManageServer.queryDatasetList(params)
@@ -127,19 +127,26 @@ export default {
           return dataObj
         })
         console.log(data, 'data')
-        // 插入自己 FIXME:
-        data.unshift({ ownerAgencyId: this.agencyId, ownerUserName: this.userId })
-        const approveChainListStr = data.map((v) => {
-          return JSON.stringify({
-            agency: v.ownerAgencyId,
-            name: v.ownerUserName,
-            deleteAble: false,
-            visible: false
+        // 合并审批链 FIXME:
+        // 插入自己
+        const approveChainList = [{ agency: this.agencyId, name: this.userId }]
+        data.forEach((v) => {
+          const { approvalChain = '' } = v
+          const approvalChainList = Array.isArray(JSON.parse(approvalChain)) ? JSON.parse(approvalChain) : []
+          approvalChainList.forEach((k) => {
+            // 已有的不放入链内
+            if (!approveChainList.some((dataPushed) => dataPushed.agency === v.ownerAgencyName && dataPushed.name === k)) {
+              approveChainList.push({
+                agency: v.ownerAgencyName,
+                name: k,
+                deleteAble: false,
+                visible: false
+              })
+            }
           })
         })
-        this.approveChainList = Array.from(new Set(approveChainListStr)).map((v) => {
-          return JSON.parse(v)
-        })
+        console.log(approveChainList, 'approveChainList')
+        this.approveChainList = approveChainList
         console.log(this.approveChainList, 'this.approveChainList ')
       } else {
         this.applyDataList = []

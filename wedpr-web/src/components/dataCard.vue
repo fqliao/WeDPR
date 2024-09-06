@@ -1,52 +1,106 @@
 <template>
-  <div :class="dataInfo.isOwner ? 'data-card' : 'others data-card'">
-    <div class="title">
-      <img src="~Assets/images/icon_data.png" alt="" />
-      <span :title="dataInfo.datasetTitle">{{ dataInfo.datasetTitle }}</span>
-      <!-- <div class="tag" v-if="dataInfo.isOwner && showStatus">{{ dataInfo.statusDesc }}</div> -->
-      <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
-      <span class="auth" v-if="!dataInfo.isOwner && dataInfo.permissions.usable">已授权</span>
+  <div>
+    <div :class="className" v-if="showInfo">
+      <div class="title">
+        <img src="~Assets/images/icon_data.png" alt="" />
+        <span :title="dataInfo.datasetTitle">{{ dataInfo.datasetTitle }}</span>
+        <!-- <div class="tag" v-if="dataInfo.isOwner && showStatus">{{ dataInfo.statusDesc }}</div> -->
+        <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
+        <span class="auth" v-if="!dataInfo.isOwner && dataInfo.permissions.usable && showAuthTags">已授权</span>
+      </div>
+      <ul @click="goDetail">
+        <li>
+          数据量<span class="data-size">
+            <i>{{ dataInfo.recordCount }}</i
+            >*<i>{{ dataInfo.columnCount }}</i></span
+          >
+        </li>
+        <li v-if="showOwner">
+          数据属主 <span :title="dataInfo.ownerUserName">{{ dataInfo.ownerUserName }}</span>
+        </li>
+        <li>
+          所属机构 <span :title="dataInfo.ownerAgencyName">{{ dataInfo.ownerAgencyName }}</span>
+        </li>
+        <li>
+          数据来源 <span :title="dataInfo.ownerAgencyName">{{ dataInfo.dataSourceType }}</span>
+        </li>
+      </ul>
+      <div class="edit" v-if="dataInfo.permissions && showEdit && dataInfo.status !== 2">
+        <div class="op-con" v-if="dataInfo.isOwner">
+          <img v-if="dataInfo.permissions.writable" src="~Assets/images/icon_edit.png" alt="" @click.stop="modifyData(dataInfo)" />
+          <img v-if="dataInfo.permissions.usable" src="~Assets/images/icon_download.png" alt="" @click.stop="downLoadData(dataInfo)" />
+          <img @click.stop="deleteData" v-if="dataInfo.permissions.writable" src="~Assets/images/icon_delete.png" alt="" />
+        </div>
+        <div class="apply" @click.stop="applyData" v-if="!dataInfo.permissions.usable">
+          <span><img src="~Assets/images/apply.png" alt="" />申请使用</span>
+        </div>
+        <div class="apply authed" @click.stop="applyData" v-if="!dataInfo.isOwner && dataInfo.permissions.usable">
+          <span><img src="~Assets/images/apply_disabled.png" alt="" />申请使用</span>
+        </div>
+      </div>
+      <div class="edit" v-if="showEdit && dataInfo.status === 2 && dataInfo.isOwner">
+        <div class="apply" @click.stop="reUpload(dataInfo)">
+          <span><img src="~Assets/images/upload.png" alt="" />重新上传</span>
+        </div>
+      </div>
     </div>
-    <ul @click="goDetail">
-      <li>
-        数据量<span class="data-size">
-          <i>{{ dataInfo.recordCount }}</i
-          >*<i>{{ dataInfo.columnCount }}</i></span
-        >
-      </li>
-      <li>
-        数据属主 <span title="dataInfo.ownerUserName">{{ dataInfo.ownerUserName }}</span>
-      </li>
-      <li>
-        所属机构 <span title="dataInfo.ownerAgencyName">{{ dataInfo.ownerAgencyName }}</span>
-      </li>
-      <li>
-        数据来源 <span title="dataInfo.ownerAgencyName">{{ dataInfo.dataSourceType }}</span>
-      </li>
-    </ul>
-    <div class="edit" v-if="dataInfo.permissions && showEdit && dataInfo.status !== 2">
-      <div class="op-con" v-if="dataInfo.isOwner">
-        <img v-if="dataInfo.permissions.writable" src="~Assets/images/icon_edit.png" alt="" @click.stop="modifyData(dataInfo)" />
-        <img v-if="dataInfo.permissions.usable" src="~Assets/images/icon_download.png" alt="" @click.stop="downLoadData(dataInfo)" />
-        <img @click.stop="deleteData" v-if="dataInfo.permissions.writable" src="~Assets/images/icon_delete.png" alt="" />
+
+    <div :class="className" v-if="showReupload">
+      <div class="title">
+        <img src="~Assets/images/icon_data.png" alt="" />
+        <span :title="dataInfo.datasetTitle">{{ dataInfo.datasetTitle }}</span>
+        <!-- <div class="tag" v-if="dataInfo.isOwner && showStatus">{{ dataInfo.statusDesc }}</div> -->
+        <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
       </div>
-      <div class="apply" @click.stop="applyData" v-if="!dataInfo.permissions.usable">
-        <span><img src="~Assets/images/apply.png" alt="" />申请使用</span>
-      </div>
-      <div class="apply authed" @click.stop="applyData" v-if="!dataInfo.isOwner && dataInfo.permissions.usable">
-        <span><img src="~Assets/images/apply_disabled.png" alt="" />申请使用</span>
+      <div class="fail"><i class="el-icon-warning" />上传失败</div>
+      <div class="edit">
+        <div @click.stop="reUpload(dataInfo)" class="apply reupload">
+          <span>重新上传</span>
+        </div>
+        <div class="apply delete" @click.stop="deleteDataset(dataInfo)">
+          <span>删除</span>
+        </div>
       </div>
     </div>
-    <div class="edit" v-if="dataInfo.status === 2 && dataInfo.isOwner">
-      <div class="apply" @click.stop="reUpload(dataInfo)">
-        <span><img src="~Assets/images/upload.png" alt="" />重新上传</span>
+    <div v-if="showUploading" :class="className" :style="{ backgroundImage: `linear-gradient(to right, #EFFCF6 ${progress}, transparent ${progress}` }">
+      <div class="title">
+        <img src="~Assets/images/icon_data.png" alt="" />
+        <span :title="dataInfo.datasetTitle">{{ dataInfo.datasetTitle }}</span>
+        <!-- <div class="tag" v-if="dataInfo.isOwner && showStatus">{{ dataInfo.statusDesc }}</div> -->
+        <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
       </div>
+      <div
+        style="height: 166px"
+        class="upload-loading"
+        v-loading="true"
+        :element-loading-text="'数据资源上传中...' + progress"
+        element-loading-spinner="el-icon-loading"
+        element-loading-background="transparent"
+      ></div>
+    </div>
+    <div :class="className" v-if="showServerDataHandle">
+      <div class="title">
+        <img src="~Assets/images/icon_data.png" alt="" />
+        <span :title="dataInfo.datasetTitle">{{ dataInfo.datasetTitle }}</span>
+        <!-- <div class="tag" v-if="dataInfo.isOwner && showStatus">{{ dataInfo.statusDesc }}</div> -->
+        <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
+      </div>
+      <div
+        style="height: 166px"
+        class="upload-loading"
+        v-loading="true"
+        element-loading-text="数据处理中"
+        element-loading-spinner="el-icon-loading"
+        element-loading-background="transparent"
+      ></div>
     </div>
   </div>
 </template>
 
 <script>
 import { downloadLargeFile } from 'Mixin/downloadLargeFile.js'
+import { mapGetters } from 'vuex'
+import { dataStatusEnum } from 'Utils/constant.js'
 export default {
   name: 'dataCard',
   mixins: [downloadLargeFile],
@@ -55,7 +109,11 @@ export default {
       type: Boolean,
       default: true
     },
-    showTags: {
+    showAuthTags: {
+      type: Boolean,
+      default: true
+    },
+    showOwner: {
       type: Boolean,
       default: true
     },
@@ -74,7 +132,39 @@ export default {
   },
   data() {
     return {
+      loading: true
       // checked: false
+    }
+  },
+  computed: {
+    ...mapGetters(['fileUploadTask']),
+    className() {
+      let name = this.dataInfo.isOwner ? 'data-card' : 'others data-card'
+      name += this.selected ? ' selected' : ''
+      return name
+    },
+    progress() {
+      if (this.fileUploadTask && this.fileUploadTask.percentage) {
+        return this.fileUploadTask.percentage + '%'
+      } else {
+        return '0%'
+      }
+    },
+    showInfo() {
+      return this.dataInfo.status === dataStatusEnum.Success
+    },
+    showReupload() {
+      return (
+        this.dataInfo.status === dataStatusEnum.Failure ||
+        this.dataInfo.status === dataStatusEnum.Fatal ||
+        (this.dataInfo.status === dataStatusEnum.Created && !this.fileUploadTask)
+      )
+    },
+    showUploading() {
+      return this.dataInfo.status === dataStatusEnum.Created && this.fileUploadTask && this.fileUploadTask.datasetId
+    },
+    showServerDataHandle() {
+      return ![dataStatusEnum.Success, dataStatusEnum.Failure, dataStatusEnum.Fatal, dataStatusEnum.Created].includes(this.dataInfo.status)
     }
   },
   methods: {
@@ -86,15 +176,14 @@ export default {
         this.$emit('getDetail')
       }
     },
-    reUpload(data) {
-      const { datasetId } = data
-      this.$router.push({ path: 'dataCreate', query: { datasetId, type: 'reUpload' } })
-    },
     deleteData() {
       this.$emit('deleteData')
     },
     handleSelect(checked) {
       this.$emit('selected', checked)
+    },
+    deleteDataset(data) {
+      this.$emit('deleteDataset', data)
     },
     downFile(url) {
       const a = document.createElement('a')
@@ -127,7 +216,11 @@ export default {
     },
     modifyData(data) {
       const { datasetId } = data
-      this.$router.push({ path: 'modifyData', query: { datasetId } })
+      this.$router.push({ path: 'dataCreate', query: { datasetId, type: 'edit' } })
+    },
+    reUpload(data) {
+      const { datasetId } = data
+      this.$router.push({ path: 'dataCreate', query: { datasetId, type: 'reupload' } })
     }
   }
 }
@@ -192,6 +285,10 @@ div.data-card {
       font-size: 12px;
       line-height: 16px;
       border-radius: 4px;
+    }
+    ::v-deep .el-checkbox__inner {
+      border: 1px solid #3071f2;
+      box-shadow: 0 0 3px #3071f2;
     }
   }
   ul {
@@ -260,6 +357,27 @@ div.data-card {
     border: 1px solid #e0e4ed;
     color: #b3b5b9;
   }
+  div.apply.delete {
+    color: #ff4d4f;
+    border: 1px solid #e0e4ed;
+  }
+  div.apply.reupload {
+    border: 1px solid #e0e4ed;
+    margin-bottom: 16px;
+  }
+  div.fail {
+    color: #787b84;
+    text-align: center;
+    font-size: 14px;
+    padding-top: 30px;
+    padding-bottom: 20px;
+    i {
+      color: #fea900;
+      font-size: 18px;
+      transform: translateY(2px);
+      margin-right: 6px;
+    }
+  }
   div.tag {
     width: 52px;
     height: 20px;
@@ -279,7 +397,10 @@ div.data-card.others {
   border: 1px solid #e0e4ed;
 }
 div.data-card:hover {
-  box-shadow: 0px 2px 10px 2px #00000014;
+  box-shadow: 0px 4px 10px 4px #00000014;
   cursor: pointer;
+}
+div.data-card.selected {
+  box-shadow: 0px 4px 10px 4px #00000014;
 }
 </style>

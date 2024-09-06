@@ -12,6 +12,7 @@ const state = {
   algList: getStore('algList') || [],
   bread: getStore('bread') || [],
   groupList: getStore('groupList') || [],
-  pbKey: getStore('pbKey') || ''
+  pbKey: getStore('pbKey') || '',
+  todoNum: getStore('todoNum') || 0
 }
 export default state

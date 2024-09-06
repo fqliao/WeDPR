@@ -39,6 +39,9 @@ const getters = {
   },
   pbKey(state) {
     return state.pbKey
+  },
+  todoNum(state) {
+    return state.todoNum
   }
 }
 export default getters

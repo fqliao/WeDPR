@@ -32,7 +32,7 @@
         </div>
         <div class="area table-area" v-else>
           <el-table size="small" :data="tagSelectList" :border="true" class="table-wrap">
-            <el-table-column label="机构ID" prop="ownerAgencyId" show-overflow-tooltip />
+            <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
             <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
             <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
             <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
@@ -52,7 +52,7 @@
         </div>
         <div class="area table-area" v-else>
           <el-table size="small" :data="[item]" :border="true" class="table-wrap">
-            <el-table-column label="机构ID" prop="ownerAgencyId" show-overflow-tooltip />
+            <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
             <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
             <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
             <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
@@ -71,14 +71,14 @@
             <p>已选数据</p>
             <div class="area table-area">
               <el-table size="small" :data="xgbSettingForm.selectedData" :border="true" class="table-wrap">
-                <el-table-column label="角色" prop="ownerAgencyId" show-overflow-tooltip>
+                <el-table-column label="角色" prop="ownerAgencyName" show-overflow-tooltip>
                   <template v-slot="scope">
                     <el-tag color="#4384ff" style="color: white" v-if="scope.row.selectedTagFields" size="small">标签方</el-tag>
                     <el-tag color="#4CA9EC" style="color: white" v-if="!scope.row.selectedTagFields" size="small">参与方</el-tag>
                   </template>
                 </el-table-column>
 
-                <el-table-column label="机构ID" prop="ownerAgencyId" show-overflow-tooltip />
+                <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
                 <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
                 <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
                 <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
@@ -88,8 +88,10 @@
           </div>
           <formCard key="set" title="请设置参数">
             <div class="alg-container">
-              <el-form-item v-if="false" label="选择历史参数" prop="template">
-                <el-input size="small" style="width: 360px" v-model="xgbSettingForm.template" placeholder="请选择"> </el-input>
+              <el-form-item label="选择历史参数" prop="setting">
+                <el-select size="small" value-key="id" @change="handleSelectSetting" style="width: 360px" v-model="model_setting" placeholder="请选择">
+                  <el-option :key="item" v-for="item in modelSettingList" :label="item.label" :value="item.value"></el-option>
+                </el-select>
               </el-form-item>
 
               <el-form-item v-for="item in modelModule" :key="item.label" :label="item.label">
@@ -115,7 +117,7 @@
           </formCard>
           <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
             <el-select size="small" style="width: 360px" v-model="xgbSettingForm.receiver" multiple placeholder="请选择">
-              <el-option :key="item" v-for="item in agencyList" multiple :label="item.lable" :value="item.value"></el-option>
+              <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
             </el-select>
           </el-form-item>
         </el-form>
@@ -126,7 +128,7 @@
             <p>选择数据字段</p>
             <div class="area table-area">
               <el-table size="small" :data="psiForm.selectedData" :border="true" class="table-wrap">
-                <el-table-column label="机构ID" prop="ownerAgencyId" show-overflow-tooltip />
+                <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
                 <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
                 <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
                 <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
@@ -142,7 +144,7 @@
           </div>
           <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
             <el-select size="small" style="width: 360px" v-model="psiForm.receiver" multiple placeholder="请选择">
-              <el-option :key="item" v-for="item in agencyList" :label="item.lable" :value="item.value"></el-option>
+              <el-option :key="item" v-for="item in agencyList" :label="item.label" :value="item.value"></el-option>
             </el-select>
           </el-form-item>
         </el-form>
@@ -225,7 +227,9 @@ export default {
       tagSelectList: [],
       paticipateSelectList: [{}],
       dataInfo: {},
-      jobEnum
+      jobEnum,
+      modelSettingList: [],
+      model_setting: ''
     }
   },
   created() {
@@ -247,6 +251,7 @@ export default {
       switch (value) {
         case jobEnum.XGB_TRAINING:
           this.paticipateSelectList = [{}]
+          this.queryModelSettingList()
           break
         case jobEnum.PSI:
           this.paticipateSelectList = [{}, {}]
@@ -343,8 +348,8 @@ export default {
     handlePsiJobData() {
       const { selectedAlg } = this
       const { selectedData, receiver } = this.psiForm
-      const ownerAgencyIdList = selectedData.map((v) => v.ownerAgencyId)
-      if (Array.from(new Set(ownerAgencyIdList)).length < 2) {
+      const ownerAgencyNameList = selectedData.map((v) => v.ownerAgencyName)
+      if (Array.from(new Set(ownerAgencyNameList)).length < 2) {
         this.$message.error('参与方至少为2方')
         return
       }
@@ -353,8 +358,8 @@ export default {
       const dataSetList = selectedData.map((v) => {
         console.log(v, v.datasetStoragePath, JSON.parse(v.datasetStoragePath))
         const dataset = {
-          owner: v.ownerUserId,
-          ownerAgency: v.ownerAgencyId,
+          owner: v.ownerUserName,
+          ownerAgency: v.ownerAgencyName,
           path: JSON.parse(v.datasetStoragePath).filePath,
           storageTypeStr: v.datasetStorageType,
           datasetID: v.datasetId
@@ -362,15 +367,15 @@ export default {
         return {
           idFields: v.datasetFieldsSelected,
           dataset,
-          receiveResult: receiver.includes(v.ownerAgencyId)
+          receiveResult: receiver.includes(v.ownerAgencyName)
         }
       })
       const param = { dataSetList }
       const params = { jobType: selectedAlg, projectName: name, param: JSON.stringify(param) }
       const taskParties = selectedData.map((v) => {
         return {
-          userName: v.ownerUserId,
-          agency: v.ownerAgencyId
+          userName: v.ownerUserName,
+          agency: v.ownerAgencyName
         }
       })
       console.log({ job: params, taskParties }, receiver)
@@ -379,8 +384,8 @@ export default {
     handleXGBdata() {
       const { selectedAlg, modelModule } = this
       const { selectedData, receiver } = this.xgbSettingForm
-      const ownerAgencyIdList = selectedData.map((v) => v.ownerAgencyId)
-      if (Array.from(new Set(ownerAgencyIdList)).length < 2) {
+      const ownerAgencyNameList = selectedData.map((v) => v.ownerAgencyName)
+      if (Array.from(new Set(ownerAgencyNameList)).length < 2) {
         this.$message.error('参与方至少为2方')
         return
       }
@@ -389,8 +394,8 @@ export default {
       const dataSetList = selectedData.map((v) => {
         console.log(v, v.datasetStoragePath, JSON.parse(v.datasetStoragePath))
         const dataset = {
-          owner: v.ownerUserId,
-          ownerAgency: v.ownerAgencyId,
+          owner: v.ownerUserName,
+          ownerAgency: v.ownerAgencyName,
           path: JSON.parse(v.datasetStoragePath).filePath,
           storageTypeStr: v.datasetStorageType,
           datasetID: v.datasetId
@@ -399,7 +404,7 @@ export default {
           idFields: v.datasetFieldsSelected,
           dataset,
           labelProvider: !!v.selectedTagFields,
-          receiveResult: receiver.includes(v.ownerAgencyId)
+          receiveResult: receiver.includes(v.ownerAgencyName)
         }
       })
       const modelSetting = {}
@@ -412,12 +417,20 @@ export default {
       const params = { jobType: selectedAlg, projectName: name, param: JSON.stringify(param) }
       const taskParties = selectedData.map((v) => {
         return {
-          userName: v.ownerUserId,
-          agency: v.ownerAgencyId
+          userName: v.ownerUserName,
+          agency: v.ownerAgencyName
         }
       })
       console.log({ job: params, taskParties }, receiver)
       this.submitJob({ job: params, taskParties })
+    },
+    handleSelectSetting(data) {
+      const setting = JSON.parse(data.setting)
+      this.modelModule.forEach((v) => {
+        const key = v.label
+        v.value = setting[key]
+      })
+      console.log(this.modelModule, setting, 'this.modelModule')
     },
     // 创建JOB
     async submitJob(params) {
@@ -439,6 +452,26 @@ export default {
         const { setting = '' } = res.data[0]
         console.log(setting, 'JSON.parse(setting)')
         this.modelModule = JSON.parse(setting)
+      }
+    },
+    async queryModelSettingList() {
+      const res = await settingManageServer.querySettings({
+        onlyMeta: false,
+        condition: {
+          id: '',
+          name: '',
+          type: 'MODEL_SETTING',
+          owner: ''
+        }
+      })
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        this.modelSettingList = res.data.map((v) => {
+          return {
+            label: v.name,
+            value: v
+          }
+        })
       }
     },
     showAddParticipate() {

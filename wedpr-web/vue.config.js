@@ -1,5 +1,7 @@
 const { defineConfig } = require('@vue/cli-service')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
+
 const path = require('path') // 引入path模块
 function resolve(dir) {
   return path.join(__dirname, dir) // path.join(__dirname)设置绝对路径
@@ -12,7 +14,12 @@ module.exports = defineConfig({
   configureWebpack: (config) => {
     // 调试JS
     process.env.NODE_ENV !== 'production' && (config.devtool = 'source-map')
-    // config.plugins = [new NodePolyfillPlugin()]
+    //  = [new MonacoWebpackPlugin()]
+    config.plugins.push(
+      new MonacoWebpackPlugin({
+        languages: ['python', 'sql']
+      })
+    )
   },
   css: {
     loaderOptions: {
@@ -26,7 +33,11 @@ module.exports = defineConfig({
   devServer: {
     proxy: {
       '/api': {
-        target: '',
+        // target: 'http://apidesign.weoa.com/apidesign-core/mock/18220',
+        // target: 'http://139.159.202.235:13000',
+        target: 'http://139.159.202.235:8005',
+        // target: 'http://139.159.202.235:6855',
+        // target: 'http://175.178.109.119:5810',
         secure: false,
         changeOrigin: true
       }

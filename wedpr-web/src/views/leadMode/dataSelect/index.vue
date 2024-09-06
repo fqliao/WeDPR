@@ -7,8 +7,8 @@
       <el-form-item prop="datasetTitle" label="资源标签：">
         <el-input style="width: 160px" v-model="searchForm.tag" placeholder="请输入"> </el-input>
       </el-form-item>
-      <el-form-item prop="ownerUserId" label="所属用户：">
-        <el-input style="width: 160px" v-model="searchForm.ownerUserId" placeholder="请输入"> </el-input>
+      <el-form-item prop="ownerUserName" label="所属用户：">
+        <el-input style="width: 160px" v-model="searchForm.ownerUserName" placeholder="请输入"> </el-input>
       </el-form-item>
       <el-form-item prop="createTime" label="上传时间：">
         <el-date-picker value-format="yyyy-MM-dd" style="width: 160px" v-model="searchForm.createTime" type="date" placeholder="请选择日期"> </el-date-picker>
@@ -59,7 +59,7 @@ export default {
       type: Boolean,
       default: false
     },
-    ownerAgencyId: {
+    ownerAgencyName: {
       type: String,
       default: ''
     }
@@ -72,13 +72,13 @@ export default {
     return {
       searchForm: {
         datasetTitle: '',
-        ownerUserId: '',
+        ownerUserName: '',
         tag: '',
         createTime: ''
       },
       searchQuery: {
         datasetTitle: '',
-        ownerUserId: '',
+        ownerUserName: '',
         tag: '',
         createTime: ''
       },
@@ -99,7 +99,7 @@ export default {
     ...mapGetters(['userId', 'agencyId'])
   },
   watch: {
-    ownerAgencyId(nv, ov) {
+    ownerAgencyName(nv, ov) {
       console.log(nv)
       this.dataList = []
       this.$emit('selected', null)
@@ -132,9 +132,9 @@ export default {
     },
     async getListDataset() {
       const { page_offset, page_size } = this.pageData
-      const { ownerAgencyId = '' } = this
-      const { tag = '', ownerUserId = '', datasetTitle = '', createTime = '' } = this.searchQuery
-      let params = handleParamsValid({ ownerAgencyId, tag, ownerUserId, datasetTitle, createTime })
+      const { ownerAgencyName = '' } = this
+      const { tag = '', ownerUserName = '', datasetTitle = '', createTime = '' } = this.searchQuery
+      let params = handleParamsValid({ ownerAgencyName, tag, ownerUserName, datasetTitle, createTime })
       params = { ...params, pageNum: page_offset, pageSize: page_size, permissionType: 'usable' }
       this.loadingFlag = true
       const res = await dataManageServer.listDataset(params)
@@ -145,7 +145,7 @@ export default {
         this.dataList = content.map((v) => {
           return {
             ...v,
-            isOwner: v.ownerAgencyId === this.agencyId && v.ownerUserId === this.userId,
+            isOwner: v.ownerAgencyName === this.agencyId && v.ownerUserName === this.userId,
             showSelect: true
           }
         })

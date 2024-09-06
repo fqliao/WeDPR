@@ -4,14 +4,14 @@
       <p>已选数据</p>
       <div class="area table-area">
         <el-table size="small" :data="tableData" :border="true" class="table-wrap">
-          <el-table-column label="角色" prop="ownerAgencyId" show-overflow-tooltip>
+          <el-table-column label="角色" show-overflow-tooltip>
             <template v-slot="scope">
               <el-tag color="#4384ff" style="color: white" v-if="scope.row.labelProvider" size="small">标签方</el-tag>
               <el-tag color="#4CA9EC" style="color: white" v-if="!scope.row.labelProvider" size="small">参与方</el-tag>
             </template>
           </el-table-column>
 
-          <el-table-column label="机构ID" prop="ownerAgencyId" show-overflow-tooltip />
+          <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
           <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
           <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
           <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />

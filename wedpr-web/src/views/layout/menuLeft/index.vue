@@ -21,10 +21,12 @@
         <div class="img-con">
           <img v-if="defaultIndex === menu.name" :src="bindIcon(menu.icon_active_src)" alt="" class="icon-tab" />
           <img v-else :src="bindIcon(menu.icon_src)" alt="" class="icon-tab" />
+          <span class="todo" v-if="menu.name === 'approveManage' && todoNum"></span>
         </div>
 
         <template #title>
           <span class="menu-text">{{ menu.text }}</span>
+          <span class="todo" v-if="menu.name === 'approveManage' && todoNum"></span>
         </template>
       </el-menu-item>
     </div>
@@ -32,9 +34,9 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-// import user from '~Assets/images/user.png'
-// import user_active from '~Assets/images/user_active.png'
+import { mapGetters, mapMutations } from 'vuex'
+import { SET_TODONUM } from 'Store/mutation-types.js'
+import { authManageServer } from 'Api'
 export default {
   props: {
     isCollapse: {
@@ -64,20 +66,12 @@ export default {
         },
 
         {
-          name: 'tenantManage',
-          path: '/tenantManage',
-          text: '用户管理',
-          icon_src: 'user',
-          icon_active_src: 'user_active'
-        },
-        {
           name: 'dataManage',
           path: '/dataManage',
           text: '数据资源',
           icon_src: 'data',
           icon_active_src: 'data_active'
         },
-
         {
           name: 'projectManage',
           path: '/projectManage',
@@ -89,6 +83,13 @@ export default {
           name: 'serverManage',
           path: '/serverManage',
           text: '服务发布',
+          icon_src: 'service',
+          icon_active_src: 'service_active'
+        },
+        {
+          name: 'accessKeyManage',
+          path: '/accessKeyManage',
+          text: '凭证管理',
           icon_src: 'service',
           icon_active_src: 'service_active'
         },
@@ -114,25 +115,37 @@ export default {
           icon_active_src: 'log_active'
         },
         {
+          name: 'tenantManage',
+          path: '/tenantManage',
+          text: '用户管理',
+          icon_src: 'user',
+          icon_active_src: 'user_active'
+        },
+        {
           name: 'certificateManage',
           path: '/certificateManage',
           text: '证书管理',
-          icon_src: 'log',
-          icon_active_src: 'log_active'
+          icon_src: 'cert',
+          icon_active_src: 'cert_active'
         }
       ],
-      defaultIndex: ''
+      defaultIndex: '',
+      timer: null,
+      isAgencyMode: process.env.VUE_APP_MODE === 'agency'
     }
   },
   computed: {
-    ...mapGetters(['permission', 'userinfo', 'bread'])
+    ...mapGetters(['permission', 'userinfo', 'bread', 'todoNum'])
   },
   created() {
     // 权限先过滤一遍
+    console.log(this.permission, 'permission========================')
     this.menuList = this.menuList.filter((v) => this.permission.includes(v.name))
     if (this.bread && this.bread.length) {
       this.defaultIndex = this.bread[0].name
     }
+    this.isAgencyMode && this.queryTODOCount()
+    this.isAgencyMode && (this.timer = setInterval(this.queryTODOCount, 10000))
   },
   watch: {
     defaultIndex(n) {
@@ -142,16 +155,41 @@ export default {
       if (v && v.length) {
         this.defaultIndex = v[0].name
       }
+    },
+    permission() {
+      // 权限先过滤一遍
+      this.menuList = this.menuList.filter((v) => this.permission.includes(v.name))
+      if (this.bread && this.bread.length) {
+        this.defaultIndex = this.bread[0].name
+      }
     }
   },
   methods: {
+    ...mapMutations([SET_TODONUM]),
     bindIcon(src) {
       return require('../../../assets/images/' + src + '.png')
     },
     handleSelect(index) {
       this.defaultIndex = index
       console.log(this.defaultIndex)
+    },
+    // 获取我的审批列表
+    async queryTODOCount() {
+      this.tableData = []
+      const params = {
+        authorizationDO: { id: '' },
+        pageOffset: 1,
+        pageSize: 1
+      }
+      const res = await authManageServer.queryTODOList(params)
+      if (res.code === 0 && res.data) {
+        const { total } = res.data
+        this.SET_TODONUM(total)
+      }
     }
+  },
+  destroyed() {
+    this.timer && clearInterval(this.timer)
   }
 }
 </script>
@@ -216,5 +254,14 @@ export default {
 .icon-tab {
   width: 20px;
   height: 20px;
+}
+span.todo {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ff5f4a;
+  right: 6px;
+  top: 6px;
 }
 </style>

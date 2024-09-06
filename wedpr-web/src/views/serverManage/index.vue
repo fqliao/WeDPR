@@ -2,26 +2,19 @@
   <div class="group-manage">
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item prop="username" label="发布用户组：">
-          <el-select v-model="searchForm.role_name" placeholder="请输入" clearable>
-            <el-option label="系统管理员" value="系统管理员"></el-option>
-            <el-option label="投票管理员" value="投票管理员"> </el-option>
+        <el-form-item prop="agency" label="发布机构：">
+          <el-select clearable size="small" style="width: 160px" v-model="searchForm.agency" placeholder="请选择">
+            <el-option :key="item" v-for="item in agencyList" :label="item.label" :value="item.value"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item prop="role_name" label="发布用户：">
-          <el-select v-model="searchForm.role_name" placeholder="请输入" clearable>
-            <el-option label="系统管理员" value="系统管理员"></el-option>
-            <el-option label="投票管理员" value="投票管理员"> </el-option>
-          </el-select>
+        <el-form-item prop="owner" label="发布用户：">
+          <el-input style="width: 120px" v-model="searchForm.owner" placeholder="请输入"> </el-input>
         </el-form-item>
-        <el-form-item prop="role_name" label="服务名称：">
-          <el-select v-model="searchForm.role_name" placeholder="请输入" clearable>
-            <el-option label="系统管理员" value="系统管理员"></el-option>
-            <el-option label="投票管理员" value="投票管理员"> </el-option>
-          </el-select>
+        <el-form-item prop="serviceName" label="服务名称：">
+          <el-input style="width: 120px" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
         </el-form-item>
-        <el-form-item prop="role_name" label="发布时间：">
-          <el-date-picker style="width: 160px" v-model="value1" type="date" placeholder="请选择日期"> </el-date-picker>
+        <el-form-item prop="createDate" label="发布时间：">
+          <el-date-picker style="width: 160px" v-model="searchForm.createDate" type="date" placeholder="请选择日期"> </el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="queryFlag" @click="queryHandle">
@@ -35,14 +28,32 @@
       </el-form>
     </div>
     <div class="card-container">
-      <div class="server-con" v-for="item in [1, 23, 4, 5, 6, 77, 8]" :key="item">
+      <div @click="getDetail(item)" class="server-con" v-for="item in tableData" :key="item">
         <img src="~Assets/images/icon_service1.png" alt="" />
         <dl>
-          <dt>匿踪查询服务</dt>
-          <dd>数据资源数量：<span class="count">3</span></dd>
-          <dd>机构数量：<span class="count">3</span></dd>
-          <dd>发布人：<span>zhangsan</span></dd>
+          <dt>{{ item.serviceName }}</dt>
+          <dd>
+            发布人：<span class="count">{{ item.owner }}</span>
+          </dd>
+          <dd>
+            发布机构：<span class="count">{{ item.agency }}</span>
+          </dd>
+          <dd>
+            服务类型：<span class="count">{{ item.serviceType }}</span>
+          </dd>
+          <dd>
+            创建时间：<span>{{ item.createDate }}</span>
+          </dd>
         </dl>
+        <div class="edit">
+          <div class="op-con" v-if="item.owner === userId && item.agency === agencyId">
+            <img src="~Assets/images/icon_edit.png" alt="" @click.stop="modifyData(item)" />
+            <img @click.stop="showDeleteModal(item)" src="~Assets/images/icon_delete.png" alt="" />
+          </div>
+          <div class="apply" @click.stop="applyData(item)" v-else>
+            <span>申请使用</span>
+          </div>
+        </div>
       </div>
     </div>
     <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
@@ -50,6 +61,9 @@
 </template>
 <script>
 import wePagination from '@/components/wePagination.vue'
+import { serviceManageServer } from 'Api'
+import { handleParamsValid } from 'Utils/index.js'
+import { mapGetters } from 'vuex'
 export default {
   name: 'serverManage',
   components: {
@@ -58,12 +72,16 @@ export default {
   data() {
     return {
       searchForm: {
-        username: '',
-        role_name: ''
+        agency: '',
+        owner: '',
+        serviceName: '',
+        createDate: ''
       },
       searchQuery: {
-        username: '',
-        role_name: ''
+        agency: '',
+        owner: '',
+        serviceName: '',
+        createDate: ''
       },
       pageData: {
         page_offset: 1,
@@ -71,12 +89,26 @@ export default {
       },
       total: 10,
       queryFlag: false,
-      tableData: [],
+      tableData: [
+        {
+          owner: 'flyhuang',
+          agency: 'SGD',
+          serverId: '9876',
+          serviceName: '我的pir服务',
+          createDate: '2024-09-03'
+        }
+      ],
       loadingFlag: false,
       showAddModal: false
     }
   },
-  created() {},
+  computed: {
+    ...mapGetters(['agencyList', 'userId', 'agencyId'])
+  },
+  created() {
+    // this.getPublishList()
+    console.log(this.userId, this.agencyId)
+  },
   methods: {
     // 查询
     queryHandle() {
@@ -84,23 +116,75 @@ export default {
         if (valid) {
           this.searchQuery = { ...this.searchForm }
           this.pageData.page_offset = 1
-          this.getAccountList()
+          this.getPublishList()
         } else {
           return false
         }
       })
     },
+    // 删除账户
+    showDeleteModal(serverData) {
+      const { serverId } = serverData
+      this.$confirm('确认删除服务吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          this.deleteServer({ serverId })
+        })
+        .catch(() => {})
+    },
+    async deleteServer(params) {
+      const res = await serviceManageServer.revokeService(params)
+      console.log(res)
+      if (res.code === 0) {
+        this.$message.success('服务删除成功')
+        this.getPublishList()
+      }
+    },
+    // 获取数据集列表
+    async getPublishList() {
+      const { page_offset, page_size } = this.pageData
+      const { agency = '', owner = '', serviceName = '', createDate = '' } = this.searchQuery
+      let params = handleParamsValid({ agency, owner, serviceName, createDate })
+      params = { ...params, pageNum: page_offset, pageSize: page_size }
+      this.loadingFlag = true
+      const res = await serviceManageServer.getPublishList(params)
+      this.loadingFlag = false
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { wedprPublishedServiceList = [], totalCount } = res.data
+        this.tableData = wedprPublishedServiceList
+        this.total = totalCount
+      } else {
+        this.tableData = []
+        this.total = 0
+      }
+    },
     // 分页切换
     paginationHandle(pageData) {
       console.log(pageData, 'pagData')
       this.pageData = { ...pageData }
-      this.getAccountList()
+      this.getPublishList()
     },
     creatPsi() {
       this.$router.push({ path: '/serverCreate', query: { type: 'PIR' } })
     },
     creatModel() {
       this.$router.push({ path: '/serverCreate', query: { type: 'MODEL' } })
+    },
+    getDetail(data) {
+      const { serviceId } = data
+      this.$router.push({ path: '/serverDetail', query: { serviceId } })
+    },
+    applyData(item) {
+      const { serviceId } = item
+      this.$router.push({ path: '/serverDetail', query: { serviceId, type: 'apply' } })
+    },
+    modifyData(item) {
+      const { serviceId } = item
+      this.$router.push({ path: '/serverCreate', query: { type: 'edit', serviceId } })
     }
   }
 }
@@ -169,11 +253,36 @@ div.server-con {
       span {
         float: right;
       }
-      span.count {
-        font-size: 16px;
-        color: #262a32;
-        font-weight: 500;
-      }
+    }
+  }
+  div.edit {
+    margin-top: 28px;
+  }
+  .op-con {
+    display: flex;
+    justify-content: space-around;
+    height: auto;
+    img {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+  }
+  div.apply {
+    border: 1px solid #b3b5b9;
+    margin-bottom: -4px;
+    margin-top: -4px;
+    height: 32px;
+    padding: 5px 12px;
+    text-align: center;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    span {
+      display: flex;
+      align-items: center;
     }
   }
 }

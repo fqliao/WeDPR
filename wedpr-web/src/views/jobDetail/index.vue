@@ -63,8 +63,8 @@
             <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="dataList" :border="true" class="table-wrap">
               <el-table-column label="数据资源ID" prop="datasetId" />
               <el-table-column label="数据资源名称" prop="datasetTitle" />
-              <el-table-column label="所属机构" prop="ownerAgencyId" />
-              <el-table-column label="所属用户" prop="ownerUserId" />
+              <el-table-column label="所属机构" prop="ownerAgencyName" />
+              <el-table-column label="所属用户" prop="ownerUserName" />
               <el-table-column label="创建时间" prop="createAt" />
               <el-table-column label="操作">
                 <template v-slot="scope">
@@ -78,14 +78,20 @@
       <el-tab-pane label="工作流视图" name="second" v-if="false"> </el-tab-pane>
       <el-tab-pane label="审计信息" name="third" v-if="false"> </el-tab-pane>
       <el-tab-pane label="查看结果" name="four" v-if="jobInfo.status === 'RunSuccess' && receiverList.includes(agencyId)">
-        <xgbResult v-if="jobInfo.jobType === jobEnum.XGB_TRAINING" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :modelResultDetail="modelResultDetail" />
+        <xgbResult
+          @saveModelConf="showSettingSaveModal"
+          v-if="jobInfo.jobType === jobEnum.XGB_TRAINING"
+          :jobID="jobID"
+          :jobStatusInfo="jobStatusInfo"
+          :modelResultDetail="modelResultDetail"
+        />
         <baseResult v-if="jobInfo.jobType === jobEnum.PSI" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :resultFileInfo="resultFileInfo" />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 <script>
-import { jobManageServer, dataManageServer } from 'Api'
+import { jobManageServer, dataManageServer, settingManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import xgbResult from './result/xgbResult.vue'
 import baseResult from './result/baseResult.vue'
@@ -114,7 +120,8 @@ export default {
       jobStatusInfo: {},
       resultFileInfo: {}, // psiresult
       receiverList: [],
-      jobEnum
+      jobEnum,
+      modelSetting: {}
     }
   },
   created() {
@@ -140,7 +147,9 @@ export default {
         this.jobInfo.particapate = JSON.parse(parties)
           .map((v) => v.agency)
           .join('，')
-        const dataSetList = JSON.parse(param).dataSetList
+        console.log(JSON.parse(param), 'JSON.parse(param)')
+        const { dataSetList, modelSetting } = JSON.parse(param)
+        this.modelSetting = modelSetting
         this.receiverList = dataSetList.filter((v) => v.receiveResult).map((v) => v.dataset.ownerAgency)
         this.jobInfo.receiver = this.receiverList.join('，')
         const ids = dataSetList
@@ -168,6 +177,38 @@ export default {
         this.dataList = data
       } else {
         this.dataList = []
+      }
+    },
+    showSettingSaveModal() {
+      this.$prompt('请输入保存的配置名称', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValidator(value) {
+          console.log(value, 'value')
+          try {
+            return !!value.trim()
+          } catch {
+            return false
+          }
+        },
+        inputErrorMessage: '配置名称不能为空'
+      })
+        .then(({ value }) => {
+          this.saveModelConf(value)
+        })
+        .catch(() => {})
+    },
+    async saveModelConf(name) {
+      const { modelSetting } = this
+      const params = {
+        templateList: [{ name, type: 'MODEL_SETTING', setting: JSON.stringify({ ...modelSetting }) }]
+      }
+      const res = await settingManageServer.insertSettings(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { data } = res
+        console.log(data)
+        this.$message.success('保存配置成功！')
       }
     },
     getDetail(datasetId) {
