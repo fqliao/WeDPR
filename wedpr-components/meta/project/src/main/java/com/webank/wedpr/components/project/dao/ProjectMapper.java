@@ -27,6 +27,8 @@ public interface ProjectMapper {
     // update the project information
     public int updateProjectInfo(
             @Param("owner") String owner, @Param("projectDO") ProjectDO projectDO);
+
+    public int batchUpdateProjectInfo(@Param("projectDOList") List<ProjectDO> projectDOList);
     // delete projects
     public int deleteProjects(
             @Param("owner") String owner, @Param("projectList") List<String> projectList);
@@ -62,8 +64,4 @@ public interface ProjectMapper {
             @Param("condition") JobDO condition);
 
     public List<JobDO> queryJobsByDatasetID(@Param("datasetID") String datasetID);
-
-    List<ProjectDO> queryProjectForAdmin();
-
-    ProjectDO queryProjectById(@Param("id") String id);
 }

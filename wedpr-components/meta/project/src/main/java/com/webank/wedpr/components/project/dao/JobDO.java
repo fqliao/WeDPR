@@ -104,6 +104,10 @@ public class JobDO extends TimeRange {
                     + ", result='"
                     + result
                     + '\''
+                    + ", startTime="
+                    + startTime
+                    + ", timeCostMs="
+                    + timeCostMs
                     + '}';
         }
     }
@@ -196,6 +200,7 @@ public class JobDO extends TimeRange {
     private String parties;
     // the job type
     private String jobType;
+    private Integer reportStatus;
 
     @JsonIgnore private transient JobType type;
     @JsonIgnore private transient JobType originalJobType;
@@ -299,6 +304,14 @@ public class JobDO extends TimeRange {
 
     public String getResult() {
         return result;
+    }
+
+    public Integer getReportStatus() {
+        return reportStatus;
+    }
+
+    public void setReportStatus(Integer reportStatus) {
+        this.reportStatus = reportStatus;
     }
 
     public void setResult(String result) {

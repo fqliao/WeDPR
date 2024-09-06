@@ -15,9 +15,7 @@
 
 package com.webank.wedpr.components.project.service;
 
-import com.webank.wedpr.components.project.dao.ProjectDO;
 import com.webank.wedpr.components.project.model.*;
-import com.webank.wedpr.core.utils.WeDPRException;
 import com.webank.wedpr.core.utils.WeDPRResponse;
 import java.util.List;
 
@@ -52,8 +50,4 @@ public interface ProjectService {
 
     // job kill
     public abstract WeDPRResponse killJobs(String user, JobListRequest request);
-
-    List<ProjectDO> queryProjectForReport() throws WeDPRException;
-
-    ProjectDO queryProjectById(String id);
 }

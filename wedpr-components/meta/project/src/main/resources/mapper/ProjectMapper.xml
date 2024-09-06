@@ -62,11 +62,25 @@
             <if test="projectDO.label != null and projectDO.label !=''">
                 `label` = #{projectDO.label},
             </if>
+            <if test="projectDO.reportStatus != null">
+                `report_status` = #{projectDO.reportStatus},
+            </if>
         </set>
         where `id` = #{projectDO.id}
         <if test="owner != null and owner !=''">
             and `owner` = #{owner}
         </if>
+    </update>
+    <update id="batchUpdateProjectInfo" parameterType="java.util.List">
+        <foreach collection="projectDOList" item = "project" separator=";">
+            update `wedpr_project_table`
+            <set>
+                <if test="project.reportStatus != null">
+                    `report_status` = #{project.reportStatus},
+                </if>
+            </set>
+            where `id` = #{project.id}
+        </foreach>
     </update>
     <delete id="deleteProjects" parameterType="java.util.List">
         delete from `wedpr_project_table`
@@ -108,6 +122,9 @@
                 <if test="condition.ownerAgency != null and condition.ownerAgency !=''">
                     and `owner_agency` = #{condition.ownerAgency}
                 </if>
+                <if test="condition.reportStatus != null">
+                    and `report_status` = #{condition.reportStatus}
+                </if>
                 <if test="condition.startTime != null and condition.startTime  != ''">
                     <![CDATA[ and datediff(create_time, #{condition.startTime}) >= 0]]>
                 </if>
@@ -117,10 +134,6 @@
             </when>
         </choose>
         order by `last_update_time` desc
-    </select>
-
-    <select id="queryProjectForAdmin" resultMap="ProjectDOMap">
-        select * from `wedpr_project_table` where `report_status` = 0
     </select>
 
     <select id="queryProjectCount" resultType="java.lang.Long">
@@ -198,6 +211,9 @@
                 </if>
                 <if test="condition.jobType != null and condition.jobType !=''">
                     and `job_type` = #{condition.jobType}
+                </if>
+                <if test="condition.reportStatus != null">
+                    and `report_status` = #{condition.reportStatus}
                 </if>
                 <if test="condition.startTime != null and condition.startTime  != ''">
                     <![CDATA[ and datediff(create_time, #{condition.startTime}) >= 0]]>
@@ -359,11 +375,6 @@
         on job_table.id = follower_table.resource_id where job_table.owner is not NULL
     </select>
 
-    <select id="queryProjectById" resultMap="ProjectDOMap">
-        select * from `wedpr_project_table` where `id` = #{id}
-    </select>
-
-
     <update id="batchUpdateJobInfo" parameterType="java.util.List">
         <foreach collection="jobDOList" item = "job" separator=";">
             update `wedpr_job_table`
@@ -376,6 +387,9 @@
                 </if>
                 <if test="job.result != null and job.result !=''">
                     `job_result` = #{job.result},
+                </if>
+                <if test="job.reportStatus != null">
+                    `report_status` = #{job.reportStatus},
                 </if>
             </set>
             where `id` = #{job.id}
