@@ -12,10 +12,10 @@
         </el-form-item>
         <el-form-item prop="createTime" label="上传时间：">
           <el-date-picker
-            style="width: 280px"
-            value-format="yyyy-MM-dd"
+            style="width: 360px"
+            value-format="yyyy-MM-dd hh:mm:ss"
             v-model="searchForm.createTime"
-            type="daterange"
+            type="datetimerange"
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"

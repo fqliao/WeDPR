@@ -13,13 +13,13 @@
       <div class="whole">
         <div class="half">
           <span class="title">项目简介：</span>
-          <span class="info" :title="dataInfo.projectDesc"> {{ dataInfo.projectDesc }} </span>
+          <span class="info" :title="dataInfo.desc"> {{ dataInfo.desc }} </span>
         </div>
       </div>
       <div class="whole">
         <div class="half">
           <span class="title">创建模式：</span>
-          <span class="info"> {{ mode[dataInfo.type] }} </span>
+          <span class="info"> {{ mode[dataInfo.projectType] }} </span>
         </div>
       </div>
     </div>
@@ -28,26 +28,22 @@
     </div>
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item prop="ownerAgency" label="创建机构：">
-          <el-select clearable size="small" style="width: 160px" v-model="searchForm.ownerAgencyName" placeholder="请选择">
-            <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
-          </el-select>
-        </el-form-item>
-        <!-- <el-form-item prop="ownerAgencyName" label="创建部门：">
-          <el-select clearable size="small" style="width: 160px" v-model="searchForm.ownerAgencyName" placeholder="请选择">
-            <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
-          </el-select>
-        </el-form-item> -->
         <el-form-item prop="owner" label="创建用户：">
-          <el-select clearable size="small" style="width: 160px" v-model="searchForm.owner" placeholder="请选择">
-            <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
-          </el-select>
+          <el-input style="width: 160px" placeholder="请输入" v-model="searchForm.owner" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item prop="name" label="任务名称：">
           <el-input style="width: 160px" placeholder="请输入" v-model="searchForm.name" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
-          <el-date-picker style="width: 160px" v-model="searchForm.createTime" type="date" placeholder="请选择日期"> </el-date-picker>
+          <el-date-picker
+            value-format="yyyy-MM-dd hh:mm:ss"
+            v-model="searchForm.createTime"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+          >
+          </el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="queryFlag" @click="queryHandle">
@@ -64,21 +60,19 @@
         <el-table-column label="任务模板" prop="jobType">
           <template v-slot="scope"> <img class="type-img" :src="handleData(scope.row.jobType).src" /> {{ handleData(scope.row.jobType).label }} </template>
         </el-table-column>
-        <el-table-column label="任务ID" prop="id" />
-        <el-table-column label="创建时间" prop="createTime" />
-        <el-table-column label="发起机构" prop="ownerAgency" />
-        <el-table-column label="参与机构" prop="createTime" />
+        <el-table-column label="任务ID" prop="id" show-overflow-tooltip />
+        <el-table-column label="任务名称" prop="name" show-overflow-tooltip />
+        <el-table-column label="创建时间" prop="createTime" show-overflow-tooltip />
+        <el-table-column label="发起机构" prop="ownerAgency" show-overflow-tooltip />
+        <el-table-column label="参与机构" prop="participate" show-overflow-tooltip />
+        <el-table-column label="创建时间" prop="createTime" show-overflow-tooltip />
+        <el-table-column label="链上存证" prop="createTime" show-overflow-tooltip />
         <el-table-column label="任务状态" prop="status">
           <template v-slot="scope">
             <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
             <el-tag size="small" v-else-if="scope.row.status == 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
             <el-tag size="small" v-else-if="scope.row.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
             <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作">
-          <template v-slot="scope">
-            <el-button size="small" @click="goDetail(scope.row.id)" type="text">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -90,7 +84,7 @@
   </div>
 </template>
 <script>
-import { projectManageServer, jobManageServer, settingManageServer } from 'Api'
+import { projectManageServer, settingManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import { jobStatusList, jobStatusMap } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
@@ -105,13 +99,11 @@ export default {
   data() {
     return {
       searchForm: {
-        ownerAgency: '',
         owner: '',
         name: '',
         createTime: ''
       },
       searchQuery: {
-        ownerAgency: '',
         owner: '',
         name: '',
         createTime: ''
@@ -140,15 +132,12 @@ export default {
     this.getConfig()
   },
   computed: {
-    ...mapGetters(['algList'])
+    ...mapGetters(['algList', 'agencyList'])
   },
   methods: {
     handleData(key) {
       const data = this.algList.filter((v) => v.value === key)
       return data[0] || {}
-    },
-    goDetail(id) {
-      this.$router.push({ path: '/jobDetail', query: { id } })
     },
     reset() {
       this.$refs.searchForm.resetFields()
@@ -172,12 +161,12 @@ export default {
     async queryProject() {
       this.loadingFlag = true
       const { projectId } = this
-      const res = await projectManageServer.queryProject({ project: { id: projectId }, onlyMeta: false })
+      const res = await projectManageServer.adminQueryProject({ id: projectId })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { dataList = [] } = res.data
-        this.dataInfo = dataList[0] || {}
+        const { projectList = [] } = res.data
+        this.dataInfo = projectList[0] || {}
         this.queryJobByCondition()
       } else {
         this.dataInfo = {}
@@ -215,12 +204,25 @@ export default {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
       }
-      const res = await jobManageServer.adminQueryJobByCondition({ job: { id: '', projectName, ...params }, pageNum: page_offset, pageSize: page_size })
+      params.ownerAgency = this.dataInfo.ownerAgency
+      const res = await projectManageServer.adminQuerylistJobInProject({ projectName, ...params, pageNum: page_offset, pageSize: page_size })
       this.loadingFlag = false
-      console.log(res)
       if (res.code === 0 && res.data) {
-        const { jobs = [], total } = res.data
-        this.tableData = jobs
+        const { jobList = [], total } = res.data
+        this.tableData = jobList.map((v) => {
+          let participate = ''
+          try {
+            participate = JSON.parse(v.parties)
+              .map((v) => v.agency)
+              .join('，')
+          } catch {
+            participate = ''
+          }
+          return {
+            participate,
+            ...v
+          }
+        })
         this.total = total
       } else {
         this.tableData = []
