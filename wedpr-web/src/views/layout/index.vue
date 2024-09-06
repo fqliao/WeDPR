@@ -62,7 +62,8 @@ export default {
       this.isCollapse = !this.isCollapse
     },
     feed() {
-      this.$router.push({ path: 'feed' })
+      // this.$router.push({ path: 'feed' })
+      window.open('https://wj.qq.com/s2/15263371/ce6c/')
     },
     closeFeed() {
       this.hiddenFeed = true

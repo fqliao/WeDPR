@@ -12,6 +12,7 @@
         <div class="custom-content-con-box">
           <div class="custom-content-con">
             <div class="info-con">
+              <img class="full" v-if="manageMode" @click="fullScreen" src="~Assets/images/full.png" alt="" />
               <el-dropdown>
                 <img class="av" src="~Assets/images/avatar_male.png" />
                 <el-dropdown-menu slot="dropdown">
@@ -41,7 +42,8 @@ export default {
   },
   data() {
     return {
-      showModifyModal: false
+      showModifyModal: false,
+      manageMode: process.env.VUE_APP_MODE === 'manage'
     }
   },
   props: {
@@ -79,6 +81,9 @@ export default {
     handleCollpasedChange() {},
     menuToggleClick() {
       this.$emit('menuToggleClick')
+    },
+    fullScreen() {
+      this.$router.push({ path: 'screen' })
     }
   }
 }
@@ -97,8 +102,8 @@ export default {
     display: flex;
     align-items: center;
     img {
-      width: 124px;
-      height: auto;
+      width: auto;
+      height: 22px;
       display: block;
       margin: 0 auto;
     }
@@ -162,6 +167,12 @@ export default {
         height: 32px;
         border-radius: 50px;
         margin-right: 8px;
+      }
+      .full {
+        width: 86px;
+        height: auto;
+        cursor: pointer;
+        margin-right: 24px;
       }
     }
 

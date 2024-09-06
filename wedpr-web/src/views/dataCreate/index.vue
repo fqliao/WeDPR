@@ -1,7 +1,7 @@
 <template>
   <div class="create-data">
     <el-form :inline="false" :rules="rules" :model="dataForm" ref="dataForm" size="small">
-      <formCard title="基础信息">
+      <formCard title="基础信息" v-if="type !== 'reupload'">
         <el-form-item label-width="96px" label="资源名称：" prop="datasetTitle">
           <el-input style="width: 480px" placeholder="请输入资源名称" v-model="dataForm.datasetTitle" autocomplete="off"></el-input>
         </el-form-item>
@@ -12,9 +12,16 @@
           <el-input style="width: 480px" placeholder="请输入资源标签" v-model="dataForm.datasetLabel" autocomplete="off"></el-input>
         </el-form-item>
       </formCard>
-      <formCard title="资源来源">
+      <formCard title="资源来源" v-if="type !== 'edit'">
         <el-form-item label-width="126px" label="数据对接来源：" prop="dataSourceType">
-          <el-cascader @change="handleTypeChange" style="width: 480px" v-model="dataForm.dataSourceType" :options="typeList" :props="{ expandTrigger: 'hover' }"></el-cascader>
+          <el-cascader
+            :disabled="type === 'reupload'"
+            @change="handleTypeChange"
+            style="width: 480px"
+            v-model="dataForm.dataSourceType"
+            :options="typeList"
+            :props="{ expandTrigger: 'hover' }"
+          ></el-cascader>
         </el-form-item>
         <el-form-item v-if="dataForm.dataSourceType.includes('CSV')" label-width="126px" label="上传文件：" prop="dataFile">
           <weUpLoad key="dataCsvFile" accept=".csv" tips="将csv文件拖到此处，或点击此处上传" :beforeUpload="beforeUploadCsv" v-model="dataForm.dataFile"></weUpLoad>
@@ -72,7 +79,7 @@
           <el-input v-model="dataForm.filePath" placeholder="请输入访问文件URL" type="text" style="width: 480px" />
         </el-form-item>
       </formCard>
-      <formCard title="资源权限">
+      <formCard title="资源权限" v-if="type !== 'reupload'">
         <el-form-item label-width="96px" label="可见范围：" prop="datasetVisibility">
           <el-radio-group v-model="dataForm.datasetVisibility">
             <el-radio :label="0">私有</el-radio>
@@ -148,10 +155,15 @@
           </el-checkbox-group>
         </el-form-item>
       </formCard>
+      <formCard title="审批流" v-if="type !== 'reupload'">
+        <approveChain showAdd @addUserToChain="addUserToChain" @deleteUser="deleteApproveChainUser" :approveChainList="approveChainList" />
+      </formCard>
     </el-form>
     <div>
       <el-button size="medium" @click="back"> 取消 </el-button>
-      <el-button size="medium" icon="el-icon-plus" type="primary" @click="submit"> 确认创建 </el-button>
+      <el-button v-if="!type" size="medium" icon="el-icon-plus" type="primary" @click="createSubmit"> 确认创建 </el-button>
+      <el-button v-if="type === 'edit'" size="medium" icon="el-icon-edit" type="primary" @click="modifySubmit"> 确认编辑 </el-button>
+      <el-button v-if="type === 'reupload'" size="medium" icon="el-icon-plus" type="primary" @click="reUpload"> 确认重新上传 </el-button>
     </div>
   </div>
 </template>
@@ -162,12 +174,14 @@ import weUpLoad from '@/components/upLoad.vue'
 import { SET_FILEUPLOADTASK } from 'Store/mutation-types.js'
 import { mapMutations, mapGetters } from 'vuex'
 import { userSelect } from 'Mixin/userSelect.js'
+import approveChain from '@/components/approveChain.vue'
 export default {
   name: 'dataCreate',
   mixins: [userSelect],
   components: {
     formCard,
-    weUpLoad
+    weUpLoad,
+    approveChain
   },
   data() {
     return {
@@ -208,18 +222,25 @@ export default {
         userList: '指定用户',
         global: '全局'
       },
-      datasetId: ''
+      datasetId: '',
+      approveChainList: [],
+      type: ''
     }
   },
   created() {
     this.getDataUploadType()
-    const { datasetId } = this.$route.query
+    const { datasetId, type } = this.$route.query
+    this.type = type
     this.datasetId = datasetId
-    datasetId && this.getDetail({ datasetId })
+    if (this.datasetId) {
+      this.datasetId = datasetId
+      this.getDetail({ datasetId })
+    } else {
+      this.initApproveChain()
+    }
   },
   computed: {
-    ...mapGetters(['fileUploadTask', 'agencyList', 'agencyId', 'groupList']),
-
+    ...mapGetters(['fileUploadTask', 'agencyList', 'agencyId', 'groupList', 'userId']),
     rules() {
       return {
         datasetTitle: [
@@ -332,6 +353,22 @@ export default {
   },
   methods: {
     ...mapMutations([SET_FILEUPLOADTASK]),
+    initApproveChain() {
+      this.approveChainList = [
+        {
+          agency: '',
+          name: '数据申请人',
+          deleteAble: false,
+          visible: false
+        },
+        {
+          agency: this.agencyId,
+          name: this.userId,
+          deleteAble: false,
+          visible: false
+        }
+      ]
+    },
     // 获取数据集详情
     async getDetail(params) {
       this.loadingFlag = true
@@ -339,16 +376,17 @@ export default {
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { visibilityDetails, datasetTitle = '', datasetDesc = '', datasetLabel = '' } = res.data
+        const { visibilityDetails, datasetTitle = '', datasetDesc = '', datasetLabel = '', dataSourceType, approvalChain = '' } = res.data
         const visibilityDetailsData = JSON.parse(visibilityDetails)
-        const { userList = [] } = visibilityDetailsData
         const dataForm = { ...this.dataForm, datasetTitle, datasetDesc, datasetLabel, ...visibilityDetailsData, setting: [] }
+        // 回显权限设置
         Object.keys(this.rangeMap).forEach((key) => {
           const Value = this.rangeMap[key]
-          if (dataForm[Value]) {
+          if (visibilityDetailsData[Value]) {
             dataForm.setting.push(key)
           }
         })
+        const { userList = [] } = visibilityDetailsData
         dataForm.userList = userList.map((v) => {
           if (v.agency === this.agencyId) {
             return { ...v, user: v.user.split(',') }
@@ -356,12 +394,56 @@ export default {
             return { ...v }
           }
         })
+        if (this.type === 'reupload') {
+          dataForm.dataSourceType = dataSourceType
+        }
         this.dataForm = { ...dataForm }
-        console.log(this.dataForm, ' this.dataForm')
+        const approvalChainData = Array.isArray(JSON.parse(approvalChain)) ? JSON.parse(approvalChain) : []
+        const approvalChainList = approvalChainData.map((v) => {
+          return {
+            agency: this.agencyId,
+            name: v,
+            deleteAble: false,
+            visible: false
+          }
+        })
+        const approveChainList = [
+          {
+            agency: '',
+            name: '数据申请人',
+            deleteAble: false,
+            visible: false
+          },
+          ...approvalChainList
+        ]
+        this.approveChainList = approveChainList
+        console.log(this.dataForm, this.approveChainList, ' this.dataForm')
       }
     },
     addUser() {
       this.dataForm.userList.push({})
+    },
+    reUpload() {
+      try {
+        this.$refs.dataForm.validate((valid) => {
+          console.log(this.dataForm)
+          if (valid) {
+            const { datasetId } = this
+            const { dataSourceType, dataFile } = this.dataForm
+            if (dataSourceType === 'CSV' || dataSourceType === 'EXCEL') {
+              if (this.fileUploadTask && this.fileUploadTask.datasetId) {
+                this.$message.info('有其他数据集正在上传，请稍后再试')
+                return
+              }
+              const params = { dataSourceType, dataFile, datasetId, status: 'waitting', percentage: 0 }
+              this.SET_FILEUPLOADTASK(params) // 上传任务推到队列
+              this.$router.push({ path: 'dataManage' })
+            }
+          }
+        })
+      } catch (error) {
+        console.log(error)
+      }
     },
     deleteUser(i) {
       this.dataForm.userList.splice(i, 1)
@@ -449,18 +531,29 @@ export default {
       }
     },
     async createDataset(params, fileParams) {
-      const res = await dataManageServer.createDataset(params)
-      console.log(res)
+      const { dataSourceType, dataFile } = fileParams
+      if ((dataSourceType === 'CSV' || dataSourceType === 'EXCEL') && this.fileUploadTask && this.fileUploadTask.datasetId) {
+        this.$message.info('有其他数据集正在上传，请稍后再试')
+        return
+      }
+      const res = await dataManageServer.createDataset({ ...params })
       if (res.code === 0 && res.data) {
         console.log('创建成功')
         const { datasetId } = res.data
-        const { dataSourceType, dataFile } = fileParams
         if (dataSourceType === 'CSV' || dataSourceType === 'EXCEL') {
           const params = { dataSourceType, dataFile, datasetId, status: 'waitting', percentage: 0 }
           this.SET_FILEUPLOADTASK(params) // 上传任务推到队列
         }
         this.$message.success('数据集创建成功，开始上传数据')
         this.$router.push({ path: 'dataManage' })
+      }
+    },
+    async updateDataset(params) {
+      const res = await dataManageServer.updateDataset(params)
+      console.log(res)
+      if (res.code === 0) {
+        this.$message.success('数据集编辑成功')
+        this.getDetail({ datasetId: this.datasetId })
       }
     },
     handleTypeChange(data) {
@@ -501,8 +594,58 @@ export default {
     back() {
       history.back()
     },
-    submit() {
-      console.log(this.$refs.dataForm.validate())
+    addUserToChain(list) {
+      this.approveChainList = [...list]
+    },
+    deleteApproveChainUser(list) {
+      this.approveChainList = [...list]
+    },
+    handlePermissionDes(permissionData) {
+      const { datasetVisibility, setting, agencyList, userList, groupIdList } = permissionData
+      const datasetVisibilityDetails = { datasetVisibility }
+      let permissionDes = []
+      if (datasetVisibility) {
+        const settingValue = setting.map((v) => this.rangeMap[v])
+        settingValue.forEach((v) => {
+          datasetVisibilityDetails[v] = true
+        })
+        if (settingValue.includes('global')) {
+          permissionDes = [...permissionDes, '全局']
+        }
+        if (settingValue.includes('selfAgency')) {
+          permissionDes = [...permissionDes, '本机构内']
+        }
+        if (settingValue.includes('agencyList')) {
+          datasetVisibilityDetails.agencyList = agencyList
+          permissionDes = [...permissionDes, ...agencyList.map((v) => v + '机构')]
+        }
+        if (settingValue.includes('selfUserGroup')) {
+          datasetVisibilityDetails.groupIdList = groupIdList
+          const dataTags = this.groupList.filter((v) => groupIdList.includes(v.groupId)).map((v) => v.groupName + '(' + this.agencyId + '机构)')
+          permissionDes = [...permissionDes, ...dataTags]
+        }
+        if (settingValue.includes('userList')) {
+          datasetVisibilityDetails.userList = userList.map((v) => {
+            if (v.agency === this.agencyId) {
+              return { ...v, user: v.user.join(',') }
+            } else {
+              return { ...v }
+            }
+          })
+          const usersDesList = []
+          datasetVisibilityDetails.userList.forEach((v) => {
+            const users = v.user.split(',')
+            users.forEach((name) => {
+              usersDesList.push(name + '(' + v.agency + '机构)')
+            })
+          })
+          permissionDes = [...permissionDes, ...usersDesList]
+        }
+      }
+      datasetVisibilityDetails.permissionDes = permissionDes
+      return datasetVisibilityDetails
+    },
+    createSubmit() {
       try {
         this.$refs.dataForm.validate((valid) => {
           console.log(this.dataForm)
@@ -520,51 +663,31 @@ export default {
             if (sourceType === 'HDFS') {
               params.filePath = filePath
             }
-            let permissionDes = []
-            const datasetVisibilityDetails = { datasetVisibility }
-            if (datasetVisibility) {
-              const settingValue = setting.map((v) => this.rangeMap[v])
-              settingValue.forEach((v) => {
-                datasetVisibilityDetails[v] = true
-                // permissionDes[v] = { title: this.rangeMapLabel[v] }
-              })
-              if (settingValue.includes('global')) {
-                permissionDes = [...permissionDes, '全局']
-              }
-              if (settingValue.includes('selfAgency')) {
-                permissionDes = [...permissionDes, '本机构内']
-              }
-              if (settingValue.includes('agencyList')) {
-                datasetVisibilityDetails.agencyList = agencyList
-                permissionDes = [...permissionDes, ...agencyList.map((v) => v + '机构')]
-              }
-              if (settingValue.includes('selfUserGroup')) {
-                datasetVisibilityDetails.groupIdList = groupIdList
-                const dataTags = this.groupList.filter((v) => groupIdList.includes(v.groupId)).map((v) => v.groupName + '(' + this.agencyId + '机构)')
-                permissionDes = [...permissionDes, ...dataTags]
-              }
-              if (settingValue.includes('userList')) {
-                datasetVisibilityDetails.userList = userList.map((v) => {
-                  if (v.agency === this.agencyId) {
-                    return { ...v, user: v.user.join(',') }
-                  } else {
-                    return { ...v }
-                  }
-                })
-                const usersDesList = []
-                datasetVisibilityDetails.userList.forEach((v) => {
-                  const users = v.user.split(',')
-                  users.forEach((name) => {
-                    usersDesList.push(name + '(' + v.agency + '机构)')
-                  })
-                })
-                permissionDes = [...permissionDes, ...usersDesList]
-              }
-            }
-            // 权限中文描述
-            datasetVisibilityDetails.permissionDes = permissionDes
+            // 权限中文描述 及参数处理
+            const datasetVisibilityDetails = this.handlePermissionDes({ datasetVisibility, setting, agencyList, userList, groupIdList })
             this.datasetId && (params.datasetId = this.datasetId)
+            params.approvalChain = this.approveChainList.filter((v) => v.agency).map((v) => v.name)
             this.createDataset({ ...params, datasetVisibilityDetails }, { dataSourceType: sourceType, dataFile })
+          }
+        })
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    modifySubmit() {
+      // 不传输文件相关内容
+      try {
+        this.$refs.dataForm.validate((valid) => {
+          console.log(this.dataForm)
+          if (valid) {
+            console.log(this.dataForm)
+            const { datasetTitle, datasetDesc, datasetLabel, datasetVisibility, setting, agencyList, userList, groupIdList } = this.dataForm
+            const params = { datasetTitle, datasetDesc, datasetLabel, datasetVisibility }
+            // 权限中文描述 及参数处理
+            const datasetVisibilityDetails = this.handlePermissionDes({ datasetVisibility, setting, agencyList, userList, groupIdList })
+            params.datasetId = this.datasetId
+            params.approvalChain = this.approveChainList.filter((v) => v.agency).map((v) => v.name)
+            this.updateDataset({ ...params, datasetVisibilityDetails })
           }
         })
       } catch (error) {
@@ -585,7 +708,4 @@ div.create-data {
   width: 94px;
   text-align: left;
 }
-// ::v-deep .el-cascader-menu__wrap {
-//   height: 262px !important;
-// }
 </style>

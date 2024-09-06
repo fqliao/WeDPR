@@ -66,16 +66,19 @@
     <div class="title-radius" v-if="dataInfo.isOwner">使用记录</div>
     <div class="tableContent autoTableWrap" v-if="dataInfo.isOwner && total">
       <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
-        <el-table-column label="项目ID" prop="projectId" />
-        <el-table-column label="项目名称" prop="projectName" />
-        <el-table-column label="发起用户" prop="initAgency">
-          <template v-slot="scope"> {{ scope.row.initAgency }} | {{ scope.row.creater }} </template>
+        <el-table-column label="任务ID" prop="taskID" />
+        <el-table-column label="所属项目" prop="projectName" />
+        <el-table-column label="发起机构" prop="ownerAgency" />
+        <el-table-column label="发起用户" prop="owner" />
+        <el-table-column label="创建时间" prop="createTime" />
+        <el-table-column label="任务状态" prop="status">
+          <template v-slot="scope">
+            <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
+            <el-tag size="small" v-else-if="scope.row.status == 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
+            <el-tag size="small" v-else-if="scope.row.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
+            <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
+          </template>
         </el-table-column>
-        <el-table-column label="发起用户" prop="initAgency">
-          <template v-slot="scope"> {{ scope.row.initAgency }} | {{ scope.row.creater }} </template>
-        </el-table-column>
-        <el-table-column label="创建时间" prop="projectId" />
-        <el-table-column label="项目状态" prop="projectName" />
         <el-table-column label="操作">
           <template>
             <el-button size="small" type="text">查看详情</el-button>
@@ -93,9 +96,10 @@
   </div>
 </template>
 <script>
-import { dataManageServer } from 'Api'
+import { dataManageServer, projectManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import { mapGetters } from 'vuex'
+import { jobStatusMap } from 'Utils/constant.js'
 export default {
   name: 'dataDetail',
   mixins: [tableHeightHandle],
@@ -116,7 +120,8 @@ export default {
         agencyList: '指定机构',
         userList: '指定用户',
         global: '全局'
-      }
+      },
+      jobStatusMap
     }
   },
   created() {
@@ -136,13 +141,29 @@ export default {
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        this.dataInfo = { ...res.data, isOwner: res.data.ownerUserId === this.userId && res.data.ownerAgencyId === this.agencyId }
+        this.dataInfo = { ...res.data, isOwner: res.data.ownerUserName === this.userId && res.data.ownerAgencyName === this.agencyId }
         const { visibilityDetails } = this.dataInfo
         const { permissionDes = [] } = JSON.parse(visibilityDetails)
         this.dataInfo.permissionDes = permissionDes
-        console.log(permissionDes)
+        if (this.dataInfo.isOwner) {
+          this.queryJobsByDatasetID()
+        }
+        console.log(this.dataInfo)
       } else {
         this.dataInfo = {}
+      }
+    },
+    // 获取数据集详情
+    async queryJobsByDatasetID() {
+      this.loadingFlag = true
+      const { datasetId } = this
+      const res = await projectManageServer.queryJobsByDatasetID({ datasetID: datasetId })
+      this.loadingFlag = false
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { content, totalCount } = res.data
+        this.total = totalCount
+        this.tableData = content
       }
     },
     paginationHandle() {},

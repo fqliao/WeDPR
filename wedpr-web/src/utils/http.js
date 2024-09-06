@@ -28,14 +28,12 @@ http.interceptors.request.use(
 
 http.interceptors.response.use(
   (response) => {
-    console.log(response, 'response')
     const { headers } = response
     if (headers && headers.authorization) {
-      console.log(headers.authorization)
       const jwt = headers.authorization
       const { user: userData } = jwtDecode(jwt)
-      console.log(JSON.parse(userData), 'JSON.parse(userData)')
       const { username, roleName, groupInfos = [] } = JSON.parse(userData)
+      console.log(roleName, 'roleName')
       store.commit('SET_AUTHORIZATION', jwt)
       store.commit('SET_USERID', username)
       store.commit('SET_USERINFO', { ...store.state.userinfo, ...JSON.parse(userData) })
@@ -43,6 +41,8 @@ http.interceptors.response.use(
       const isGroupAdmin = groupInfos.map((v) => v.groupAdminName).includes(username)
       if (roleName === 'admin_user') {
         store.commit('SET_PERMISSION', permissionMap.admin_user)
+      } else if (roleName === 'agency_admin') {
+        store.commit('SET_PERMISSION', permissionMap.agency_admin)
       } else if (isGroupAdmin) {
         store.commit('SET_PERMISSION', permissionMap.group_admin)
       } else {
@@ -82,12 +82,12 @@ http.interceptors.response.use(
       //   })
       //   router.push({ path: '/login' })
       //   break
-      case 403:
-        Message.error({
-          message: '您的登录态已超时，请重新登录'
-        })
-        router.push({ path: '/login', query: { redirectUrl: encodeURIComponent(location.href) } })
-        break
+      // case 403:
+      //   Message.error({
+      //     message: '您的登录态已超时，请重新登录'
+      //   })
+      //   router.push({ path: '/login', query: { redirectUrl: encodeURIComponent(location.href) } })
+      //   break
       case 404:
         Message.error({
           message: '请求URL错误：' + error.message,

@@ -105,7 +105,7 @@ export default {
         this.SET_USERINFO({ ...data, ...res.data })
       }
     },
-    // 账号注册
+    // 账号登录
     async normalLogin(params) {
       const res = await loginManageServer.login(params)
       console.log(res)

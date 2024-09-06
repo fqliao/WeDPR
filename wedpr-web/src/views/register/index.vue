@@ -7,18 +7,54 @@
         <div class="login-form">
           <el-form ref="normalForm" :model="normalForm" :rules="normalFormRules" @keydown.enter.native="handleSubmitRegister">
             <el-form-item prop="mobile">
-              <el-tooltip class="item" effect="dark" :content="userNametips" placement="left-start">
-                <el-input type="text" v-model="normalForm.username" placeholder="请输入账号"> </el-input>
+              <el-tooltip class="item" effect="light" placement="bottom">
+                <div slot="content" class="check-info">
+                  <div class="rule">
+                    <el-icon v-if="!userNameRule.lengthStatus" style="color: #ff4d4f" class="icon el-icon-error" />
+                    <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
+                    用户名长度3～18个字符
+                  </div>
+                  <div class="rule">
+                    <el-icon v-if="!userNameRule.charStatus" style="color: #ff4d4f" class="icon el-icon-error" />
+                    <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
+                    仅支持数字、大小写字母、下划线_、连接符-
+                  </div>
+                </div>
+                <el-input type="text" v-model="normalForm.username" @input="checkUserName" placeholder="请输入账号"> </el-input>
               </el-tooltip>
             </el-form-item>
             <el-form-item prop="password">
-              <el-tooltip class="item" effect="dark" :content="passwordtips" placement="left-start">
-                <el-input type="password" v-model="normalForm.password" placeholder="请输入登录密码" show-password> </el-input>
+              <el-tooltip class="item" effect="light" placement="bottom">
+                <div slot="content" class="check-info">
+                  <div class="rule">
+                    <el-icon v-if="!passwordRule.lengthStatus" style="color: #ff4d4f" class="icon el-icon-error" />
+                    <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
+                    密码长度8~18个字符
+                  </div>
+                  <div class="rule">
+                    <el-icon v-if="!passwordRule.charStatus" style="color: #ff4d4f" class="icon el-icon-error" />
+                    <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
+                    至少包含一个数字、一个大写字母、一个小写字母、一个特殊字符
+                  </div>
+                </div>
+                <el-input type="password" v-model="normalForm.password" @input="checkPassword" placeholder="请输入登录密码" show-password> </el-input>
               </el-tooltip>
             </el-form-item>
             <el-form-item prop="passwordRepeat">
-              <el-tooltip class="item" effect="dark" :content="passwordtips" placement="left-start">
-                <el-input type="password" v-model="normalForm.passwordRepeat" placeholder="确认密码" show-password> </el-input>
+              <el-tooltip class="item" effect="light" :content="passwordtips" placement="bottom">
+                <div slot="content" class="check-info">
+                  <div class="rule">
+                    <el-icon v-if="!passwordRepeatRule.lengthStatus" style="color: #ff4d4f" class="icon el-icon-error" />
+                    <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
+                    密码长度8~18个字符
+                  </div>
+                  <div class="rule">
+                    <el-icon v-if="!passwordRepeatRule.charStatus" style="color: #ff4d4f" class="icon el-icon-error" />
+                    <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
+                    至少包含一个数字、一个大写字母、一个小写字母、一个特殊字符
+                  </div>
+                </div>
+                <el-input type="password" v-model="normalForm.passwordRepeat" @input="checkPasswordRepeat" placeholder="确认密码" show-password> </el-input>
               </el-tooltip>
             </el-form-item>
             <el-form-item prop="phone">
@@ -53,13 +89,25 @@ export default {
         email: ''
       },
       userNametips: '用户名长度3～18个字符，支持数字、大小写字母、下划线_、连接符-',
-      passwordtips: '密码长度8~18个字符，支持数字、大小写字母、特殊字符\'-!"#$%&()*,./:;?@[]^_`{|}~+<=>，至少包含一个数字和一个大写字母和一个小写字母和一个特殊字符',
+      passwordtips: '密码长度8~18个字符，至少包含一个数字、一个大写字母、一个小写字母、一个特殊字符',
       normalFormRules: {
         username: [{ validator: this.validUsername, trigger: 'blur' }],
         password: [{ validator: this.validPassword, trigger: 'blur' }],
         passwordRepeat: [{ validator: this.validatePasswordReapeat, trigger: 'blur' }],
         phone: [{ validator: this.validateMobile, trigger: 'blur' }],
         email: [{ required: true, message: '邮箱不能为空', trigger: 'blur' }]
+      },
+      userNameRule: {
+        lengthStatus: false,
+        charStatus: false
+      },
+      passwordRule: {
+        lengthStatus: false,
+        charNumStatus: false
+      },
+      passwordRepeatRule: {
+        lengthStatus: false,
+        charNumStatus: false
       }
     }
   },
@@ -96,6 +144,45 @@ export default {
     },
     goLogin() {
       this.$router.push('/login')
+    },
+    checkUserName(userName) {
+      console.log(userName, 'userName')
+      if (/^.{3,18}$/.test(userName)) {
+        this.userNameRule.lengthStatus = true
+      } else {
+        this.userNameRule.lengthStatus = false
+      }
+      if (/^[a-zA-Z0-9_-]+$/.test(userName)) {
+        this.userNameRule.charStatus = true
+      } else {
+        this.userNameRule.charStatus = false
+      }
+    },
+    checkPassword(password) {
+      console.log(password, 'password')
+      if (/^.{8,18}$/.test(password)) {
+        this.passwordRule.lengthStatus = true
+      } else {
+        this.passwordRule.lengthStatus = false
+      }
+      if (/^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]+$/.test(password)) {
+        this.passwordRule.charStatus = true
+      } else {
+        this.passwordRule.charStatus = false
+      }
+    },
+    checkPasswordRepeat(password) {
+      console.log(password, 'password')
+      if (/^.{8,18}$/.test(password)) {
+        this.passwordRepeatRule.lengthStatus = true
+      } else {
+        this.passwordRepeatRule.lengthStatus = false
+      }
+      if (/^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]+$/.test(password)) {
+        this.passwordRepeatRule.charStatus = true
+      } else {
+        this.passwordRepeatRule.charStatus = false
+      }
     },
     validateMobile(rule, value, callback) {
       if (!value) {
@@ -193,6 +280,18 @@ export default {
         color: #3071f2;
         cursor: pointer;
       }
+    }
+  }
+}
+</style>
+<style lang="less">
+div.check-info {
+  div.rule {
+    line-height: 20px;
+    i.icon {
+      font-size: 14px;
+      margin-right: 4px;
+      transform: translateY(1px);
     }
   }
 }

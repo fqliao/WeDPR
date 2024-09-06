@@ -160,7 +160,7 @@ export default {
         data.unshift({ agency: this.agencyId, ownerUserName: this.userId })
         const approveChainListStr = data.map((v) => {
           return JSON.stringify({
-            agency: v.ownerAgencyId,
+            agency: v.ownerAgencyName,
             name: v.ownerUserName,
             deleteAble: false,
             visible: false

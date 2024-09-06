@@ -1,5 +1,32 @@
 export const permissionMap = {
-  admin_user: ['home', 'groupManage', 'tenantManage', 'accountManage', 'dataManage', 'projectManage', 'messageManage', 'logManage', 'approveManage', 'serverManage'],
-  original_user: ['home', 'tenantManage', 'accountManage', 'dataManage', 'projectManage', 'messageManage', 'logManage', 'approveManage', 'serverManage'],
-  group_admin: ['home', 'groupManage', 'tenantManage', 'accountManage', 'dataManage', 'projectManage', 'messageManage', 'logManage', 'approveManage', 'serverManage']
+  admin_user: [
+    'home',
+    'feed',
+    'groupManage',
+    'tenantManage',
+    'accessKeyManage',
+    'accountManage',
+    'dataManage',
+    'projectManage',
+    'messageManage',
+    'logManage',
+    'approveManage',
+    'serverManage'
+  ],
+  original_user: ['home', 'feed', 'tenantManage', 'accountManage', 'accessKeyManage', 'dataManage', 'projectManage', 'messageManage', 'logManage', 'approveManage', 'serverManage'],
+  group_admin: [
+    'home',
+    'feed',
+    'groupManage',
+    'tenantManage',
+    'accountManage',
+    'accessKeyManage',
+    'dataManage',
+    'projectManage',
+    'messageManage',
+    'logManage',
+    'approveManage',
+    'serverManage'
+  ],
+  agency_admin: ['agencyManage', 'feed', 'dataManage', 'projectManage', 'logManage', 'certificateManage', 'addCertificate', 'screen']
 }

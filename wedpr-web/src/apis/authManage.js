@@ -16,6 +16,7 @@ const queryFollowerAuthList = (params) => http.post('/auth/queryFollowerAuthList
 const queryAuthTemplateDetails = (params) => http.post('/auth/template/queryAuthTemplateDetails ', params)
 // 查询关注信息
 const queryAuthDetail = (params) => http.get('/auth/queryAuthDetail', params)
-// 查询关注信息
+// 查询待办列表信息
+const queryTODOList = (params) => http.post('/auth/queryTODOList', params)
 
-export default { queryAuthTemplateDetails, createAuth, updateAuth, updateAuthResult, closeAuthList, queryAuthList, queryFollowerAuthList, queryAuthDetail }
+export default { queryTODOList, queryAuthTemplateDetails, createAuth, updateAuth, updateAuthResult, closeAuthList, queryAuthList, queryFollowerAuthList, queryAuthDetail }

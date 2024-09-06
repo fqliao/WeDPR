@@ -2,13 +2,13 @@
   <el-dialog width="1160px" height="806px" title="选择参与方" @close="handleClose" :visible="showParticipateModal">
     <div class="dataset-con">
       <el-form label-position="right" size="small" :model="dataForm" :rules="dataFormFormRules" ref="dataForm" :label-width="formLabelWidth">
-        <el-form-item label="选择参与方：" prop="ownerAgencyId">
-          <el-select style="width: 1010px" v-model="dataForm.ownerAgencyId" placeholder="请选择参与方">
+        <el-form-item label="选择参与方：" prop="ownerAgencyName">
+          <el-select style="width: 1010px" v-model="dataForm.ownerAgencyName" placeholder="请选择参与方">
             <el-option :label="item.label" :value="item.value" v-for="item in agencyList" :key="item.value"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="选择数据：" prop="datasetInfo">
-          <dataSelect :key="dataForm.ownerAgencyId" :ownerAgencyId="dataForm.ownerAgencyId" @selected="selected" />
+          <dataSelect :key="dataForm.ownerAgencyName" :ownerAgencyName="dataForm.ownerAgencyName" @selected="selected" />
         </el-form-item>
       </el-form>
     </div>
@@ -36,12 +36,12 @@ export default {
   data() {
     return {
       dataForm: {
-        ownerAgencyId: '',
+        ownerAgencyName: '',
         datasetInfo: null
       },
 
       dataFormFormRules: {
-        ownerAgencyId: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
+        ownerAgencyName: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
         datasetInfo: [{ required: true, message: '数据集不能为空', trigger: 'blur' }]
       },
       formLabelWidth: '112px',
@@ -53,7 +53,7 @@ export default {
     }
   },
   created() {
-    this.dataForm.ownerAgencyId = this.agencyId
+    this.dataForm.ownerAgencyName = this.agencyId
   },
   computed: {
     ...mapGetters(['agencyList', 'agencyId'])
@@ -61,7 +61,7 @@ export default {
   methods: {
     handleClose() {
       this.dataForm = {
-        ownerAgencyId: '',
+        ownerAgencyName: '',
         datasetInfo: null
       }
       this.$emit('closeModal')

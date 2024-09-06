@@ -11,7 +11,8 @@ import {
   SET_AGENCYNAME,
   SET_BREAD,
   SET_GROUPLIST,
-  SET_PBKEY
+  SET_PBKEY,
+  SET_TODONUM
 } from './mutation-types'
 import { setStore } from 'Utils/sessionstore'
 // 必须是同步代码
@@ -66,6 +67,10 @@ const mutation = {
   [SET_PBKEY](state, pbKey) {
     state.pbKey = pbKey
     setStore('pbKey', pbKey)
+  },
+  [SET_TODONUM](state, todoNum) {
+    state.todoNum = todoNum
+    setStore('todoNum', todoNum)
   }
 }
 export default mutation

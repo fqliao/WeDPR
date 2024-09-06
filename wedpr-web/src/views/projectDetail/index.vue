@@ -124,7 +124,8 @@ export default {
       },
       typeList: [],
       jobStatusList,
-      jobStatusMap
+      jobStatusMap,
+      pageMode: process.env.VUE_APP_MODE
     }
   },
   created() {

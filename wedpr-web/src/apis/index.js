@@ -9,6 +9,12 @@ import projectManageServer from './projectManage'
 import commonService from './commonService'
 import settingManageServer from './settingManage'
 import jobManageServer from './jobManage'
+import dashboardManageServer from './dashboardManage'
+import agencyManageServer from './agencyManage'
+import certificateManageServer from './certificateManage'
+import jupyterManageServer from './jupyterManage'
+import accessKeyManageServer from './accessKeyManage'
+import serviceManageServer from './serviceManage'
 export {
   projectManageServer,
   authManageServer,
@@ -20,5 +26,11 @@ export {
   voteManageServer,
   commonService,
   settingManageServer,
-  jobManageServer
+  jobManageServer,
+  dashboardManageServer,
+  agencyManageServer,
+  certificateManageServer,
+  jupyterManageServer,
+  accessKeyManageServer,
+  serviceManageServer
 }
