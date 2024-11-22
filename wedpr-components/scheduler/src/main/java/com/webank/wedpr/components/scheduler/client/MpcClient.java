@@ -25,6 +25,9 @@ public class MpcClient {
     private final int httpRetryDelayMilli = DEFAULT_HTTP_REQUEST_RETRY_DELAY_MILLI;
 
     private static final String RUN_FINISHED_STATUS = "COMPLETED";
+    private static final String RUN_RUNNING_STATUS = "RUNNING";
+    private static final String RUN_FAILED_STATUS = "FAILED";
+    private static final String RUN_KILLED_STATUS = "KILLED";
 
     private final Integer MpcSuccessStatus = 0;
     private final Integer MpcDuplicatedTaskStatus = 1;
@@ -77,14 +80,15 @@ public class MpcClient {
     }
 
     public void pollTask(String taskId) throws WeDPRException {
-        String mpcRunTaskMethod = MPCExecutorConfig.getMpcRunTaskMethod();
+        String mpcQueryTaskStatusMethod = MPCExecutorConfig.getMpcQueryTaskStatusMethod();
         String mpcToken = MPCExecutorConfig.getMpcToken();
         MpcQueryJobRequest mpcQueryJobRequest = new MpcQueryJobRequest();
         mpcQueryJobRequest.setJobId(taskId);
 
         while (true) {
             JsonRpcResponse response =
-                    sendRequestWithRetry(taskId, mpcRunTaskMethod, mpcToken, mpcQueryJobRequest);
+                    sendRequestWithRetry(
+                            taskId, mpcQueryTaskStatusMethod, mpcToken, mpcQueryJobRequest);
 
             // response error
             if (!response.statusOk()) {
@@ -96,7 +100,7 @@ public class MpcClient {
                                 + response);
             }
 
-            if (response.getResult().getStatus().compareToIgnoreCase(RUN_FINISHED_STATUS) == 0) {
+            if (response.getResult().getStatus().compareToIgnoreCase(RUN_RUNNING_STATUS) != 0) {
                 logger.info(
                         "MPC task execute successfully, taskId: {}, response: {}",
                         taskId,

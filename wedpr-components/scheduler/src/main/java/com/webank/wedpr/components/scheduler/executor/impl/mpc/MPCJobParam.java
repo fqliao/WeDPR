@@ -104,7 +104,7 @@ public class MPCJobParam {
             PSIJobParam.PartyResourceInfo partyResourceInfo =
                     new PSIJobParam.PartyResourceInfo(datasetInfo.getDataset(), output);
             partyResourceInfo.setIdFields(datasetInfo.getIdFields());
-            partyResourceInfo.setReceiveResult(datasetInfo.getReceiveResult());
+            partyResourceInfo.setReceiveResult(true);
             partyResourceInfos.add(partyResourceInfo);
         }
         psiJobParam.setPartyResourceInfoList(partyResourceInfos);
