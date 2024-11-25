@@ -100,12 +100,19 @@ public class MpcClient {
                                 + response);
             }
 
-            if (response.getResult().getStatus().compareToIgnoreCase(RUN_RUNNING_STATUS) != 0) {
+            // response finish
+            if (response.getResult().getStatus().compareToIgnoreCase(RUN_FINISHED_STATUS) == 0) {
                 logger.info(
                         "MPC task execute successfully, taskId: {}, response: {}",
                         taskId,
                         response);
                 return;
+            }
+
+            if (response.getResult().getStatus().compareToIgnoreCase(RUN_RUNNING_STATUS) != 0) {
+                logger.error("MPC task execute failed, taskId: {}, response: {}", taskId, response);
+                throw new WeDPRException(
+                        "MPC task execute failed, taskId: " + taskId + " ,response: " + response);
             }
 
             WorkerUtils.sleep(pollIntervalMilli);
