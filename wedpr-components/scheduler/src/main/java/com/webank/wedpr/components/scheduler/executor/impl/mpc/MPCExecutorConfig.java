@@ -23,6 +23,8 @@ public class MPCExecutorConfig {
     // true);
     private static final String MPC_RUN_TASK_METHOD =
             WeDPRConfig.apply("wedpr.executor.mpc.method.runTask", "asyncRun");
+    private static final String MPC_QUERY_TASK_STATUS_METHOD =
+            WeDPRConfig.apply("wedpr.executor.mpc.method.queryTask", "query");
     private static final String MPC_KILL_TASK_METHOD =
             WeDPRConfig.apply("wedpr.executor.mpc.method.killTask", "kill");
     private static final String MPC_TOKEN = WeDPRConfig.apply("wedpr.executor.mpc.token", "", true);
@@ -58,6 +60,10 @@ public class MPCExecutorConfig {
 
     public static String getMpcRunTaskMethod() {
         return MPC_RUN_TASK_METHOD;
+    }
+
+    public static String getMpcQueryTaskStatusMethod() {
+        return MPC_QUERY_TASK_STATUS_METHOD;
     }
 
     public static String getMpcKillTaskMethod() {
