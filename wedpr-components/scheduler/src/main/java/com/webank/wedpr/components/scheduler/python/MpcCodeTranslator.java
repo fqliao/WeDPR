@@ -42,7 +42,7 @@ public class MpcCodeTranslator {
                     + "#                   INNER JOIN source1 AS s1 ON s0.id = s1.id)\\\n"
                     + "#               INNER JOIN source2 AS s2 ON s0.id = s2.id;\"\n"
                     + "\n"
-                    + "print (\"## original SQL => \" + str(sql))\n"
+                    + "# print (\"## original SQL => \" + str(sql))\n"
                     + "\n"
                     + "try:\n"
                     + "    code_gen = CodeGenerator(sql)\n"
@@ -77,12 +77,21 @@ public class MpcCodeTranslator {
     public static void main(String[] args)
             throws WeDPRException, IOException, InterruptedException {
 
-        String sql = "select 2 * source0.field0 * source1.field0 from source0,source1;";
+        // String sql = "select 2 * source0.field0 * source1.field0 from source0,source1;";
+
+        String sql =
+                "SELECT s0.field0 * s1.field0 + 2* (s2.field1 - s1.field1) + 3* s0.field2 / s1.field2\n"
+                        + "    AS credit_score\n"
+                        + "FROM source0 AS s0,\n"
+                        + "     source1 AS s1,\n"
+                        + "     source2 AS s2\n"
+                        + "WHERE s0.id = s1.id = s2.id;";
+
         if (args.length > 0) {
             sql = args[0];
         }
 
-        System.out.println("# " + sql);
+        //      //  System.out.println("# " + sql);
 
         String mpcCode = MpcCodeTranslator.translateSqlToMpcCode(sql);
 

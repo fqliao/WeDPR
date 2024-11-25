@@ -57,7 +57,8 @@ public class DagSchedulerExecutor implements Executor {
         this.threadPoolService = threadPoolService;
         this.executorManager = executorManager;
 
-        this.workFlowScheduler = new DagWorkFlowSchedulerImpl(loadBalancer, jobWorkerMapper);
+        this.workFlowScheduler =
+                new DagWorkFlowSchedulerImpl(loadBalancer, jobWorkerMapper, fileStorageInterface);
 
         JobWorkFlowBuilderManager jobWorkflowBuilderManager =
                 new JobWorkFlowBuilderManager(fileMetaBuilder, fileStorageInterface, jobChecker);
