@@ -14,6 +14,7 @@ import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
 import com.webank.wedpr.components.scheduler.workflow.WorkFlow;
 import com.webank.wedpr.components.scheduler.workflow.WorkFlowNode;
 import com.webank.wedpr.components.scheduler.workflow.WorkFlowUpstream;
+import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,14 +28,19 @@ public class DagWorkFlowSchedulerImpl implements WorkFlowScheduler {
 
     private LoadBalancer loadBalancer;
     private JobWorkerMapper jobWorkerMapper;
+    private FileStorageInterface fileStorageInterface;
 
     // TODO: make it config items
     private final Integer workerRetryTimes = -1;
     private final Integer workerRetryDelayMillis = -1;
 
-    public DagWorkFlowSchedulerImpl(LoadBalancer loadBalancer, JobWorkerMapper jobWorkerMapper) {
+    public DagWorkFlowSchedulerImpl(
+            LoadBalancer loadBalancer,
+            JobWorkerMapper jobWorkerMapper,
+            FileStorageInterface storage) {
         this.loadBalancer = loadBalancer;
         this.jobWorkerMapper = jobWorkerMapper;
+        this.fileStorageInterface = storage;
     }
 
     public LoadBalancer getLoadBalancer() {
@@ -109,7 +115,8 @@ public class DagWorkFlowSchedulerImpl implements WorkFlowScheduler {
                             workerRetryTimes,
                             workerRetryDelayMillis,
                             loadBalancer,
-                            jobWorkerMapper);
+                            jobWorkerMapper,
+                            fileStorageInterface);
             workerList.add(worker);
         }
 

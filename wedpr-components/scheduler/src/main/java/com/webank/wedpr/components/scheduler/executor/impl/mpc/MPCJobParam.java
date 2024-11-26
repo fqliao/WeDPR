@@ -3,6 +3,7 @@ package com.webank.wedpr.components.scheduler.executor.impl.mpc;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.webank.wedpr.common.config.WeDPRCommonConfig;
 import com.webank.wedpr.common.protocol.JobType;
+import com.webank.wedpr.common.protocol.StorageType;
 import com.webank.wedpr.common.utils.Common;
 import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.common.utils.WeDPRException;
@@ -34,6 +35,7 @@ public class MPCJobParam {
     // the dataset information
     private List<DatasetInfo> dataSetList;
 
+    @JsonIgnore private boolean receiveResult = true;
     @JsonIgnore private DatasetInfo selfDataset;
     @JsonIgnore private int selfIndex = -1;
     @JsonIgnore private transient List<String> datasetIDList;
@@ -45,9 +47,9 @@ public class MPCJobParam {
         if (dataSetList == null || dataSetList.isEmpty()) {
             throw new WeDPRException("Invalid mpc job param, must define the dataSet information!");
         }
-        if (this.jobType == null) {
-            throw new WeDPRException("Invalid mpc job param, must define the job type!");
-        }
+        //        if (this.jobType == null) {
+        //            throw new WeDPRException("Invalid mpc job param, must define the job type!");
+        //        }
 
         if (Common.isEmptyStr(sql) && Common.isEmptyStr(mpcContent)) {
             // sql and mpc content is both empty
@@ -80,17 +82,47 @@ public class MPCJobParam {
             if (agency.equals(ownerAgency)) {
                 selfDataset = datasetInfo;
                 selfIndex = index;
+                receiveResult = datasetInfo.getReceiveResult();
             }
 
             index++;
         }
 
         logger.info(
-                "## check params, selfIndex: {}, selfDataset: {}, shareBytesLength: {}, needRunPsi: {}",
+                "## check params, selfIndex: {}, selfDataset: {}, shareBytesLength: {}, needRunPsi: {}, receiveResult: {}",
                 selfIndex,
                 selfDataset.getDataset().getDatasetID(),
                 shareBytesLength,
-                needRunPsi);
+                needRunPsi,
+                receiveResult);
+    }
+
+    public FileMeta getMpcPath(FileMetaBuilder fileMetaBuilder, String jobId, String fileName) {
+        if (this.selfDataset == null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("self dataset not exist, jobId: {}", jobId);
+            }
+            return null;
+        }
+
+        FileMeta dataset = selfDataset.getDataset();
+        String ownerAgency = dataset.getOwnerAgency();
+        String owner = dataset.getOwner();
+        StorageType storageType = dataset.getStorageType();
+
+        String mpcResultFilePath =
+                WeDPRCommonConfig.getUserJobCachePath(
+                        owner, JobType.MPC.getType(), jobId, fileName);
+
+        FileMeta fileMeta =
+                fileMetaBuilder.build(storageType, mpcResultFilePath, owner, ownerAgency);
+        fileMetaBuilder.getAbsoluteDir(fileMeta);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("mpc job params get result file: {}", fileMeta);
+        }
+
+        return fileMeta;
     }
 
     public PSIJobParam toPSIJobParam(FileMetaBuilder fileMetaBuilder) {

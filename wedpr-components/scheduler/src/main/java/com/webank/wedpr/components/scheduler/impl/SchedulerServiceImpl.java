@@ -23,10 +23,12 @@ import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
 import com.webank.wedpr.components.scheduler.JobDetailResponse;
 import com.webank.wedpr.components.scheduler.SchedulerService;
+import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
 import com.webank.wedpr.components.scheduler.executor.impl.ml.MLExecutorClient;
 import com.webank.wedpr.components.scheduler.executor.impl.ml.model.ModelJobResult;
 import com.webank.wedpr.components.scheduler.executor.impl.ml.request.GetTaskResultRequest;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.executor.impl.mpc.MPCJobParam;
 import com.webank.wedpr.components.scheduler.executor.impl.psi.model.PSIJobParam;
 import java.util.List;
 import org.slf4j.Logger;
@@ -90,6 +92,21 @@ public class SchedulerServiceImpl implements SchedulerService {
         if (JobType.isPirJob(jobDO.getJobType())) {
             response.setResultFileInfo(fileMetaBuilder.build(jobDO.getJobResult().getResult()));
         }
+
+        // the mpc job, get result files
+        if (JobType.isMPCJob(jobDO.getJobType())) {
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("mpc job param: {}", jobDO.getParam());
+            }
+
+            MPCJobParam mpcJobParam = MPCJobParam.deserialize(jobDO.getParam());
+            mpcJobParam.check();
+            response.setResultFileInfo(
+                    mpcJobParam.getMpcPath(
+                            fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName()));
+        }
+
         return response;
     }
 }

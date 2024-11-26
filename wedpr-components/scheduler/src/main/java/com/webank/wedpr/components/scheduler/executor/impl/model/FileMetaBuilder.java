@@ -42,7 +42,7 @@ public class FileMetaBuilder {
     }
 
     // add baseDir to the filePath
-    public void getAbsoluteDir(FileMeta fileMeta) throws Exception {
+    public void getAbsoluteDir(FileMeta fileMeta) {
         String pathWithHome =
                 storagePathBuilder.getAbsoluteDir(
                         fileMeta.getStorageType().getName(), fileMeta.getPath());

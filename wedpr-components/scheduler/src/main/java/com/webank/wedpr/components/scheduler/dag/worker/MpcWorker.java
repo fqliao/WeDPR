@@ -1,12 +1,21 @@
 package com.webank.wedpr.components.scheduler.dag.worker;
 
 import com.webank.wedpr.common.protocol.ServiceName;
+import com.webank.wedpr.common.utils.Common;
+import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
 import com.webank.wedpr.components.scheduler.client.MpcClient;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
+import com.webank.wedpr.components.scheduler.dag.utils.MpcResultFileResolver;
+import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
+import com.webank.wedpr.components.scheduler.executor.impl.mpc.request.MpcRunJobRequest;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
+import com.webank.wedpr.components.storage.api.FileStorageInterface;
+import com.webank.wedpr.components.storage.impl.hdfs.HDFSStoragePath;
 import com.webank.wedpr.sdk.jni.transport.model.ServiceMeta;
+import java.io.File;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +28,19 @@ public class MpcWorker extends Worker {
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
-            JobWorkerMapper jobWorkerMapper) {
-        super(jobWorker, workerRetryTimes, workerRetryDelayMillis, loadBalancer, jobWorkerMapper);
+            JobWorkerMapper jobWorkerMapper,
+            FileStorageInterface fileStorageInterface) {
+        super(
+                jobWorker,
+                workerRetryTimes,
+                workerRetryDelayMillis,
+                loadBalancer,
+                jobWorkerMapper,
+                fileStorageInterface);
     }
 
     @Override
-    public WorkerStatus engineRun() throws Exception {
+    public WorkerStatus onRun() throws Exception {
 
         String jobId = getJobId();
         String workerId = getWorkerId();
@@ -64,12 +80,107 @@ public class MpcWorker extends Worker {
         } finally {
             long endTimeMillis = System.currentTimeMillis();
             logger.info(
-                    "## mpc engine run end, jobId: {}, workerId: {}, elapsed: {} ms",
+                    "## mpc engine run end, jobId: {}, workerId: {}, elapsedMs: {}",
                     jobId,
                     workerId,
                     (endTimeMillis - startTimeMillis));
         }
 
         return WorkerStatus.SUCCESS;
+    }
+
+    @SneakyThrows
+    @Override
+    public void onFinished() {
+
+        super.onFinished();
+
+        String workerArgs = getArgs();
+        MpcRunJobRequest mpcRunJobRequest =
+                ObjectMapperFactory.getObjectMapper().readValue(workerArgs, MpcRunJobRequest.class);
+        boolean receiveResult = mpcRunJobRequest.isReceiveResult();
+        if (!receiveResult) {
+            logger.info(
+                    "## mpc party not receive result, jobId: {}, workId: {}",
+                    getJobId(),
+                    getWorkerId());
+            return;
+        }
+
+        long startTimeMillis = System.currentTimeMillis();
+
+        logger.info(
+                "## mpc worker on finished, jobId: {}, workerId: {}, args: {}",
+                getJobId(),
+                getWorkerId(),
+                workerArgs);
+
+        String outputFilePath = mpcRunJobRequest.getOutputFilePath();
+        String resultFilePath = mpcRunJobRequest.getResultFilePath();
+
+        String owner = mpcRunJobRequest.getOwner();
+        String userGroup = null;
+        String mpcOutputFilePath =
+                Common.joinPath(
+                        ExecutorConfig.getJobCacheDir(getJobId()),
+                        ExecutorConfig.getMpcOutputFileName());
+        String mpcResultFilePath =
+                Common.joinPath(
+                        ExecutorConfig.getJobCacheDir(getJobId()),
+                        ExecutorConfig.getMpcResultFileName());
+
+        try {
+            // 1. download mpc_result.txt
+            logger.info(
+                    "begin to download mpc output file from {}=>{}, jobId: {}",
+                    outputFilePath,
+                    mpcOutputFilePath,
+                    getJobId());
+
+            FileStorageInterface fileStorage = getFileStorageInterface();
+            HDFSStoragePath hdfsStoragePath = new HDFSStoragePath(outputFilePath);
+            fileStorage.download(hdfsStoragePath, mpcOutputFilePath);
+
+            logger.info("download the mpc output file successfully, jobId: {}", getJobId());
+
+            // 2. trans mpc_result.txt to mpc_result.csv
+            logger.info(
+                    "begin to trans mpc output file to mpc result file from {}=>{}, jobId: {}",
+                    mpcOutputFilePath,
+                    mpcResultFilePath,
+                    getJobId());
+
+            MpcResultFileResolver mpcResultFileResolver = new MpcResultFileResolver();
+            mpcResultFileResolver.transMpcOutputFile2ResultFile(
+                    getJobId(), mpcOutputFilePath, mpcResultFilePath);
+
+            logger.info(
+                    "trans mpc output file to mpc result file successfully, jobId: {}", getJobId());
+
+            // 3. upload mpc_result.csv to storage
+            logger.info(
+                    "begin to upload mpc result file from {}=>{}, jobId: {}",
+                    mpcResultFilePath,
+                    resultFilePath,
+                    getJobId());
+
+            FileStorageInterface.FilePermissionInfo permissionInfo =
+                    new FileStorageInterface.FilePermissionInfo(owner, userGroup);
+            fileStorage.upload(
+                    permissionInfo, Boolean.TRUE, mpcResultFilePath, resultFilePath, true);
+
+            logger.info("upload mpc result file successfully, jobId: {}", getJobId());
+        } finally {
+            // 4. remove temp file
+            Common.deleteFile(new File(mpcOutputFilePath));
+            Common.deleteFile(new File(mpcResultFilePath));
+
+            long endTimeMillis = System.currentTimeMillis();
+
+            logger.info(
+                    "## mpc worker on finished end, jobId: {}, costMs: {}",
+                    getJobId(),
+                    (endTimeMillis - startTimeMillis));
+        }
     }
 }

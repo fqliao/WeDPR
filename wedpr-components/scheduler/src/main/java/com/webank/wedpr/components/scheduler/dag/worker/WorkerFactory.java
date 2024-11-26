@@ -6,6 +6,7 @@ import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
+import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,8 @@ public class WorkerFactory {
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
-            JobWorkerMapper jobWorkerMapper)
+            JobWorkerMapper jobWorkerMapper,
+            FileStorageInterface fileStorageInterface)
             throws WeDPRException {
 
         String jobId = jobWorker.getJobId();
@@ -30,7 +32,8 @@ public class WorkerFactory {
                     workerRetryTimes,
                     workerRetryDelayMillis,
                     loadBalancer,
-                    jobWorkerMapper);
+                    jobWorkerMapper,
+                    fileStorageInterface);
         }
 
         if (WorkerNodeType.isMLJob(workerType)) {
@@ -39,7 +42,8 @@ public class WorkerFactory {
                     workerRetryTimes,
                     workerRetryDelayMillis,
                     loadBalancer,
-                    jobWorkerMapper);
+                    jobWorkerMapper,
+                    fileStorageInterface);
         }
 
         if (JobType.isMPCJob(workerType)) {
@@ -48,7 +52,8 @@ public class WorkerFactory {
                     workerRetryTimes,
                     workerRetryDelayMillis,
                     loadBalancer,
-                    jobWorkerMapper);
+                    jobWorkerMapper,
+                    fileStorageInterface);
         }
 
         logger.error("Unsupported worker type, jobId: {}, workType: {}", jobId, workerType);

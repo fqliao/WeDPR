@@ -23,7 +23,7 @@ sql = ' '.join(sys.argv[1:])
 #                   INNER JOIN source1 AS s1 ON s0.id = s1.id)\
 #               INNER JOIN source2 AS s2 ON s0.id = s2.id;"
 
-print ("## original SQL => " + str(sql))
+# print ("## original SQL => " + str(sql))
 
 try:
     code_gen = CodeGenerator(sql)

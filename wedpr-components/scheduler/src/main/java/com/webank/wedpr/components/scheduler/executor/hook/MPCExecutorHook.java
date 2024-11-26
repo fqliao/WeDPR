@@ -1,7 +1,6 @@
 package com.webank.wedpr.components.scheduler.executor.hook;
 
 import com.webank.wedpr.common.config.WeDPRCommonConfig;
-import com.webank.wedpr.common.protocol.JobType;
 import com.webank.wedpr.common.utils.Common;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
@@ -60,9 +59,11 @@ public class MPCExecutorHook implements ExecutorHook {
 
     public MpcRunJobRequest buildJobRequest(
             String taskID,
+            String owner,
             String mpcFilePath,
             String inputFilePath,
             String outputFilePath,
+            String resultFilePath,
             MPCJobParam jobParam) {
 
         logger.debug(
@@ -84,10 +85,13 @@ public class MPCExecutorHook implements ExecutorHook {
         mpcRunJobRequest.setMpcNodeDirectPort(mpcDirectNodePort);
         mpcRunJobRequest.setBitLength(jobParam.getShareBytesLength());
         mpcRunJobRequest.setReceiverNodeIp(mpcDirectNodeIp);
+        mpcRunJobRequest.setReceiveResult(jobParam.isReceiveResult());
 
         mpcRunJobRequest.setMpcFilePath(mpcFilePath);
         mpcRunJobRequest.setInputFilePath(inputFilePath);
         mpcRunJobRequest.setOutputFilePath(outputFilePath);
+        mpcRunJobRequest.setResultFilePath(resultFilePath);
+        mpcRunJobRequest.setOwner(owner);
 
         logger.info(" ## mpc job request: {}", mpcRunJobRequest);
 
@@ -118,6 +122,18 @@ public class MPCExecutorHook implements ExecutorHook {
                         ExecutorConfig.getJobCacheDir(jobID),
                         ExecutorConfig.getMpcPrepareFileName());
 
+        FileMeta mpcPrepareFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcPrepareFileName());
+        FileMeta mpcContentFileMeta =
+                mpcJobParam.getMpcPath(fileMetaBuilder, jobID, jobID + ".mpc");
+        FileMeta mpcOutputFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcOutputFileName());
+        FileMeta mpcResultFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName());
+
         try {
             // int shareBytesLength = MpcUtils.getShareBytesLength(mpcContent);
             int datasetColumnCount = MpcUtils.getDatasetColumnCount(mpcContent, selfIndex);
@@ -138,33 +154,17 @@ public class MPCExecutorHook implements ExecutorHook {
                     MpcUtils.makeDatasetToMpcDataDirect(
                             datasetFilePath, mpcPrepareFilePath, datasetColumnCount, false);
 
-            // upload mpc prepare file
-            String mpcPrepareStoragePath =
-                    WeDPRCommonConfig.getUserJobCachePath(
-                            owner,
-                            JobType.MPC.getType(),
-                            jobID,
-                            ExecutorConfig.getMpcPrepareFileName());
-
-            String absMpcPrepareStoragePath = storage.generateAbsoluteDir(mpcPrepareStoragePath);
-
-            FileMeta fileMeta =
-                    fileMetaBuilder.build(
-                            storage.type(),
-                            absMpcPrepareStoragePath,
-                            owner,
-                            WeDPRCommonConfig.getAgency());
             logger.info(
                     "begin to upload the mpc prepare file from {}=>{}, jobId: {}",
                     mpcPrepareFilePath,
-                    fileMeta.getPath(),
+                    mpcPrepareFileMeta.getPath(),
                     jobDO);
 
             storage.upload(
                     new FileStorageInterface.FilePermissionInfo(owner, null),
                     Boolean.TRUE,
                     mpcPrepareFilePath,
-                    fileMeta.getPath(),
+                    mpcPrepareFileMeta.getPath(),
                     true);
 
             logger.info("upload the mpc prepare file successfully, jobId: {}", jobID);
@@ -176,23 +176,10 @@ public class MPCExecutorHook implements ExecutorHook {
             // upload mpc content
             Files.write(Paths.get(mpcContentFilePath), newMpcContent.getBytes());
 
-            String mpcFileStoragePath =
-                    WeDPRCommonConfig.getUserJobCachePath(
-                            owner, JobType.MPC.getType(), jobID, jobID + ".mpc");
-
-            String absMpcFileStoragePath = storage.generateAbsoluteDir(mpcFileStoragePath);
-
-            FileMeta mpcFileMeta =
-                    fileMetaBuilder.build(
-                            storage.type(),
-                            absMpcFileStoragePath,
-                            owner,
-                            WeDPRCommonConfig.getAgency());
-
             logger.info(
                     "begin to upload the mpc content file from {}=>{}, jobId: {}",
                     mpcContentFilePath,
-                    mpcFileMeta.getPath(),
+                    mpcContentFileMeta.getPath(),
                     jobDO);
 
             // upload mpc prepare to storage
@@ -200,26 +187,18 @@ public class MPCExecutorHook implements ExecutorHook {
                     new FileStorageInterface.FilePermissionInfo(owner, null),
                     Boolean.TRUE,
                     mpcContentFilePath,
-                    mpcFileMeta.getPath(),
+                    mpcContentFileMeta.getPath(),
                     true);
 
             logger.info("upload the mpc content file successfully, jobId: {}", jobID);
 
-            // upload mpc prepare file
-            String mpcOutputFilePath =
-                    WeDPRCommonConfig.getUserJobCachePath(
-                            owner,
-                            JobType.MPC.getType(),
-                            jobID,
-                            ExecutorConfig.getMpcResultFileName());
-
-            String absMpcOutputFilePath = storage.generateAbsoluteDir(mpcOutputFilePath);
-
             return buildJobRequest(
                     jobDO.getTaskID(),
-                    absMpcFileStoragePath,
-                    absMpcPrepareStoragePath,
-                    absMpcOutputFilePath,
+                    owner,
+                    mpcContentFileMeta.getPath(),
+                    mpcPrepareFileMeta.getPath(),
+                    mpcOutputFileMeta.getPath(),
+                    mpcResultFileMeta.getPath(),
                     mpcJobParam);
         } catch (Exception e) {
             logger.error("e: ", e);
@@ -269,6 +248,18 @@ public class MPCExecutorHook implements ExecutorHook {
             logger.debug("psi result storage path: {}", psiResultStoragePath.getStoragePath());
         }
 
+        FileMeta mpcPrepareFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcPrepareFileName());
+        FileMeta mpcContentFileMeta =
+                mpcJobParam.getMpcPath(fileMetaBuilder, jobID, jobID + ".mpc");
+        FileMeta mpcOutputFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcOutputFileName());
+        FileMeta mpcResultFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName());
+
         try {
             // download dataset file
             logger.info(
@@ -301,33 +292,17 @@ public class MPCExecutorHook implements ExecutorHook {
                             datasetColumnCount,
                             false);
 
-            // upload mpc prepare file
-            String mpcPrepareStoragePath =
-                    WeDPRCommonConfig.getUserJobCachePath(
-                            owner,
-                            JobType.MPC.getType(),
-                            jobID,
-                            ExecutorConfig.getMpcPrepareFileName());
-
-            String absMpcPrepareStoragePath = storage.generateAbsoluteDir(mpcPrepareStoragePath);
-
-            FileMeta fileMeta =
-                    fileMetaBuilder.build(
-                            storage.type(),
-                            absMpcPrepareStoragePath,
-                            owner,
-                            WeDPRCommonConfig.getAgency());
             logger.info(
                     "begin to upload the mpc prepare file from {}=>{}, jobId: {}",
                     mpcPrepareFilePath,
-                    fileMeta.getPath(),
+                    mpcPrepareFileMeta.getPath(),
                     jobDO);
 
             storage.upload(
                     new FileStorageInterface.FilePermissionInfo(owner, null),
                     Boolean.TRUE,
                     mpcPrepareFilePath,
-                    fileMeta.getPath(),
+                    mpcPrepareFileMeta.getPath(),
                     true);
 
             logger.info("upload the mpc prepare file successfully, jobId: {}", jobID);
@@ -339,23 +314,10 @@ public class MPCExecutorHook implements ExecutorHook {
             // upload mpc content
             Files.write(Paths.get(mpcContentFilePath), newMpcContent.getBytes());
 
-            String mpcFileStoragePath =
-                    WeDPRCommonConfig.getUserJobCachePath(
-                            owner, JobType.MPC.getType(), jobID, jobID + ".mpc");
-
-            String absMpcFileStoragePath = storage.generateAbsoluteDir(mpcFileStoragePath);
-
-            FileMeta mpcFileMeta =
-                    fileMetaBuilder.build(
-                            storage.type(),
-                            absMpcFileStoragePath,
-                            owner,
-                            WeDPRCommonConfig.getAgency());
-
             logger.info(
                     "begin to upload the mpc content file from {}=>{}, jobId: {}",
                     mpcContentFilePath,
-                    mpcFileMeta.getPath(),
+                    mpcContentFileMeta.getPath(),
                     jobDO);
 
             // upload mpc prepare to storage
@@ -363,26 +325,18 @@ public class MPCExecutorHook implements ExecutorHook {
                     new FileStorageInterface.FilePermissionInfo(owner, null),
                     Boolean.TRUE,
                     mpcContentFilePath,
-                    mpcFileMeta.getPath(),
+                    mpcContentFileMeta.getPath(),
                     true);
 
             logger.info("upload the mpc content file successfully, jobId: {}", jobID);
 
-            // upload mpc prepare file
-            String mpcOutputFilePath =
-                    WeDPRCommonConfig.getUserJobCachePath(
-                            owner,
-                            JobType.MPC.getType(),
-                            jobID,
-                            ExecutorConfig.getMpcResultFileName());
-
-            String absMpcOutputFilePath = storage.generateAbsoluteDir(mpcOutputFilePath);
-
             return buildJobRequest(
                     jobDO.getTaskID(),
-                    absMpcFileStoragePath,
-                    absMpcPrepareStoragePath,
-                    absMpcOutputFilePath,
+                    owner,
+                    mpcContentFileMeta.getPath(),
+                    mpcPrepareFileMeta.getPath(),
+                    mpcOutputFileMeta.getPath(),
+                    mpcResultFileMeta.getPath(),
                     mpcJobParam);
         } finally {
             Common.deleteFile(new File(datasetFilePath));

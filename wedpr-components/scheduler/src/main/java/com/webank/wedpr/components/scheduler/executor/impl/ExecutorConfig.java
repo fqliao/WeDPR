@@ -40,7 +40,7 @@ public class ExecutorConfig {
     private static String MPC_RESULT_FILE_NAME =
             WeDPRConfig.apply("wedpr.executor.mpc.result.file.name", "mpc_result.csv");
 
-    private static String MPC_OUTPUT_FILE =
+    private static String MPC_OUTPUT_FILE_NAME =
             WeDPRConfig.apply("wedpr.executor.mpc.output.file.name", "mpc_output.txt");
 
     private static String MPC_PSI_OPTION_REGEX =
@@ -84,6 +84,10 @@ public class ExecutorConfig {
 
     public static String getMpcResultFileName() {
         return MPC_RESULT_FILE_NAME;
+    }
+
+    public static String getMpcOutputFileName() {
+        return MPC_OUTPUT_FILE_NAME;
     }
 
     public static String getPsiResultFileName() {

@@ -7,6 +7,7 @@ import com.webank.wedpr.components.loadbalancer.LoadBalancer;
 import com.webank.wedpr.components.scheduler.client.ModelClient;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
+import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.sdk.jni.transport.model.ServiceMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,19 @@ public class ModelWorker extends Worker {
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
-            JobWorkerMapper jobWorkerMapper) {
-        super(jobWorker, workerRetryTimes, workerRetryDelayMillis, loadBalancer, jobWorkerMapper);
+            JobWorkerMapper jobWorkerMapper,
+            FileStorageInterface fileStorageInterface) {
+        super(
+                jobWorker,
+                workerRetryTimes,
+                workerRetryDelayMillis,
+                loadBalancer,
+                jobWorkerMapper,
+                fileStorageInterface);
     }
 
     @Override
-    public WorkerStatus engineRun() throws Exception {
+    public WorkerStatus onRun() throws Exception {
 
         String jobId = getJobId();
         String workerId = getWorkerId();

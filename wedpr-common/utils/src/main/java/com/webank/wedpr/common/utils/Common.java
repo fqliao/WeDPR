@@ -84,7 +84,9 @@ public class Common {
         if (!file.exists()) {
             return false;
         }
-        return file.delete();
+        boolean delete = file.delete();
+        logger.info("delete file, path: {}, delete: {}", file.getPath(), delete);
+        return delete;
     }
 
     public static String getCron(Integer value) {

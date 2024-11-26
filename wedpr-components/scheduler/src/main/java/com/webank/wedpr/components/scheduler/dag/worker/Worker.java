@@ -4,6 +4,7 @@ import com.webank.wedpr.components.loadbalancer.LoadBalancer;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.dag.utils.WorkerUtils;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
+import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ public abstract class Worker {
 
     private final JobWorkerMapper jobWorkerMapper;
     private final LoadBalancer loadBalancer;
+    private final FileStorageInterface fileStorageInterface;
 
     private final String jobId;
     private final String workerId;
@@ -31,7 +33,8 @@ public abstract class Worker {
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
-            JobWorkerMapper jobWorkerMapper) {
+            JobWorkerMapper jobWorkerMapper,
+            FileStorageInterface fileStorageInterface) {
         this.jobWorker = jobWorker;
         this.jobId = jobWorker.getJobId();
         this.workerId = jobWorker.getWorkerId();
@@ -44,6 +47,7 @@ public abstract class Worker {
 
         this.loadBalancer = loadBalancer;
         this.jobWorkerMapper = jobWorkerMapper;
+        this.fileStorageInterface = fileStorageInterface;
     }
 
     /*
@@ -76,33 +80,40 @@ public abstract class Worker {
                 workStatus);
     }
 
+    public void onLaunch() {
+        logger.info(workerStartLog(workerId));
+    }
+
+    public void onFinished() {
+        logger.info(workerEndLog(workerId));
+    }
+
     /**
      * to be impl
      *
      * @return
      */
-    public abstract WorkerStatus engineRun() throws Exception;
+    public abstract WorkerStatus onRun() throws Exception;
 
     public WorkerStatus run(String workerStatus) throws Exception {
 
         if (workerStatus.equals(WorkerStatus.SUCCESS.name())) {
             logger.info(
-                    "worker has been executed successfully, jobId: {}, workId: {}",
+                    " ## worker has been executed successfully, jobId: {}, workId: {}",
                     jobId,
                     workerId);
             return WorkerStatus.SUCCESS;
         }
 
         logWorker();
-
         int retryTimes = this.workerRetryTimes < 0 ? 1 : this.workerRetryTimes;
 
         int attemptTimes = 0;
         while (attemptTimes++ < retryTimes) {
             try {
-                logger.info(workerStartLog(workerId));
-                WorkerStatus status = this.engineRun();
-                logger.info(workerEndLog(workerId));
+                this.onLaunch();
+                WorkerStatus status = this.onRun();
+                this.onFinished();
                 return status;
             } catch (Exception e) {
                 if (attemptTimes >= retryTimes) {

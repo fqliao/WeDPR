@@ -15,4 +15,8 @@ public class MpcRunJobRequest {
     private String mpcFilePath;
     private String inputFilePath;
     private String outputFilePath;
+    private String resultFilePath;
+
+    private String owner;
+    private boolean receiveResult;
 }
