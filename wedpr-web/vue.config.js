@@ -34,12 +34,7 @@ module.exports = defineConfig({
   devServer: {
     proxy: {
       '/api': {
-        // target: 'http://apidesign.weoa.com/apidesign-core/mock/18220',
-        // target: 'http://139.159.202.235:13000',
-        target: 'http://139.159.202.235:8005',
-        // target: 'http://139.159.202.235:8016',
-        // target: 'http://139.159.202.235:6855',
-        // target: 'http://175.178.109.119:5810',
+        target: 'http://127.0.0.1:8005',
         secure: false,
         changeOrigin: true
       }
