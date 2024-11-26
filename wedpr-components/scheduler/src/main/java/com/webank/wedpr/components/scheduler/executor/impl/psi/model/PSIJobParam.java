@@ -23,6 +23,7 @@ import com.webank.wedpr.common.utils.CSVFileParser;
 import com.webank.wedpr.common.utils.Common;
 import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.common.utils.WeDPRException;
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
 import com.webank.wedpr.components.scheduler.executor.impl.model.DatasetInfo;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMeta;
@@ -92,6 +93,8 @@ public class PSIJobParam {
     private String jobID;
     private String taskID;
 
+    private String user;
+
     @JsonProperty("dataSetList")
     private List<PartyResourceInfo> partyResourceInfoList;
 
@@ -129,7 +132,8 @@ public class PSIJobParam {
         return null;
     }
 
-    public void check(FileMetaBuilder fileMetaBuilder) throws Exception {
+    public void check(DatasetMapper datasetMapper, FileMetaBuilder fileMetaBuilder)
+            throws Exception {
         Common.requireNonEmpty(jobID, "jobID");
         if (partyResourceInfoList == null || partyResourceInfoList.size() < 2) {
             throw new WeDPRException("Invalid PSIJobParam, must define at least 2-parties!");
@@ -137,6 +141,14 @@ public class PSIJobParam {
         for (PartyResourceInfo partyResourceInfo : partyResourceInfoList) {
             partyResourceInfo.setDatasetIDList(datasetIDList);
             partyResourceInfo.checkAndResetPath(fileMetaBuilder, jobID);
+            if (partyResourceInfo
+                    .getDataset()
+                    .getOwnerAgency()
+                    .equalsIgnoreCase(WeDPRCommonConfig.getAgency())) {
+                // obtain information for the input dataset
+                partyResourceInfo.getDataset().obtainDatasetInfo(datasetMapper);
+                setUser(partyResourceInfo.getDataset().getOwner());
+            }
         }
     }
 
@@ -144,6 +156,7 @@ public class PSIJobParam {
         PSIRequest psiRequest = new PSIRequest();
         psiRequest.setTaskID(this.taskID);
         psiRequest.setParties(toPSIParam(ownerAgency));
+        psiRequest.setUser(getUser());
         resetPartyIndex(psiRequest.getParties());
         List<String> receivers = new ArrayList<>();
         boolean syncResult = false;
