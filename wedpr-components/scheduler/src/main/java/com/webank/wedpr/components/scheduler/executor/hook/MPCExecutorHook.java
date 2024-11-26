@@ -55,11 +55,7 @@ public class MPCExecutorHook implements ExecutorHook {
             return null;
         }
 
-        if (jobParam.isNeedRunPsi()) {
-            return prepareWithPsi(datasetMapper, jobDO, jobParam);
-        } else {
-            return prepareWithoutPsi(jobDO, jobParam);
-        }
+        return prepare(jobDO, jobParam);
     }
 
     public MpcRunJobRequest buildJobRequest(
@@ -103,10 +99,43 @@ public class MPCExecutorHook implements ExecutorHook {
         return mpcRunJobRequest;
     }
 
-    public MpcRunJobRequest prepareWithoutPsi(JobDO jobDO, MPCJobParam mpcJobParam)
+    public MpcRunJobRequest prepare(JobDO jobDO, MPCJobParam mpcJobParam) {
+
+        String jobId = jobDO.getId();
+
+        DatasetInfo selfDataset = mpcJobParam.getSelfDataset();
+        String owner = selfDataset.getDataset().getOwner();
+
+        FileMeta mpcPrepareFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobId, ExecutorConfig.getMpcPrepareFileName());
+        FileMeta mpcContentFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobId, ExecutorConfig.getMpcFileName(jobId));
+        FileMeta mpcOutputFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobId, ExecutorConfig.getMpcOutputFileName());
+        FileMeta mpcResultFileMeta =
+                mpcJobParam.getMpcPath(
+                        fileMetaBuilder, jobId, ExecutorConfig.getMpcResultFileName());
+
+        return buildJobRequest(
+                jobDO.getTaskID(),
+                owner,
+                mpcContentFileMeta.getPath(),
+                mpcPrepareFileMeta.getPath(),
+                mpcOutputFileMeta.getPath(),
+                mpcResultFileMeta.getPath(),
+                mpcJobParam);
+    }
+
+    public void prepareWithoutPsi(DatasetMapper datasetMapper, JobDO jobDO, MPCJobParam mpcJobParam)
             throws Exception {
 
         String jobID = jobDO.getId();
+
+        logger.info("prepare step begin, jobId: {}", jobDO.getId());
+
         DatasetInfo selfDataset = mpcJobParam.getSelfDataset();
         int selfIndex = mpcJobParam.getSelfIndex();
 
@@ -132,19 +161,24 @@ public class MPCExecutorHook implements ExecutorHook {
                         fileMetaBuilder, jobID, ExecutorConfig.getMpcPrepareFileName());
         FileMeta mpcContentFileMeta =
                 mpcJobParam.getMpcPath(fileMetaBuilder, jobID, jobID + ".mpc");
-        FileMeta mpcOutputFileMeta =
-                mpcJobParam.getMpcPath(
-                        fileMetaBuilder, jobID, ExecutorConfig.getMpcOutputFileName());
-        FileMeta mpcResultFileMeta =
-                mpcJobParam.getMpcPath(
-                        fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName());
+        //        FileMeta mpcOutputFileMeta =
+        //                mpcJobParam.getMpcPath(
+        //                        fileMetaBuilder, jobID, ExecutorConfig.getMpcOutputFileName());
+        //        FileMeta mpcResultFileMeta =
+        //                mpcJobParam.getMpcPath(
+        //                        fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName());
 
         try {
             // int shareBytesLength = MpcUtils.getShareBytesLength(mpcContent);
-            int datasetColumnCount = MpcUtils.getDatasetColumnCount(mpcContent, selfIndex);
+            int datasetColumnCount = MpcUtils.getMpcDatasetColumnCount(mpcContent, selfIndex);
 
             logger.info(
-                    "begin to download dataset file from {} => {}, jobId: {}",
+                    "prepare step, obtain the fields number the dataset participating in mpc task, jobId: {}, fieldNumber: {}",
+                    jobID,
+                    datasetColumnCount);
+
+            logger.info(
+                    "prepare step, begin to download dataset file from {} => {}, jobId: {}",
                     selfDataset.getDataset().getStoragePath(),
                     datasetFilePath,
                     jobID);
@@ -152,15 +186,14 @@ public class MPCExecutorHook implements ExecutorHook {
             // download dataset file
             storage.download(selfDataset.getDataset().getStoragePath(), datasetFilePath);
 
-            logger.info("download dataset file successfully, jobId: {}", jobID);
+            logger.info("prepare step, download dataset file successfully, jobId: {}", jobID);
 
             // convert dataset to .mpc file
-            long mpcDatasetRecordCount =
-                    MpcUtils.makeDatasetToMpcDataDirect(
-                            datasetFilePath, mpcPrepareFilePath, datasetColumnCount, false);
+            MpcUtils.makeDatasetToMpcDataDirect(
+                    jobID, datasetFilePath, mpcPrepareFilePath, datasetColumnCount, false);
 
             logger.info(
-                    "begin to upload the mpc prepare file from {}=>{}, jobId: {}",
+                    "prepare step, begin to upload the mpc prepare file from {}=>{}, jobId: {}",
                     mpcPrepareFilePath,
                     mpcPrepareFileMeta.getPath(),
                     jobDO);
@@ -172,17 +205,16 @@ public class MPCExecutorHook implements ExecutorHook {
                     mpcPrepareFileMeta.getPath(),
                     true);
 
-            logger.info("upload the mpc prepare file successfully, jobId: {}", jobID);
+            logger.info("prepare step, upload the mpc prepare file successfully, jobId: {}", jobID);
 
             String newMpcContent =
-                    MpcUtils.replaceMpcContentFieldHolder(
-                            mpcContent, mpcDatasetRecordCount, mpcJobParam.getDataSetList());
+                    MpcUtils.replaceMpcContentFieldHolder(mpcContent, mpcJobParam.getDataSetList());
 
             // upload mpc content
             Files.write(Paths.get(mpcContentFilePath), newMpcContent.getBytes());
 
             logger.info(
-                    "begin to upload the mpc content file from {}=>{}, jobId: {}",
+                    "prepare step, begin to upload the mpc content file from {}=>{}, jobId: {}",
                     mpcContentFilePath,
                     mpcContentFileMeta.getPath(),
                     jobDO);
@@ -195,16 +227,8 @@ public class MPCExecutorHook implements ExecutorHook {
                     mpcContentFileMeta.getPath(),
                     true);
 
-            logger.info("upload the mpc content file successfully, jobId: {}", jobID);
+            logger.info("prepare step, upload the mpc content file successfully, jobId: {}", jobID);
 
-            return buildJobRequest(
-                    jobDO.getTaskID(),
-                    owner,
-                    mpcContentFileMeta.getPath(),
-                    mpcPrepareFileMeta.getPath(),
-                    mpcOutputFileMeta.getPath(),
-                    mpcResultFileMeta.getPath(),
-                    mpcJobParam);
         } catch (Exception e) {
             logger.error("e: ", e);
             throw e;
@@ -212,13 +236,20 @@ public class MPCExecutorHook implements ExecutorHook {
             Common.deleteFile(new File(datasetFilePath));
             Common.deleteFile(new File(mpcPrepareFilePath));
             Common.deleteFile(new File(mpcContentFilePath));
+
+            logger.info("prepare step end, jobId: {}", jobDO.getId());
         }
     }
 
-    public MpcRunJobRequest prepareWithPsi(
-            DatasetMapper datasetMapper, JobDO jobDO, MPCJobParam mpcJobParam) throws Exception {
+    public void prepareWithPsi(DatasetMapper datasetMapper, JobDO jobDO, MPCJobParam mpcJobParam)
+            throws Exception {
 
         String jobID = jobDO.getId();
+
+        long startTimeMillis = System.currentTimeMillis();
+
+        logger.info("prepare step(psi) begin, jobId: {}", jobID);
+
         DatasetInfo selfDataset = mpcJobParam.getSelfDataset();
         int selfIndex = mpcJobParam.getSelfIndex();
 
@@ -226,8 +257,8 @@ public class MPCExecutorHook implements ExecutorHook {
         FileMeta dataset = selfDataset.getDataset();
         String owner = selfDataset.getDataset().getOwner();
 
-        int shareBytesLength = MpcUtils.getShareBytesLength(mpcContent);
-        int datasetColumnCount = MpcUtils.getDatasetColumnCount(mpcContent, selfIndex);
+        // int shareBytesLength = MpcUtils.getShareBytesLength(mpcContent);
+        int datasetColumnCount = MpcUtils.getMpcDatasetColumnCount(mpcContent, selfIndex);
 
         String datasetFilePath =
                 Common.joinPath(
@@ -251,48 +282,49 @@ public class MPCExecutorHook implements ExecutorHook {
         FileMeta psiResultStoragePath =
                 psiJobParam.getResultPath(datasetMapper, fileMetaBuilder, jobID);
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("psi result storage path: {}", psiResultStoragePath.getStoragePath());
-        }
+        logger.info(
+                "prepare step(psi), fetch psi result storage path: {}",
+                psiResultStoragePath.getStoragePath());
 
         FileMeta mpcPrepareFileMeta =
                 mpcJobParam.getMpcPath(
                         fileMetaBuilder, jobID, ExecutorConfig.getMpcPrepareFileName());
         FileMeta mpcContentFileMeta =
-                mpcJobParam.getMpcPath(fileMetaBuilder, jobID, jobID + ".mpc");
-        FileMeta mpcOutputFileMeta =
                 mpcJobParam.getMpcPath(
-                        fileMetaBuilder, jobID, ExecutorConfig.getMpcOutputFileName());
-        FileMeta mpcResultFileMeta =
-                mpcJobParam.getMpcPath(
-                        fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName());
+                        fileMetaBuilder, jobID, ExecutorConfig.getMpcFileName(jobID));
+        //        FileMeta mpcOutputFileMeta =
+        //                mpcJobParam.getMpcPath(
+        //                        fileMetaBuilder, jobID, ExecutorConfig.getMpcOutputFileName());
+        //        FileMeta mpcResultFileMeta =
+        //                mpcJobParam.getMpcPath(
+        //                        fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName());
 
         try {
             // download dataset file
             logger.info(
-                    "begin to download dataset file from {} => {}, jobId: {}",
+                    "prepare step(psi), begin to download dataset file from {} => {}, jobId: {}",
                     selfDataset.getDataset().getStoragePath(),
                     datasetFilePath,
                     jobID);
 
             storage.download(selfDataset.getDataset().getStoragePath(), datasetFilePath);
 
-            logger.info("download dataset file successfully, jobId: {}", jobID);
-
             // download psi result file
             logger.info(
-                    "begin to download psi result file from {} => {}, jobId: {}",
-                    null,
+                    "prepare step(psi), begin to download psi result file from {} => {}, jobId: {}",
+                    psiResultStoragePath.getStoragePath(),
                     psiResultFilePath,
                     jobID);
 
             storage.download(psiResultStoragePath.getStoragePath(), psiResultFilePath);
 
-            logger.info("download psi result file successfully, jobId: {}", jobID);
+            logger.info(
+                    "prepare step(psi), download psi result file successfully, jobId: {}", jobID);
 
             // merge and sort: psi_result_file and dataset_file
             long mpcDatasetRecordCount =
                     MpcUtils.mergeAndSortById(
+                            jobID,
                             datasetFilePath,
                             psiResultFilePath,
                             mpcPrepareFilePath,
@@ -300,7 +332,7 @@ public class MPCExecutorHook implements ExecutorHook {
                             false);
 
             logger.info(
-                    "begin to upload the mpc prepare file from {}=>{}, jobId: {}",
+                    "prepare step(psi), begin to upload the mpc prepare file from {}=>{}, jobId: {}",
                     mpcPrepareFilePath,
                     mpcPrepareFileMeta.getPath(),
                     jobDO);
@@ -312,17 +344,19 @@ public class MPCExecutorHook implements ExecutorHook {
                     mpcPrepareFileMeta.getPath(),
                     true);
 
-            logger.info("upload the mpc prepare file successfully, jobId: {}", jobID);
+            logger.info(
+                    "prepare step(psi), upload the mpc prepare file successfully, jobId: {}",
+                    jobID);
 
             String newMpcContent =
                     MpcUtils.replaceMpcContentFieldHolder(
-                            mpcContent, mpcDatasetRecordCount, mpcJobParam.getDataSetList());
+                            mpcContent, mpcJobParam.getDataSetList().size(), mpcDatasetRecordCount);
 
             // upload mpc content
             Files.write(Paths.get(mpcContentFilePath), newMpcContent.getBytes());
 
             logger.info(
-                    "begin to upload the mpc content file from {}=>{}, jobId: {}",
+                    "prepare step(psi), begin to upload the mpc content file from {}=>{}, jobId: {}",
                     mpcContentFilePath,
                     mpcContentFileMeta.getPath(),
                     jobDO);
@@ -335,21 +369,21 @@ public class MPCExecutorHook implements ExecutorHook {
                     mpcContentFileMeta.getPath(),
                     true);
 
-            logger.info("upload the mpc content file successfully, jobId: {}", jobID);
+            logger.info(
+                    "prepare step(psi), upload the mpc content file successfully, jobId: {}",
+                    jobID);
 
-            return buildJobRequest(
-                    jobDO.getTaskID(),
-                    owner,
-                    mpcContentFileMeta.getPath(),
-                    mpcPrepareFileMeta.getPath(),
-                    mpcOutputFileMeta.getPath(),
-                    mpcResultFileMeta.getPath(),
-                    mpcJobParam);
         } finally {
             Common.deleteFile(new File(datasetFilePath));
             Common.deleteFile(new File(mpcPrepareFilePath));
             Common.deleteFile(new File(mpcContentFilePath));
             Common.deleteFile(new File(psiResultFilePath));
+
+            long endTimeMillis = System.currentTimeMillis();
+            logger.info(
+                    "prepare step(psi) end, jobId: {}, costMs: {}",
+                    jobID,
+                    endTimeMillis - startTimeMillis);
         }
     }
 }

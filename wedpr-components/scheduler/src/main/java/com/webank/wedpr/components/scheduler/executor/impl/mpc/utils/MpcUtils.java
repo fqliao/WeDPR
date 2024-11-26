@@ -47,7 +47,7 @@ public class MpcUtils {
         return shareBitLength;
     }
 
-    public static int getDatasetColumnCount(String mpcContent, int selfIndex)
+    public static int getMpcDatasetColumnCount(String mpcContent, int selfIndex)
             throws WeDPRException {
 
         String strPattern = "source" + selfIndex + "_column_count\\s*=\\s*(\\d+)";
@@ -62,21 +62,27 @@ public class MpcUtils {
                 "Not found \"source" + selfIndex + "_column_count\" in mpc content");
     }
 
-    public static int getIdFieldIndex(List<String> fieldNames) throws WeDPRException {
+    public static int getIdFieldIndex(String file, List<String> fieldNames) throws WeDPRException {
 
         int index = 0;
         for (String fieldName : fieldNames) {
             if (fieldName.equals(MPC_FIELD_ID_NAME)) {
+
+                if (logger.isInfoEnabled()) {
+                    logger.info("the id field found, file: {}, index: {}", file, index);
+                }
+
                 return index;
             }
             index++;
         }
 
-        logger.warn("the id field does not exist, fields: {}", fieldNames);
+        logger.error("the id field does not exist, file: {}, fields: {}", file, fieldNames);
         throw new WeDPRException("the id field does not exist, fields: " + fieldNames);
     }
 
-    public static List<String> makeFieldNamesNormalized(List<String> fieldNames) {
+    public static List<String> makeFieldNamesNormalized(String file, List<String> fieldNames)
+            throws WeDPRException {
 
         List<String> normalizedNames = new ArrayList<>();
         if (fieldNames.contains(MPC_FIELD_ID_NAME)) {
@@ -90,6 +96,9 @@ public class MpcUtils {
             for (int i = 0; i < size; i++) {
                 normalizedNames.add(String.format(MPC_FIELD_NORMALIZED_NAMES, i));
             }
+
+            logger.error("Not found id field, file: {}, fieldNames: {}", file, fieldNames);
+            throw new WeDPRException("Not found id field in dataset, file: " + file);
         }
 
         return normalizedNames;
@@ -110,7 +119,7 @@ public class MpcUtils {
         for (String selectFieldName : selectFieldNames) {
             int index = originalFieldNames.indexOf(selectFieldName);
             if (index == -1) {
-                logger.warn("Not found select field index, fieldName: {}", selectFieldName);
+                logger.error("Not found select field index, fieldName: {}", selectFieldName);
                 throw new WeDPRException(
                         "Not found select field index, fieldName: " + selectFieldName);
             }
@@ -130,6 +139,7 @@ public class MpcUtils {
     }
 
     public static long makeDatasetToMpcDataDirect(
+            String jobId,
             String datasetFilePath,
             String datasetMpcFilePath,
             int datasetCountNumber,
@@ -152,7 +162,8 @@ public class MpcUtils {
             String[] fieldNames = csvReader.readNextSilently();
             List<String> originalFieldNames = Arrays.asList(fieldNames);
 
-            List<String> newFieldNames = makeFieldNamesNormalized(originalFieldNames);
+            List<String> newFieldNames =
+                    makeFieldNamesNormalized(datasetFilePath, originalFieldNames);
 
             List<String> selectFieldNames = makeSelectFields(datasetCountNumber);
             List<Integer> selectFieldsIndex =
@@ -165,35 +176,35 @@ public class MpcUtils {
 
             // read the remaining data rows and write them into the output file
             String[] nextLine;
-            long lineNum = 0;
+            long totalRowNum = 0;
             while ((nextLine = csvReader.readNext()) != null) {
                 String[] writeNextLine = makeNextLine(nextLine, selectFieldsIndex);
 
                 if (logger.isTraceEnabled()) {
-                    logger.trace("next line: {}", Arrays.asList(writeNextLine));
+                    logger.trace(
+                            "prepare step, jobId: {}, next line: {}",
+                            jobId,
+                            Arrays.asList(writeNextLine));
                 }
 
                 csvWriter.writeNext(writeNextLine, false);
-                lineNum++;
+                totalRowNum++;
             }
 
             logger.info(
-                    "lineNum: {}, original field names: {}, field names: {}, select field index: {}",
-                    lineNum,
+                    "prepare step, jobId: {}, totalRowNum: {}, original field names: {}, field names: {}, select field index: {}",
+                    jobId,
+                    totalRowNum,
                     originalFieldNames,
                     fieldNames,
                     selectFieldsIndex);
 
-            return lineNum;
+            return totalRowNum;
         }
     }
 
     public static String replaceMpcContentFieldHolder(
-            String mpcContent, long mpcDatasetRecordCount, List<DatasetInfo> datasetInfoList) {
-
-        mpcContent =
-                mpcContent.replace(
-                        "$(ppc_max_record_count)", String.valueOf(mpcDatasetRecordCount));
+            String mpcContent, List<DatasetInfo> datasetInfoList) {
 
         int partCount = datasetInfoList.size();
         for (int i = 0; i < partCount; i++) {
@@ -204,8 +215,23 @@ public class MpcUtils {
             mpcContent = mpcContent.replace(placeholder, String.valueOf(datasetRecordCount));
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("new mpc content: {}", mpcContent);
+        if (logger.isTraceEnabled()) {
+            logger.trace("new mpc content: {}", mpcContent);
+        }
+
+        return mpcContent;
+    }
+
+    public static String replaceMpcContentFieldHolder(
+            String mpcContent, int partCount, long psiResultDataCount) {
+
+        for (int i = 0; i < partCount; i++) {
+            String placeholder = String.format(MPC_SOURCE_RECORD_COUNT_LABEL, i);
+            mpcContent = mpcContent.replace(placeholder, String.valueOf(psiResultDataCount));
+        }
+
+        if (logger.isTraceEnabled()) {
+            logger.trace("new mpc content: {}", mpcContent);
         }
 
         return mpcContent;
@@ -219,15 +245,13 @@ public class MpcUtils {
 
         boolean needRunPsi = matcher.find();
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(
-                    "check need run psi for mpc, jobID: {}, needRunPsi: {} ", jobId, needRunPsi);
-        }
+        logger.info("check need run psi for mpc, jobId: {}, needRunPsi: {} ", jobId, needRunPsi);
 
         return needRunPsi;
     }
 
     public static long mergeAndSortById(
+            String jobId,
             String datasetFilePath,
             String psiResultFilePath,
             String resultFilePath,
@@ -237,6 +261,8 @@ public class MpcUtils {
 
         Set<Integer> psiIdMap = new TreeSet<>();
 
+        long psiResultFileLineNum = 0;
+
         // read the id field value of the psi result file
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(psiResultFilePath));
                 CSVReader psiResultReader = new CSVReader(bufferedReader)) {
@@ -244,21 +270,36 @@ public class MpcUtils {
             String[] fieldNames = psiResultReader.readNextSilently();
             List<String> originalFieldNames = Arrays.asList(fieldNames);
 
-            int idFieldIndex = getIdFieldIndex(originalFieldNames);
+            int idFieldIndex = getIdFieldIndex(psiResultFilePath, originalFieldNames);
 
             String[] nextLine;
+            // TODO: id值都放在内存,数据量大的时候会有较高的内存占用
             while ((nextLine = psiResultReader.readNext()) != null) {
 
-                String strId = nextLine[idFieldIndex];
+                String idFieldValue = nextLine[idFieldIndex];
                 if (logger.isTraceEnabled()) {
-                    logger.trace("id: {}, next line: {}", strId, Arrays.asList(nextLine));
+                    logger.trace(
+                            "prepare step(psi), jobId: {}, idFieldValue: {}, next line: {}",
+                            jobId,
+                            idFieldValue,
+                            Arrays.asList(nextLine));
                 }
 
-                psiIdMap.add(Integer.valueOf(strId));
+                psiResultFileLineNum++;
+
+                psiIdMap.add(Integer.valueOf(idFieldValue));
             }
+
+            logger.info(
+                    "prepare step(psi), psi result file, jobId: {}, fieldNames: {}, idFieldIndex: {}, lineNum: {}",
+                    jobId,
+                    fieldNames,
+                    idFieldIndex,
+                    psiResultFileLineNum);
         }
 
-        long lineNum = 0;
+        long totalLineNum = 0;
+        long datasetFileLineNum = 0;
         // read the id field value of the psi result file
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(datasetFilePath));
                 CSVReader datasetFileReader = new CSVReader(bufferedReader);
@@ -274,13 +315,14 @@ public class MpcUtils {
             String[] fieldNames = datasetFileReader.readNextSilently();
             List<String> originalFieldNames = Arrays.asList(fieldNames);
 
-            List<String> newFieldNames = makeFieldNamesNormalized(originalFieldNames);
+            List<String> normalizedFieldNames =
+                    makeFieldNamesNormalized(datasetFilePath, originalFieldNames);
 
-            int idFieldIndex = getIdFieldIndex(originalFieldNames);
+            int idFieldIndex = getIdFieldIndex(datasetFilePath, originalFieldNames);
 
             List<String> selectFieldNames = makeSelectFields(datasetCountNumber);
             List<Integer> selectFieldsIndex =
-                    makeSelectFieldsIndex(selectFieldNames, newFieldNames);
+                    makeSelectFieldsIndex(selectFieldNames, normalizedFieldNames);
 
             if (withHeader) {
                 // write in new column names
@@ -289,6 +331,8 @@ public class MpcUtils {
 
             String[] nextLine;
             while ((nextLine = datasetFileReader.readNext()) != null) {
+
+                datasetFileLineNum++;
 
                 String strId = nextLine[idFieldIndex];
                 Integer id = Integer.valueOf(strId);
@@ -299,14 +343,28 @@ public class MpcUtils {
                 String[] writeNextLine = makeNextLine(nextLine, selectFieldsIndex);
 
                 if (logger.isTraceEnabled()) {
-                    logger.trace("next line: {}", Arrays.asList(writeNextLine));
+                    logger.trace(
+                            "prepare step(psi), jobId: {}, next line: {}",
+                            jobId,
+                            Arrays.asList(writeNextLine));
                 }
 
                 resultFileWriter.writeNext(writeNextLine, false);
-                lineNum++;
+                totalLineNum++;
             }
+
+            logger.info(
+                    "prepare step(psi), jobId: {}, totalLineNum: {}, dataset original field names: {}, normalized field names: {}, idIndex: {}, select field names: {}, select field index: {}, datasetFileLineNum: {}",
+                    jobId,
+                    totalLineNum,
+                    originalFieldNames,
+                    normalizedFieldNames,
+                    idFieldIndex,
+                    selectFieldNames,
+                    selectFieldsIndex,
+                    datasetFileLineNum);
         }
 
-        return lineNum;
+        return totalLineNum;
     }
 }

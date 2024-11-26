@@ -76,7 +76,9 @@ public class MPCJobParam {
 
         int index = 0;
         for (DatasetInfo datasetInfo : dataSetList) {
+
             datasetInfo.setDatasetIDList(datasetIDList);
+            datasetInfo.getDataset().obtainDatasetInfo(datasetMapper);
             datasetInfo.check();
 
             String ownerAgency = datasetInfo.getDataset().getOwnerAgency();
@@ -91,7 +93,7 @@ public class MPCJobParam {
         if (this.selfDataset == null) {
             throw new WeDPRException("Must define the selfDataset!");
         }
-        this.selfDataset.getDataset().obtainDatasetInfo(datasetMapper);
+
         logger.info(
                 "## check params, selfIndex: {}, selfDataset: {}, shareBytesLength: {}, needRunPsi: {}, receiveResult: {}",
                 selfIndex,
@@ -129,26 +131,28 @@ public class MPCJobParam {
         return fileMeta;
     }
 
-    public PSIJobParam toPSIJobParam(FileMetaBuilder fileMetaBuilder) {
+    public PSIJobParam toPSIJobParam(FileMetaBuilder fileMetaBuilder) throws Exception {
         PSIJobParam psiJobParam = new PSIJobParam();
         psiJobParam.setJobID(jobID);
         List<PSIJobParam.PartyResourceInfo> partyResourceInfos = new ArrayList<>();
         for (DatasetInfo datasetInfo : dataSetList) {
-            FileMeta output =
-                    PSIJobParam.getDefaultPSIOutputPath(
-                            fileMetaBuilder, datasetInfo.getDataset(), jobID);
             PSIJobParam.PartyResourceInfo partyResourceInfo =
-                    new PSIJobParam.PartyResourceInfo(datasetInfo.getDataset(), output);
+                    new PSIJobParam.PartyResourceInfo(datasetInfo.getDataset());
+            if (datasetInfo
+                    .getDataset()
+                    .getOwnerAgency()
+                    .equalsIgnoreCase(WeDPRCommonConfig.getAgency())) {
+                FileMeta output =
+                        PSIJobParam.getDefaultPSIOutputPath(
+                                fileMetaBuilder, selfDataset.getDataset(), jobID);
+                partyResourceInfo.setOutput(output);
+                psiJobParam.setSelfDatasetInfo(partyResourceInfo);
+            }
             partyResourceInfo.setIdFields(datasetInfo.getIdFields());
-            partyResourceInfo.setReceiveResult(true);
+            partyResourceInfo.setReceiveResult(datasetInfo.getReceiveResult());
             partyResourceInfos.add(partyResourceInfo);
         }
         psiJobParam.setPartyResourceInfoList(partyResourceInfos);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("to psi params, psiJobParam: {}", psiJobParam);
-        }
-
         return psiJobParam;
     }
 
@@ -158,5 +162,33 @@ public class MPCJobParam {
 
     public static MPCJobParam deserialize(String data) throws Exception {
         return ObjectMapperFactory.getObjectMapper().readValue(data, MPCJobParam.class);
+    }
+
+    @Override
+    public String toString() {
+        return "MPCJobParam{"
+                + "jobID='"
+                + jobID
+                + '\''
+                + ", jobType="
+                + jobType
+                + ", sql='"
+                + sql
+                + '\''
+                + ", needRunPsi="
+                + needRunPsi
+                + ", shareBytesLength="
+                + shareBytesLength
+                + ", dataSetList="
+                + dataSetList
+                + ", receiveResult="
+                + receiveResult
+                + ", selfDataset="
+                + selfDataset
+                + ", selfIndex="
+                + selfIndex
+                + ", datasetIDList="
+                + datasetIDList
+                + '}';
     }
 }

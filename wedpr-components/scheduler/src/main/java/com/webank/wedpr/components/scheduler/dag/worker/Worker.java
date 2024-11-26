@@ -1,8 +1,11 @@
 package com.webank.wedpr.components.scheduler.dag.worker;
 
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
+import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.dag.utils.WorkerUtils;
+import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import lombok.Getter;
@@ -15,26 +18,33 @@ public abstract class Worker {
     private static final Logger logger = LoggerFactory.getLogger(Worker.class);
 
     private final JobWorkerMapper jobWorkerMapper;
+    private final DatasetMapper datasetMapper;
     private final LoadBalancer loadBalancer;
     private final FileStorageInterface fileStorageInterface;
+    private final FileMetaBuilder fileMetaBuilder;
 
     private final String jobId;
     private final String workerId;
     private final String workType;
     private final String workStatus;
     private final String args;
+    private final JobDO jobDO;
     private final JobWorker jobWorker;
 
     private int workerRetryTimes = -1;
     private int workerRetryDelayMillis = -1;
 
     public Worker(
+            JobDO jobDO,
             JobWorker jobWorker,
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
             JobWorkerMapper jobWorkerMapper,
-            FileStorageInterface fileStorageInterface) {
+            DatasetMapper datasetMapper,
+            FileStorageInterface fileStorageInterface,
+            FileMetaBuilder fileMetaBuilder) {
+        this.jobDO = jobDO;
         this.jobWorker = jobWorker;
         this.jobId = jobWorker.getJobId();
         this.workerId = jobWorker.getWorkerId();
@@ -47,30 +57,10 @@ public abstract class Worker {
 
         this.loadBalancer = loadBalancer;
         this.jobWorkerMapper = jobWorkerMapper;
+        this.datasetMapper = datasetMapper;
         this.fileStorageInterface = fileStorageInterface;
+        this.fileMetaBuilder = fileMetaBuilder;
     }
-
-    /*
-    public Worker(
-            String jobId,
-            String workerId,
-            String workType,
-            String args,
-            int workerRetryTimes,
-            int workerRetryDelayMillis,
-            LoadBalancer loadBalancer,
-            JobWorkerMapper jobWorkerMapper) {
-        this.jobId = jobId;
-        this.workerId = workerId;
-        this.workType = workType;
-        this.args = args;
-        this.workerRetryTimes = workerRetryTimes;
-        this.workerRetryDelayMillis = workerRetryDelayMillis;
-
-        this.loadBalancer = loadBalancer;
-        this.jobWorkerMapper = jobWorkerMapper;
-    }
-    */
 
     public void logWorker() {
         logger.info(
