@@ -11,6 +11,8 @@ import com.webank.wedpr.components.storage.api.StoragePath;
 import java.util.List;
 
 public interface DatasetServiceApi {
+    // update the dataset meta
+    void updateDatasetMeta(UserInfo userInfo, Dataset dataset) throws Exception;
 
     /**
      * create dataset

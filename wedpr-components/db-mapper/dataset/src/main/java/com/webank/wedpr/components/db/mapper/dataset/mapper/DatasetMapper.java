@@ -92,7 +92,7 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
      * @param dataset
      * @return
      */
-    int updateDatasetMetaInfo(Dataset dataset);
+    int updateDatasetMetaInfo(@Param("dataset") Dataset dataset);
 
     int getUseCountByDataSourceType(@Param("dataSourceType") String dataSourceType);
 

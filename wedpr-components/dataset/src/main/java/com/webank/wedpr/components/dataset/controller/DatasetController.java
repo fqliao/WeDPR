@@ -80,6 +80,20 @@ public class DatasetController {
         return response;
     }
 
+    @PostMapping(value = "updateDatasetMeta")
+    public WeDPRResponse updateDatasetMeta(
+            HttpServletRequest httpServletRequest, @RequestBody Dataset dataset) {
+        try {
+            UserInfo userInfo = UserTokenUtils.getUserInfo(datasetConfig, httpServletRequest);
+            datasetService.updateDatasetMeta(userInfo, dataset);
+            return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
+        } catch (Exception e) {
+            logger.warn(
+                    "updateDatasetMeta exception, dataset: {}, error: ", dataset.getDatasetId(), e);
+            return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+        }
+    }
+
     @PostMapping(value = "createDataset")
     public WeDPRResponse createDataset(
             HttpServletRequest httpServletRequest,
