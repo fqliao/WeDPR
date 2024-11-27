@@ -25,6 +25,7 @@ import com.webank.wedpr.components.storage.config.HdfsStorageConfig;
 import com.webank.wedpr.components.storage.stream.HdfsStorageStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.security.PrivilegedAction;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -32,6 +33,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +57,18 @@ public class HDFSStorage implements FileStorageInterface {
             try {
                 Configuration hadoopConf = new Configuration();
                 hadoopConf.set(StorageConstant.FS_URI_CONFIG_KEY, hdfsConfig.getUrl());
-                this.fileSystem = FileSystem.get(hadoopConf);
+                UserGroupInformation userGroupInformation =
+                        UserGroupInformation.createRemoteUser(hdfsConfig.getUser());
+                this.fileSystem =
+                        userGroupInformation.doAs(
+                                new PrivilegedAction<FileSystem>() {
+
+                                    @SneakyThrows(Exception.class)
+                                    @Override
+                                    public FileSystem run() {
+                                        return FileSystem.get(hadoopConf);
+                                    }
+                                });
                 this.hdfsConfig = hdfsConfig;
                 logger.info("connect to hdfs success, hdfsConfig: {}", hdfsConfig);
             } catch (Exception e) {

@@ -282,17 +282,32 @@
     <update id="updateDatasetMetaInfo" parameterType="com.webank.wedpr.components.db.mapper.dataset.dao.Dataset">
         UPDATE
             wedpr_dataset
-        SET
-            dataset_fields = #{datasetFields},
-            dataset_version_hash = #{datasetVersionHash},
-            dataset_size = #{datasetSize},
-            dataset_record_count = #{datasetRecordCount},
-            dataset_column_count = #{datasetColumnCount},
-            dataset_storage_type = #{datasetStorageType},
-            dataset_storage_path = #{datasetStoragePath},
-            status = #{status},
-            status_desc = #{statusDesc}
-        WHERE
-            dataset_id = #{datasetId}
+        <set>
+            <if test="dataset.datasetFields != null and dataset.datasetFields !=''">
+                dataset_fields = #{dataset.datasetFields},
+            </if>
+            <if test="dataset.datasetSize != 0">
+                dataset_size = #{dataset.datasetSize},
+            </if>
+            <if test="dataset.datasetRecordCount != 0">
+                dataset_record_count = #{dataset.datasetRecordCount},
+            </if>
+            <if test="dataset.datasetColumnCount != 0">
+                dataset_column_count = #{dataset.datasetColumnCount},
+            </if>
+            <if test="dataset.datasetStorageType != null and dataset.datasetStorageType !=''">
+                dataset_storage_type = #{dataset.datasetStorageType},
+            </if>
+            <if test="dataset.datasetStoragePath != null and dataset.datasetStoragePath !=''">
+                dataset_storage_path = #{dataset.datasetStoragePath},
+            </if>
+        </set>
+        WHERE dataset_id = #{dataset.datasetId}
+        <if test="dataset.ownerAgencyName != null and dataset.ownerAgencyName !=''">
+            owner_agency_name = #{dataset.ownerAgencyName},
+        </if>
+        <if test="dataset.ownerUserName != null and dataset.ownerUserName !=''">
+            owner_user_name = #{dataset.ownerUserName},
+        </if>
     </update>
 </mapper>

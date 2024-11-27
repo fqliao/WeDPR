@@ -3,6 +3,8 @@ package com.webank.wedpr.components.dataset.service;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.page.PageMethod;
+import com.webank.wedpr.common.utils.Common;
+import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.dataset.common.DatasetStatus;
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
 import com.webank.wedpr.components.dataset.config.HiveConfig;
@@ -88,6 +90,29 @@ public class DatasetServiceImpl implements DatasetServiceApi {
      */
     public static String newDatasetId() {
         return DatasetConstant.DATASET_ID_PREFIX + WeDPRUuidGenerator.generateID();
+    }
+
+    @Override
+    public void updateDatasetMeta(UserInfo userInfo, Dataset dataset) throws Exception {
+        // must define the datasetId field
+        Common.requireNonEmpty("datasetId", dataset.getDatasetId());
+        // set the owner information
+        if (userInfo != null) {
+            dataset.setOwnerAgencyName(userInfo.getAgency());
+            dataset.setOwnerUserName(userInfo.getUser());
+        }
+        logger.info(
+                "updateDatasetMeta, datasetId: {}, user_info: {}",
+                dataset.getDatasetId(),
+                userInfo == null ? "empty" : userInfo.toString());
+        int updatedCount = datasetMapper.updateDatasetMetaInfo(dataset);
+        if (updatedCount > 0) {
+            return;
+        }
+        throw new WeDPRException(
+                "update dataset meta for "
+                        + dataset.getDatasetId()
+                        + " failed for no recorder found!");
     }
 
     // CreateDatasetRequest => Dataset
