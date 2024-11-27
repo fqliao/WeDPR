@@ -224,7 +224,7 @@ public class ExecutorManagerImpl implements ExecutorManager {
         String executorType = JobType.getExecutorType(jobType).getType();
         if (executors.containsKey(executorType)) {
             Executor executor = executors.get(executorType);
-            logger.debug("get executor, executorType: {}", executorType);
+            // logger.debug("get executor, executorType: {}", executorType);
             return executor;
         }
         return null;

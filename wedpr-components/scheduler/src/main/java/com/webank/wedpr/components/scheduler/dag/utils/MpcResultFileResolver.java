@@ -1,5 +1,6 @@
 package com.webank.wedpr.components.scheduler.dag.utils;
 
+import com.webank.wedpr.common.utils.WeDPRException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -31,23 +32,24 @@ public class MpcResultFileResolver {
 
     public static final String CSV_SEP = ",";
     public static final String BLANK_SEP = " ";
+    public static final String MPC_ID_FIELD = "id";
 
     public MpcResult doParseMpcResultFile(String mpcOutputFile, boolean onlyField)
-            throws IOException {
+            throws IOException, WeDPRException {
 
-        int valueCount = 0;
+        int mpcResultRowCount = 0;
+        int mpcResultFieldCount = 0;
 
-        int fieldCount = 0;
         boolean needAddFields = true;
         MpcResult mpcResult = new MpcResult();
-        String strResultFields = "id";
+        String strResultFields = MPC_ID_FIELD;
         try (BufferedReader mpcOutputBufferedReader =
                 new BufferedReader(new FileReader(mpcOutputFile))) {
             String line;
             while ((line = mpcOutputBufferedReader.readLine()) != null) {
                 line = line.trim();
                 if (line.startsWith(PPC_RESULT_FIELDS_FLAG)) {
-                    strResultFields += ",";
+                    strResultFields += CSV_SEP;
                     strResultFields +=
                             line.substring(line.indexOf('=') + 1)
                                     .trim()
@@ -56,13 +58,13 @@ public class MpcResultFileResolver {
                     mpcResult.setMpcResultFields(strResultFields);
                     needAddFields = false;
                 } else if (line.startsWith(PPC_RESULT_VALUES_FLAG)) {
-                    fieldCount = line.split("=")[1].trim().split(BLANK_SEP).length;
-                    logger.info("## {}:{}", PPC_RESULT_VALUES_FLAG, fieldCount);
-                    mpcResult.setMpcResultFieldCount(fieldCount);
+                    mpcResultFieldCount = line.split("=")[1].trim().split(BLANK_SEP).length;
+                    logger.info("## {}:{}", PPC_RESULT_VALUES_FLAG, mpcResultFieldCount);
+                    mpcResult.setMpcResultFieldCount(mpcResultFieldCount);
                     if (onlyField) {
                         break;
                     }
-                    valueCount++;
+                    mpcResultRowCount++;
                 } else if (line.startsWith(PPC_RESULT_TIME_FLAG)) {
                     logger.info("## {}:{}", PPC_RESULT_TIME_FLAG, line);
                     mpcResult.setMpcResultTimeLine(line);
@@ -79,19 +81,29 @@ public class MpcResultFileResolver {
         if (needAddFields) {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append(strResultFields);
-            for (int i = 0; i < fieldCount; i++) {
-                stringBuilder.append("," + "result").append(i);
+            for (int i = 0; i < mpcResultFieldCount; i++) {
+                stringBuilder.append(CSV_SEP + "result").append(i);
             }
             mpcResult.setMpcResultFields(stringBuilder.toString());
+
+            logger.error(
+                    "Not found \"{}\" flag in mpc result file, fields: {}, mpcOutputFile: {}",
+                    PPC_RESULT_FIELDS_FLAG,
+                    stringBuilder,
+                    mpcOutputFile);
+
+            throw new WeDPRException(
+                    "Not found \"" + PPC_RESULT_FIELDS_FLAG + "\" flag in mpc result file");
         }
 
-        mpcResult.setMpcResultValueCount(valueCount);
-        logger.info("mpc result: {}", mpcResult);
+        mpcResult.setMpcResultValueCount(mpcResultRowCount);
+        logger.info("## mpc result: {}", mpcResult);
         return mpcResult;
     }
 
     public void transMpcOutputFile2ResultFile(
-            String jobId, String mpcOutputFile, String mpcResultFile) throws IOException {
+            String jobId, String mpcOutputFile, String mpcResultFile)
+            throws IOException, WeDPRException {
 
         long startTimeMillis = System.currentTimeMillis();
         logger.info(
@@ -102,7 +114,7 @@ public class MpcResultFileResolver {
 
         MpcResult mpcResult = doParseMpcResultFile(mpcOutputFile, true);
 
-        int rowCount = 0;
+        int rowNumber = 0;
         try (BufferedReader mpcOutputBufferedReader =
                         new BufferedReader(new FileReader(mpcOutputFile));
                 FileWriter mpcResultFileWriter = new FileWriter(mpcResultFile);
@@ -124,19 +136,19 @@ public class MpcResultFileResolver {
                     continue;
                 }
 
-                rowCount++;
+                rowNumber++;
 
-                StringBuilder stringBuilder = new StringBuilder(String.valueOf(rowCount));
+                StringBuilder stringBuilder = new StringBuilder(String.valueOf(rowNumber));
 
                 String[] valuesList = line.split("=")[1].trim().split(BLANK_SEP);
                 for (String value : valuesList) {
-                    stringBuilder.append(",").append(value);
+                    stringBuilder.append(CSV_SEP).append(value);
                 }
 
                 csvWriter.write(stringBuilder.toString());
 
                 if (logger.isTraceEnabled()) {
-                    logger.trace("result values: {}, index: {}", stringBuilder, rowCount);
+                    logger.trace("result values: {}, index: {}", stringBuilder, rowNumber);
                 }
 
                 // add a newline at the end of each row
@@ -146,25 +158,12 @@ public class MpcResultFileResolver {
             long endTimeMillis = System.currentTimeMillis();
 
             logger.info(
-                    "trans mpc output file to mpc result file end, jobId: {}, mpcOutputFile: {}, mpcResultFile: {}, rowCount: {}, costMs: {}",
+                    "trans mpc output file to mpc result file end, jobId: {}, mpcOutputFile: {}, mpcResultFile: {}, rowNumber: {}, costMs: {}",
                     jobId,
                     mpcOutputFile,
                     mpcResultFile,
-                    rowCount,
+                    rowNumber,
                     endTimeMillis - startTimeMillis);
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        MpcResultFileResolver mpcResultFileResolver = new MpcResultFileResolver();
-        //        MpcResult mpcResult =
-        //                mpcResultFileResolver.doParseMpcResultFile(
-        //                        "/Users/octopus/Desktop/mpc_result_1.txt", true);
-
-        mpcResultFileResolver.transMpcOutputFile2ResultFile(
-                "",
-                "/Users/octopus/Desktop/mpc_result_1.txt",
-                "/Users/octopus/Desktop/mpc_result.csv");
-        //        System.out.println(mpcResult);
     }
 }

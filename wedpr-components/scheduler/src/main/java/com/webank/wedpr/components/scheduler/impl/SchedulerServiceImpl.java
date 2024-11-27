@@ -104,6 +104,7 @@ public class SchedulerServiceImpl implements SchedulerService {
             }
 
             MPCJobParam mpcJobParam = MPCJobParam.deserialize(jobDO.getParam());
+            mpcJobParam.check(datasetMapper);
             response.setResultFileInfo(
                     mpcJobParam.getMpcPath(
                             fileMetaBuilder, jobID, ExecutorConfig.getMpcResultFileName()));

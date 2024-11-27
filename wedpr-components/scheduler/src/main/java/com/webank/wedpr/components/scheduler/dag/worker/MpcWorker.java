@@ -4,11 +4,16 @@ import com.webank.wedpr.common.protocol.ServiceName;
 import com.webank.wedpr.common.utils.Common;
 import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.common.utils.WeDPRException;
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
+import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.client.MpcClient;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.dag.utils.MpcResultFileResolver;
+import com.webank.wedpr.components.scheduler.executor.hook.MPCExecutorHook;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
+import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.executor.impl.mpc.MPCJobParam;
 import com.webank.wedpr.components.scheduler.executor.impl.mpc.request.MpcRunJobRequest;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
@@ -24,19 +29,56 @@ public class MpcWorker extends Worker {
     private static final Logger logger = LoggerFactory.getLogger(MpcWorker.class);
 
     public MpcWorker(
+            JobDO jobDO,
             JobWorker jobWorker,
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
             JobWorkerMapper jobWorkerMapper,
-            FileStorageInterface fileStorageInterface) {
+            DatasetMapper datasetMapper,
+            FileStorageInterface fileStorageInterface,
+            FileMetaBuilder fileMetaBuilder) {
         super(
+                jobDO,
                 jobWorker,
                 workerRetryTimes,
                 workerRetryDelayMillis,
                 loadBalancer,
                 jobWorkerMapper,
-                fileStorageInterface);
+                datasetMapper,
+                fileStorageInterface,
+                fileMetaBuilder);
+    }
+
+    @SneakyThrows
+    @Override
+    public void onLaunch() {
+        super.onLaunch();
+
+        long startTimeMillis = System.currentTimeMillis();
+        JobDO jobDO = getJobDO();
+        MPCJobParam mpcJobParam = (MPCJobParam) getJobDO().getJobParam();
+
+        logger.info(
+                "## mpc engine launch begin, jobId: {}, mpcJobParams: {}",
+                jobDO.getId(),
+                mpcJobParam);
+
+        MPCExecutorHook mpcExecutorHook =
+                new MPCExecutorHook(
+                        getDatasetMapper(), getFileStorageInterface(), getFileMetaBuilder());
+        boolean needRunPsi = mpcJobParam.isNeedRunPsi();
+        if (needRunPsi) {
+            mpcExecutorHook.prepareWithPsi(getDatasetMapper(), jobDO, mpcJobParam);
+        } else {
+            mpcExecutorHook.prepareWithoutPsi(getDatasetMapper(), jobDO, mpcJobParam);
+        }
+
+        long endTimeMillis = System.currentTimeMillis();
+        logger.info(
+                "## mpc engine launch end, jobId: {}, costMs: {}",
+                jobDO.getId(),
+                endTimeMillis - startTimeMillis);
     }
 
     @Override

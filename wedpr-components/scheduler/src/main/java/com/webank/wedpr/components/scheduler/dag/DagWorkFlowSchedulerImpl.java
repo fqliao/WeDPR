@@ -3,13 +3,16 @@ package com.webank.wedpr.components.scheduler.dag;
 // import static com.webank.wedpr.components.scheduler.dag.utils.WorkerUtils.toJobWorker;
 
 import com.webank.wedpr.common.utils.WeDPRException;
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
+import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.dag.api.WorkFlowScheduler;
 import com.webank.wedpr.components.scheduler.dag.base.DAG;
 import com.webank.wedpr.components.scheduler.dag.base.DAGNode;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.dag.utils.WorkerUtils;
 import com.webank.wedpr.components.scheduler.dag.worker.*;
+import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
 import com.webank.wedpr.components.scheduler.workflow.WorkFlow;
 import com.webank.wedpr.components.scheduler.workflow.WorkFlowNode;
@@ -28,19 +31,24 @@ public class DagWorkFlowSchedulerImpl implements WorkFlowScheduler {
 
     private LoadBalancer loadBalancer;
     private JobWorkerMapper jobWorkerMapper;
+    private DatasetMapper datasetMapper;
     private FileStorageInterface fileStorageInterface;
+    private FileMetaBuilder fileMetaBuilder;
 
-    // TODO: make it config items
     private final Integer workerRetryTimes = -1;
     private final Integer workerRetryDelayMillis = -1;
 
     public DagWorkFlowSchedulerImpl(
             LoadBalancer loadBalancer,
             JobWorkerMapper jobWorkerMapper,
-            FileStorageInterface storage) {
+            DatasetMapper datasetMapper,
+            FileStorageInterface fileStorageInterface,
+            FileMetaBuilder fileMetaBuilder) {
         this.loadBalancer = loadBalancer;
         this.jobWorkerMapper = jobWorkerMapper;
-        this.fileStorageInterface = storage;
+        this.datasetMapper = datasetMapper;
+        this.fileStorageInterface = fileStorageInterface;
+        this.fileMetaBuilder = fileMetaBuilder;
     }
 
     public LoadBalancer getLoadBalancer() {
@@ -81,10 +89,10 @@ public class DagWorkFlowSchedulerImpl implements WorkFlowScheduler {
     }
 
     @Override
-    public void schedule(String jobId, WorkFlow workFlow) throws WeDPRException {
+    public void schedule(String jobId, JobDO jobDO, WorkFlow workFlow) throws WeDPRException {
 
         // prepare for dag
-        List<Worker> workerList = prepareDag(jobId, workFlow);
+        List<Worker> workerList = prepareDag(jobId, jobDO, workFlow);
 
         // construct dag
         DAG<Integer> dag = createDag(jobId, workerList);
@@ -93,7 +101,8 @@ public class DagWorkFlowSchedulerImpl implements WorkFlowScheduler {
         executeDag(jobId, workerList, dag);
     }
 
-    public List<Worker> prepareDag(String jobId, WorkFlow workFlow) throws WeDPRException {
+    public List<Worker> prepareDag(String jobId, JobDO jobDO, WorkFlow workFlow)
+            throws WeDPRException {
 
         List<Worker> workerList = new ArrayList<>();
 
@@ -111,12 +120,15 @@ public class DagWorkFlowSchedulerImpl implements WorkFlowScheduler {
             // build worker
             Worker worker =
                     WorkerFactory.buildWorker(
+                            jobDO,
                             jobWorker,
                             workerRetryTimes,
                             workerRetryDelayMillis,
                             loadBalancer,
                             jobWorkerMapper,
-                            fileStorageInterface);
+                            datasetMapper,
+                            fileStorageInterface,
+                            fileMetaBuilder);
             workerList.add(worker);
         }
 

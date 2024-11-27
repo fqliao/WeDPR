@@ -60,7 +60,12 @@ public class DagSchedulerExecutor implements Executor {
         this.executorManager = executorManager;
 
         this.workFlowScheduler =
-                new DagWorkFlowSchedulerImpl(loadBalancer, jobWorkerMapper, fileStorageInterface);
+                new DagWorkFlowSchedulerImpl(
+                        loadBalancer,
+                        jobWorkerMapper,
+                        datasetMapper,
+                        fileStorageInterface,
+                        fileMetaBuilder);
 
         JobWorkFlowBuilderManager jobWorkflowBuilderManager =
                 new JobWorkFlowBuilderManager(
@@ -101,7 +106,7 @@ public class DagSchedulerExecutor implements Executor {
         try {
             WorkFlow workflow = workflowOrchestrator.buildWorkFlow(jobDO);
 
-            this.workFlowScheduler.schedule(jobDO.getId(), workflow);
+            this.workFlowScheduler.schedule(jobDO.getId(), jobDO, workflow);
             executiveContext.onTaskFinished(new ExecuteResult(ExecuteResult.ResultStatus.SUCCESS));
 
             long endTimeMillis = System.currentTimeMillis();

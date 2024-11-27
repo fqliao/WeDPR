@@ -3,8 +3,11 @@ package com.webank.wedpr.components.scheduler.dag.worker;
 import com.webank.wedpr.common.protocol.JobType;
 import com.webank.wedpr.common.protocol.WorkerNodeType;
 import com.webank.wedpr.common.utils.WeDPRException;
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
+import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
+import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import org.slf4j.Logger;
@@ -15,12 +18,15 @@ public class WorkerFactory {
     private static final Logger logger = LoggerFactory.getLogger(WorkerFactory.class);
 
     public static Worker buildWorker(
+            JobDO jobDO,
             JobWorker jobWorker,
             int workerRetryTimes,
             int workerRetryDelayMillis,
             LoadBalancer loadBalancer,
             JobWorkerMapper jobWorkerMapper,
-            FileStorageInterface fileStorageInterface)
+            DatasetMapper datasetMapper,
+            FileStorageInterface fileStorageInterface,
+            FileMetaBuilder fileMetaBuilder)
             throws WeDPRException {
 
         String jobId = jobWorker.getJobId();
@@ -28,32 +34,41 @@ public class WorkerFactory {
 
         if (JobType.isPSIJob(workerType)) {
             return new PsiWorker(
+                    jobDO,
                     jobWorker,
                     workerRetryTimes,
                     workerRetryDelayMillis,
                     loadBalancer,
                     jobWorkerMapper,
-                    fileStorageInterface);
+                    datasetMapper,
+                    fileStorageInterface,
+                    fileMetaBuilder);
         }
 
         if (WorkerNodeType.isMLJob(workerType)) {
             return new ModelWorker(
+                    jobDO,
                     jobWorker,
                     workerRetryTimes,
                     workerRetryDelayMillis,
                     loadBalancer,
                     jobWorkerMapper,
-                    fileStorageInterface);
+                    datasetMapper,
+                    fileStorageInterface,
+                    fileMetaBuilder);
         }
 
         if (JobType.isMPCJob(workerType)) {
             return new MpcWorker(
+                    jobDO,
                     jobWorker,
                     workerRetryTimes,
                     workerRetryDelayMillis,
                     loadBalancer,
                     jobWorkerMapper,
-                    fileStorageInterface);
+                    datasetMapper,
+                    fileStorageInterface,
+                    fileMetaBuilder);
         }
 
         logger.error("Unsupported worker type, jobId: {}, workType: {}", jobId, workerType);

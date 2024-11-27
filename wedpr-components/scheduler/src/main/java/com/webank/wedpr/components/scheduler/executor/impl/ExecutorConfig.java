@@ -107,4 +107,8 @@ public class ExecutorConfig {
     public static String getMpcPrepareFileName() {
         return MPC_PREPARE_FILE_NAME;
     }
+
+    public static String getMpcFileName(String jobId) {
+        return jobId + ".mpc";
+    }
 }

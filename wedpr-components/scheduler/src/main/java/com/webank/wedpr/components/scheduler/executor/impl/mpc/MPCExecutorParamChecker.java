@@ -21,13 +21,13 @@ public class MPCExecutorParamChecker implements ExecutorParamChecker {
 
     @Override
     public Object checkAndParseJob(JobDO jobDO) throws Exception {
-        MPCJobParam modelJobParam = MPCJobParam.deserialize(jobDO.getParam());
-        modelJobParam.setJobID(jobDO.getId());
-        modelJobParam.setJobType(jobDO.getType());
-        modelJobParam.setDatasetIDList(jobDO.getDatasetList());
+        MPCJobParam mpcJobParam = MPCJobParam.deserialize(jobDO.getParam());
+        mpcJobParam.setJobID(jobDO.getId());
+        mpcJobParam.setJobType(jobDO.getType());
+        mpcJobParam.setDatasetIDList(jobDO.getDatasetList());
         // check the param
-        modelJobParam.check(datasetMapper);
+        mpcJobParam.check(datasetMapper);
 
-        return modelJobParam;
+        return mpcJobParam;
     }
 }
