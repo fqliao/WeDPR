@@ -93,7 +93,7 @@ public class CSVFileParser {
                 new ParseHandler() {
                     @Override
                     public Object call(CSVReaderHeaderAware reader) throws Exception {
-                        // check the fields
+                        // check the fields(Note: readMap will read the first content line)
                         Map<String, String> headerInfo = reader.readMap();
                         Map<String, String> fieldsMapping =
                                 Common.trimAndMapping(headerInfo.keySet());
@@ -108,7 +108,7 @@ public class CSVFileParser {
                                 throw new WeDPRException(errorMsg);
                             }
                         }
-                        Map<String, String> row;
+                        Map<String, String> row = headerInfo;
                         try (Writer writer =
                                 new BufferedWriter(
                                         new FileWriter(extractConfig.getExtractFilePath()),
@@ -116,7 +116,10 @@ public class CSVFileParser {
                             // write the data(Note: here no need to write the header)
                             writer.write(
                                     Constant.DEFAULT_ID_FIELD + Constant.DEFAULT_LINE_SPLITTER);
-                            while ((row = reader.readMap()) != null) {
+                            do {
+                                if (row == null) {
+                                    break;
+                                }
                                 int column = 0;
                                 for (String field : extractConfig.getExtractFields()) {
                                     // Note: the key for row maybe exist blanks
@@ -127,7 +130,7 @@ public class CSVFileParser {
                                     column++;
                                 }
                                 writer.write(Constant.DEFAULT_LINE_SPLITTER);
-                            }
+                            } while ((row = reader.readMap()) != null);
                         } catch (Exception e) {
                             logger.warn(
                                     "extractFields exception, config: {}, error",
