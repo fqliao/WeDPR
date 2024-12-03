@@ -169,37 +169,37 @@ def compute_min_with_group_by(source, col_index, group_row_index):
 
 
 def calculate_result_0():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][0] = 3*group_indexes_key[i]
 
 
 def calculate_result_1():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][1] = compute_count_with_group_by(i)
 
 
 def calculate_result_2():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][2] = compute_avg_with_group_by(source0_record, 1, i)*2+group_indexes_key[i]
 
 
 def calculate_result_3():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][3] = (compute_sum_with_group_by(source0_record, 2, i)+compute_sum_with_group_by(source1_record, 2, i))/(compute_count_with_group_by(i)+100/(compute_min_with_group_by(source0_record, 1, i)+compute_min_with_group_by(source1_record, 1, i)))+10
 
 
 def calculate_result_4():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][4] = compute_max_with_group_by(source1_record, 1, i)
 
 
 def calculate_result_5():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][5] = compute_min_with_group_by(source2_record, 2, i)
 
