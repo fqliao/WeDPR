@@ -71,6 +71,7 @@ public interface DatasetServiceApi {
      * @param userInfo
      * @param ownerAgency
      * @param ownerUser
+     * @param datasetId
      * @param datasetTitle
      * @param permissionType
      * @param startTime
@@ -84,6 +85,7 @@ public interface DatasetServiceApi {
             UserInfo userInfo,
             String ownerAgency,
             String ownerUser,
+            String datasetId,
             String datasetTitle,
             Integer permissionType,
             String dataSourceType,

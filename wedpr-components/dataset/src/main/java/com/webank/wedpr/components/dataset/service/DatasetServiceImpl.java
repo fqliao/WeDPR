@@ -520,6 +520,7 @@ public class DatasetServiceImpl implements DatasetServiceApi {
             String ownerAgency,
             String ownerUser,
             String datasetTitle,
+            String datasetId,
             Integer permissionType,
             String dataSourceType,
             String startTime,
@@ -532,10 +533,11 @@ public class DatasetServiceImpl implements DatasetServiceApi {
         long startTimeMillis = System.currentTimeMillis();
 
         logger.info(
-                "list dataset begin, ownerAgency: {}, ownerUser: {}, datasetTitle: {}, permissionType: {}, dataSourceType: {}, startTime: {}, endTime: {}, status: {}, pageNum: {}, pageSize: {}",
+                "list dataset begin, ownerAgency: {}, ownerUser: {}, datasetTitle: {}, datasetId: {}, permissionType: {}, dataSourceType: {}, startTime: {}, endTime: {}, status: {}, pageNum: {}, pageSize: {}",
                 ownerAgency,
                 ownerUser,
                 datasetTitle,
+                datasetId,
                 permissionType,
                 dataSourceType,
                 startTime,
@@ -573,6 +575,7 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                                 ownerUser,
                                 ownerAgency,
                                 datasetTitle,
+                                datasetId,
                                 permissionType,
                                 dataSourceType,
                                 startTime,
@@ -581,10 +584,12 @@ public class DatasetServiceImpl implements DatasetServiceApi {
 
                 if (!datasetList.isEmpty()) {
                     for (Dataset dataset : datasetList) {
-                        String datasetId = dataset.getDatasetId();
                         DatasetUserPermissions datasetUserPermissions =
                                 DatasetUserPermissionValidator.confirmUserDatasetPermissions(
-                                        datasetId, userInfo, datasetPermissionMapper, false);
+                                        dataset.getDatasetId(),
+                                        userInfo,
+                                        datasetPermissionMapper,
+                                        false);
                         dataset.setPermissions(datasetUserPermissions);
                     }
                 }
