@@ -326,7 +326,7 @@ class CodeGenerator:
 
             if self.sql_pattern == SqlPattern.BASIC_ARITH_OPE or self.sql_pattern == SqlPattern.AGGR_FUNC_WITH_GROUP_BY:
                 mpc_str += f"def calculate_result_{i}():\n" \
-                           f"{INDENT}@for_range_opt_multithread(n_threads, result_record)\n" \
+                           f"{INDENT}@for_range_opt(result_record)\n" \
                            f"{INDENT}def _(i):\n" \
                            f"{INDENT}{INDENT}results[i][{i}] = {formula_str}\n\n\n"
             elif self.sql_pattern == SqlPattern.AGGR_FUNC_ONLY:

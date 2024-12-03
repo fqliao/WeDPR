@@ -44,13 +44,13 @@ def read_data_collection(data_collection, party_id):
 
 
 def calculate_result_0():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][0] = 3*(source1_record[i][3]+source2_record[i][3])-source0_record[i][3]
 
 
 def calculate_result_1():
-    @for_range_opt_multithread(n_threads, result_record)
+    @for_range_opt(result_record)
     def _(i):
         results[i][1] = (source0_record[i][1]+source2_record[i][1])/2*source1_record[i][1]
 
