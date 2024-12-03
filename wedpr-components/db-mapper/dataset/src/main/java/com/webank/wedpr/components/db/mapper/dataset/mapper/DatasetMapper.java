@@ -40,6 +40,7 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
             @Param("ownerUser") String ownerUser,
             @Param("ownerAgency") String ownerAgency,
             @Param("datasetTitle") String datasetTitle,
+            @Param("datasetId") String datasetId,
             @Param("permissionType") Integer permissionType,
             @Param("dataSourceType") String dataSourceType,
             @Param("startTime") String startTime,
