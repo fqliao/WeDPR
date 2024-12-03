@@ -74,6 +74,8 @@ public interface DatasetServiceApi {
      * @param datasetId
      * @param datasetTitle
      * @param permissionType
+     * @param noPermissionType
+     * @param excludeMyOwn
      * @param startTime
      * @param endTime
      * @param pageOffset
@@ -88,6 +90,8 @@ public interface DatasetServiceApi {
             String datasetId,
             String datasetTitle,
             Integer permissionType,
+            Integer noPermissionType,
+            Boolean excludeMyOwn,
             String dataSourceType,
             String startTime,
             String endTime,

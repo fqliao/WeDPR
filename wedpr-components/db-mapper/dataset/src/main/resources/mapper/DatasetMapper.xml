@@ -143,12 +143,17 @@
             <if test="loginAgency != null and loginAgency.trim() != ''">
                 <if test="loginUser != null and loginUser.trim() != ''">
                     AND (
+                            <if test="(excludeMyOwn == null) or (excludeMyOwn == false)">
+                                (
+                                    <!--自己的数据集，所有状态的都获取-->
+                                    t1.owner_user_name = #{loginUser}
+                                    AND
+                                    t1.owner_agency_name = #{loginAgency}
+                                )
+                                OR
+                            </if>
                             (
-                                t1.owner_user_name = #{loginUser}
-                                AND
-                                t1.owner_agency_name = #{loginAgency})
-                            OR
-                            (
+<!--                    其他人的数据集，仅仅获取状态为成功的-->
                                 (
                                     t1.owner_user_name != #{loginUser}
                                     OR
@@ -163,9 +168,47 @@
                 </if>
             </if>
 
+            <if test="noPermissionType != null">
+                 <!--            权限判断-->
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM
+                      wedpr_dataset_permission
+                    WHERE
+                      (1 = 1)
+                      AND
+                            (t1.dataset_id = dataset_id)
+                      AND
+                            (permission_type = #{noPermissionType})
+                      AND
+                            CURDATE() &lt;= expired_at
+                      AND (
+                        permission_scope = 'global'
+                        OR (
+                          permission_scope = 'agency'
+                          AND permission_subject_id = #{loginAgency}
+                        )
+                <if test="loginUserGroupSubjectList != null and !loginUserGroupSubjectList.isEmpty()">
+                        OR (
+                          permission_scope = 'user_group'
+                            AND permission_subject_id IN
+                            <foreach item="loginUserGroupSubject" index="index" collection="loginUserGroupSubjectList" open="(" separator="," close=")">
+                                #{loginUserGroupSubject}
+                            </foreach>
+                        )
+                </if>
+                        OR (
+                          permission_scope = 'user'
+                          AND permission_subject_id = #{loginUserSubject}
+                        )
+                      )
+                )
+            </if>
+
         ORDER BY
           t1.create_at DESC
     </select>
+
     <select id="getUseCountByDataSourceType" resultType="java.lang.Integer">
         select count(wjdr.dataset_id) from wedpr_job_dataset_relation wjdr, wedpr_dataset wd where wjdr.dataset_id = wd.dataset_id and wd.data_source_type = #{dataSourceType};
     </select>

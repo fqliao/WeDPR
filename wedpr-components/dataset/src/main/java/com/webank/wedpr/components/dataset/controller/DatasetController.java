@@ -240,13 +240,15 @@ public class DatasetController {
             HttpServletRequest httpServletRequest,
             @RequestParam(value = "ownerAgencyName", required = false) String ownerAgency,
             @RequestParam(value = "ownerUserName", required = false) String ownerUser,
-            @RequestParam(value = "permissionType", required = false) String permissionType,
+            @RequestParam(value = "permissionType", required = false) String strPermissionType,
+            @RequestParam(value = "noPermissionType", required = false) String strNoPermissionType,
             @RequestParam(value = "datasetTitle", required = false) String datasetTitle,
             @RequestParam(value = "datasetId", required = false) String datasetId,
             @RequestParam(value = "dataSourceType", required = false) String dataSourceType,
             @RequestParam(value = "startTime", required = false) String startTime,
             @RequestParam(value = "endTime", required = false) String endTime,
             @RequestParam(value = "status", required = false) Integer status,
+            @RequestParam(value = "excludeMyOwn", required = false) Boolean excludeMyOwn,
             @RequestParam(value = "pageNum", required = false) Integer pageNum,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
 
@@ -270,9 +272,15 @@ public class DatasetController {
             },
             */
 
-            int type = DatasetConstant.DatasetPermissionType.VISIBLE.getType();
-            if (permissionType != null) {
-                type = DatasetConstant.DatasetPermissionType.fromString(permissionType);
+            Integer permissionType = DatasetConstant.DatasetPermissionType.VISIBLE.getType();
+            Integer noPermissionType = null;
+
+            if (strNoPermissionType != null) {
+                noPermissionType =
+                        DatasetConstant.DatasetPermissionType.fromString(strNoPermissionType);
+            } else if (strPermissionType != null) {
+                permissionType =
+                        DatasetConstant.DatasetPermissionType.fromString(strPermissionType);
             }
 
             UserInfo userInfo = UserTokenUtils.getUserInfo(datasetConfig, httpServletRequest);
@@ -284,7 +292,9 @@ public class DatasetController {
                             ownerUser,
                             datasetTitle,
                             datasetId,
-                            type,
+                            permissionType,
+                            noPermissionType,
+                            excludeMyOwn,
                             dataSourceType,
                             startTime,
                             endTime,

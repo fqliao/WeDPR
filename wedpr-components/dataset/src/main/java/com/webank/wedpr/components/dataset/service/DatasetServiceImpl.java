@@ -507,6 +507,8 @@ public class DatasetServiceImpl implements DatasetServiceApi {
      * @param ownerUser
      * @param datasetTitle
      * @param permissionType
+     * @param noPermissionType
+     * @param excludeMyOwn
      * @param startTime
      * @param endTime
      * @param pageNum
@@ -522,6 +524,8 @@ public class DatasetServiceImpl implements DatasetServiceApi {
             String datasetTitle,
             String datasetId,
             Integer permissionType,
+            Integer noPermissionType,
+            Boolean excludeMyOwn,
             String dataSourceType,
             String startTime,
             String endTime,
@@ -533,12 +537,15 @@ public class DatasetServiceImpl implements DatasetServiceApi {
         long startTimeMillis = System.currentTimeMillis();
 
         logger.info(
-                "list dataset begin, ownerAgency: {}, ownerUser: {}, datasetTitle: {}, datasetId: {}, permissionType: {}, dataSourceType: {}, startTime: {}, endTime: {}, status: {}, pageNum: {}, pageSize: {}",
+                "list dataset begin, userInfo: {}, ownerAgency: {}, ownerUser: {}, datasetTitle: {}, datasetId: {}, permissionType: {}, noPermissionType: {}, excludeMyOwn: {}, dataSourceType: {}, startTime: {}, endTime: {}, status: {}, pageNum: {}, pageSize: {}",
+                userInfo,
                 ownerAgency,
                 ownerUser,
                 datasetTitle,
                 datasetId,
                 permissionType,
+                noPermissionType,
+                excludeMyOwn,
                 dataSourceType,
                 startTime,
                 endTime,
@@ -577,6 +584,8 @@ public class DatasetServiceImpl implements DatasetServiceApi {
                                 datasetTitle,
                                 datasetId,
                                 permissionType,
+                                noPermissionType,
+                                excludeMyOwn,
                                 dataSourceType,
                                 startTime,
                                 endTime,
