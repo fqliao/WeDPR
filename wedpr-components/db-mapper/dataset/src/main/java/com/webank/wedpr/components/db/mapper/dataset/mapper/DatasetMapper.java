@@ -42,6 +42,8 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
             @Param("datasetTitle") String datasetTitle,
             @Param("datasetId") String datasetId,
             @Param("permissionType") Integer permissionType,
+            @Param("noPermissionType") Integer noPermissionType,
+            @Param("excludeMyOwn") Boolean excludeMyOwn,
             @Param("dataSourceType") String dataSourceType,
             @Param("startTime") String startTime,
             @Param("endTime") String endTime,
