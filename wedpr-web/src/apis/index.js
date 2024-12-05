@@ -5,7 +5,6 @@ import accountManageServer from './accountManage'
 import dataManageServer from './dataManage'
 import authManageServer from './authManage'
 import projectManageServer from './projectManage'
-import commonService from './commonService'
 import settingManageServer from './settingManage'
 import jobManageServer from './jobManage'
 import jupyterManageServer from './jupyterManage'
@@ -19,7 +18,6 @@ export {
   msgManageServer,
   accountManageServer,
   dataManageServer,
-  commonService,
   settingManageServer,
   jobManageServer,
   jupyterManageServer,
