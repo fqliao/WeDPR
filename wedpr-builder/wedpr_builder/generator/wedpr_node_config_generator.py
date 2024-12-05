@@ -3,10 +3,12 @@
 import os
 import sys
 from wedpr_builder.common import utilities
+from wedpr_builder.common import constant
 from wedpr_builder.generator.binary_generator import BinaryGenerator
 from wedpr_builder.generator.cert_generator import CertGenerator
 from wedpr_builder.generator.shell_script_generator import ShellScriptGenerator
 from wedpr_builder.config.wedpr_deploy_config import WeDPRDeployConfig
+from wedpr_builder.config.wedpr_deploy_config import AgencyConfig
 
 
 class WeDPRNodeConfigGenerator:
@@ -16,9 +18,10 @@ class WeDPRNodeConfigGenerator:
 
     def __init__(self, config: WeDPRDeployConfig, output_dir: str):
         self.config = config
-        self.output_dir = output_dir
-        self.binary_name = utilities.ConfigInfo.ppc_node_binary_name
-        self.service_type = utilities.ServiceInfo.node_service_type
+        self.output_dir = os.path.join(
+            output_dir, self.config.env_config.deploy_dir)
+        self.binary_name = constant.ConfigInfo.ppc_node_binary_name
+        self.service_type = constant.ServiceInfo.node_service_type
 
     def generate_node_config(self):
         utilities.print_badge("* generate_node_config")
@@ -44,12 +47,16 @@ class WeDPRNodeConfigGenerator:
                         node_count = int(ip_array[1])
                     for node_index in range(node_count):
                         node_name = "node" + str(node_index)
-                        if self.__generate_single_node_config__(node_config, ip, node_name, node_config.agency_name, node_index) is False:
+                        if self.__generate_single_node_config__(
+                                agency_config, node_config, ip,
+                                node_name, node_config.agency_name, node_index) is False:
                             return False
         utilities.print_badge("* generate_node_config success")
         return True
 
-    def __generate_single_node_config__(self, node_config, ip, node_name, agency_name, node_index):
+    def __generate_single_node_config__(
+            self, agency_config: AgencyConfig,
+            node_config, ip, node_name, agency_name, node_index):
         utilities.print_badge("* generate node config for %s, ip: %s, agency: %s" %
                               (node_name, ip, agency_name))
         # copy the binary
@@ -66,7 +73,8 @@ class WeDPRNodeConfigGenerator:
 
         private_key_path = self.__generate_node_conf_path__(
             agency_name, ip, node_name)
-        if self.__generate_single_node_inner_config__(utilities.ConfigInfo.node_config_tpl_path,
+        if self.__generate_single_node_inner_config__(agency_config,
+                                                      constant.ConfigInfo.node_config_tpl_path,
                                                       node_path,
                                                       private_key_path, node_config, ip,
                                                       node_index) is False:
@@ -88,7 +96,8 @@ class WeDPRNodeConfigGenerator:
                               (node_name, agency_name, ip))
         return True
 
-    def __generate_single_node_inner_config__(self, tpl_config_path, node_path, private_key_path,
+    def __generate_single_node_inner_config__(self, agency_config: AgencyConfig,
+                                              tpl_config_path, node_path, private_key_path,
                                               node_config, ip, node_index):
         config_content = utilities.load_config(tpl_config_path)
         utilities.log_debug(
@@ -102,7 +111,8 @@ class WeDPRNodeConfigGenerator:
             config_content, node_config)
         # load the rpc config
         self.__generate_rpc_config__(
-            config_content, node_config.rpc_config, node_index)
+            config_content, node_config.rpc_config,
+            agency_config.psi_api_token,  node_index)
         # load the transport config
         self.__generate_transport_config__(config_content,
                                            node_config, node_id, ip, node_index)
@@ -110,14 +120,14 @@ class WeDPRNodeConfigGenerator:
         self.__generate_storage_config__(
             config_content, node_config.storage_config)
         # load the hdfs_storage_config
-        self.__generate_hdfs_storage_config__(node_path, utilities.ConfigInfo.krb5_config_tpl_path,
+        self.__generate_hdfs_storage_config__(node_path, constant.ConfigInfo.krb5_config_tpl_path,
                                               config_content, node_config.hdfs_storage_config)
         # load the ra2018psi config
         self.__generate_ra2018psi_config__(
             config_content, node_config.ra2018psi_config)
         # store the config
         ini_config_output_path = os.path.join(
-            node_path, utilities.ConfigInfo.config_ini_file)
+            node_path, constant.ConfigInfo.config_ini_file)
         ret = utilities.store_config(
             config_content, "ini", ini_config_output_path, "config.ini")
         if ret is False:
@@ -151,7 +161,7 @@ class WeDPRNodeConfigGenerator:
         config_content["crypto"]["sm_crypto"] = utilities.convert_bool_to_str(
             self.config.sm_crypto)
 
-    def __generate_rpc_config__(self, config_content, rpc_config, node_index):
+    def __generate_rpc_config__(self, config_content, rpc_config, psi_token: str, node_index):
         """
         generate the rpc config
         """
@@ -167,6 +177,7 @@ class WeDPRNodeConfigGenerator:
         # disable_ssl
         config_content[section_name]["disable_ssl"] = utilities.convert_bool_to_str(
             self.config.rpc_disable_ssl)
+        config_content[section_name]["token"] = psi_token
 
     def __generate_storage_config__(self, config_content, storage_config):
         """
@@ -232,7 +243,7 @@ class WeDPRNodeConfigGenerator:
         config_content[section]["listen_port"] = str(
             node_config.grpc_listen_port + node_index)
         config_content[section]["host_ip"] = deploy_ip
-        config_content[section]["gateway_target"] = node_config.gateway_config.gateway_grpc_target
+        config_content[section]["gateway_target"] = node_config.gateway_config.gateway_targets
         config_content[section]["components"] = node_config.components
         config_content[section]["nodeid"] = node_id
 
