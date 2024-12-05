@@ -40,6 +40,27 @@ class EnvConfig:
         # zone
         self.zone = utilities.get_value(
             self.config, self.section_name, "zone", None, True)
+        # wedpr_site_dist_path
+        self.wedpr_site_dist_path = utilities.get_value(
+            self.config, self.section_name,
+            "wedpr_site_dist_path", None, True)
+        # wedpr_pir_dist_path
+        self.wedpr_pir_dist_path = utilities.get_value(
+            self.config, self.section_name,
+            "wedpr_pir_dist_path", None, True)
+        # docker_mode
+        self.docker_mode = utilities.get_value(
+            self.config,
+            self.section_name,
+            "docker_mode", True, True)
+
+    # Note: jupyter only use docker mode
+    def get_dist_path_by_service_type(self, service_type: str) -> str:
+        if service_type == constant.ServiceInfo.wedpr_site_service:
+            return self.wedpr_site_dist_path
+        if service_type == constant.ServiceInfo.wedpr_pir_service:
+            return self.wedpr_pir_dist_path
+        return None
 
     def __repr__(self):
         return f"**EnvConfig: binary_path: {self.binary_path}, " \
@@ -510,7 +531,7 @@ class AgencyConfig:
         # load the pir config
         self.pir_config = self.__load_service_config__(
             "[agency.pir]", "pir", self.component_switch.pir_must_exists,
-            constant.ServiceInfo.wedpr_site_service,
+            constant.ServiceInfo.wedpr_pir_service,
             constant.ConfigInfo.wedpr_pir_config_path,
             constant.ConfigInfo.pir_config_list)
 
