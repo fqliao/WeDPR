@@ -1,11 +1,14 @@
 <template>
-  <div class="project-manage" style="position: relative; height: 100%">
+  <div class="project-manage" style="height: 100%">
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
         <el-form-item prop="name" label="项目名称：">
           <el-select filterable clearable style="width: 160px" v-model="searchForm.name" remote :remote-method="getProjectNameSelect" placeholder="请输入">
             <el-option v-for="item in projectNameSelectList" :label="item.label" :value="item.value" :key="item.value"></el-option>
           </el-select>
+        </el-form-item>
+        <el-form-item prop="id" label="项目ID：">
+          <el-input style="width: 160px" v-model="searchForm.id" placeholder="请输入"> </el-input>
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
           <el-date-picker value-format="yyyy-MM-dd" v-model="searchForm.createTime" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期">
@@ -19,20 +22,19 @@
         <el-form-item>
           <el-button type="default" :disabled="showDeleteSelect" :loading="queryFlag" @click="reset"> 重置 </el-button>
         </el-form-item>
-        <el-form-item>
-          <el-button icon="el-icon-plus" type="primary" @click="createProject"> 新建项目 </el-button>
-        </el-form-item>
-        <el-form-item>
-          <el-button icon="el-icon-folder-opened" type="primary" @click="getJupterLink"> 打开juypter </el-button>
-        </el-form-item>
         <el-form-item v-if="!showDeleteSelect">
           <el-button icon="el-icon-delete" style="color: red" @click="startDelete"> 批量删除 </el-button>
         </el-form-item>
       </el-form>
+
       <div class="handle" v-if="showDeleteSelect">
         <span>已选{{ selectdDataList.length }}项</span><el-button style="color: red" size="small" :disabled="!selectdDataList.length" @click="showDeleteMore"> 确认删除 </el-button
         ><el-button size="small" type="info" @click="cancelDelete"> 取消 </el-button>
       </div>
+    </div>
+    <div class="right-fix">
+      <el-button size="small" icon="el-icon-plus" type="primary" @click="createProject"> 新建项目 </el-button>
+      <el-button size="small" icon="el-icon-folder-opened" type="primary" @click="getJupterLink"> 打开juypter </el-button>
     </div>
     <div class="record">
       <div class="card-container" v-if="tableData.length">
@@ -78,6 +80,7 @@
 <script>
 import { projectManageServer, jupyterManageServer } from 'Api'
 import { handleParamsValid } from 'Utils/index.js'
+import { Message } from 'element-ui'
 import { mapGetters } from 'vuex'
 export default {
   name: 'dataManage',
@@ -85,11 +88,13 @@ export default {
     return {
       searchForm: {
         createTime: [],
-        name: ''
+        name: '',
+        id: ''
       },
       searchQuery: {
         createTime: [],
-        name: ''
+        name: '',
+        id: ''
       },
       pageData: {
         page_offset: 1,
@@ -149,20 +154,28 @@ export default {
         })
         .catch(() => {})
     },
+
     async getJupterLink(params) {
       const res = await jupyterManageServer.getJupterLink(params)
       if (res.code === 0 && res.data) {
         const { jupyters = [] } = res.data
         if (jupyters.length) {
-          const { jupyterAccessUrl = 'http://139.159.202.235:9401/lab' } = jupyters[0]
-          window.open(jupyterAccessUrl + 'Authorization=' + this.authorization)
+          const { id } = jupyters[0]
+          const openRes = await jupyterManageServer.openJupter({ id })
+          console.log(openRes)
+          if (openRes.code === 0) {
+            const { jupyterAccessUrl } = jupyters[0]
+            window.open(jupyterAccessUrl + 'Authorization=' + this.authorization)
+          } else {
+            Message.error('juypter打开失败')
+          }
         } else {
-          window.open('http://139.159.202.235:9401/lab?Authorization=' + this.authorization)
+          Message.error('juypter信息获取失败')
         }
       }
     },
     bindIcon(randomIndex) {
-      return require('../../assets/images/cover/pro' + randomIndex + '.png')
+      return require('../../assets/images/cover/pro' + randomIndex + '.jpg')
     },
     async allocate(params) {
       const res = await jupyterManageServer.allocate(params)
@@ -220,8 +233,8 @@ export default {
     async queryProject() {
       console.log(this.searchQuery, 'this.searchQuery')
       const { page_offset, page_size } = this.pageData
-      const { createTime, name } = this.searchQuery
-      const params = handleParamsValid({ name })
+      const { createTime, name, id } = this.searchQuery
+      const params = handleParamsValid({ name, id })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
@@ -236,7 +249,7 @@ export default {
         this.tableData = dataList.map((v) => {
           return {
             ...v,
-            randomIndex: (v.id % 7) + 1,
+            randomIndex: (v.id % 6) + 1,
             isOwner: v.ownerAgencyName === this.agencyId && v.ownerUserName === this.userId,
             showSelect: false
           }

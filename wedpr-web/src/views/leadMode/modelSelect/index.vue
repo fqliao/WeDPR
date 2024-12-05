@@ -1,7 +1,31 @@
 <template>
   <div class="record">
+    <div class="form-search">
+      <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
+        <el-form-item prop="serviceName" label="模型名称：">
+          <el-input clearable style="width: 180px" v-model="searchForm.name" placeholder="请输入"> </el-input>
+        </el-form-item>
+        <el-form-item prop="serviceId" label="模型ID：">
+          <el-input style="width: 180px" v-model="searchForm.id" placeholder="请输入" clearable> </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="queryFlag" @click="queryHandle">
+            {{ queryFlag ? '查询中...' : '查询' }}
+          </el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="default" @click="reset"> 重置 </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
     <div class="card-container" v-if="modelTableData.length">
-      <modelCard v-for="item in modelTableData" :selected="value.id === item.id" @selected="(data) => hanleSelectedModel(data, item)" :modelInfo="item" :key="item.id"></modelCard>
+      <modelCard
+        v-for="item in modelTableData"
+        :selected="selectedId === item.id"
+        @selected="(data) => hanleSelectedModel(data, item)"
+        :modelInfo="item"
+        :key="item.id"
+      ></modelCard>
     </div>
     <el-empty v-else :image-size="120" description="暂无数据">
       <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
@@ -20,6 +44,7 @@ import { settingManageServer } from 'Api'
 import { mapGetters } from 'vuex'
 import modelCard from '@/components/modelCard.vue'
 import { jobModelSettingMap } from 'Utils/constant.js'
+import { handleParamsValid } from 'Utils/index.js'
 export default {
   name: 'modelSelect',
   model: {
@@ -54,18 +79,33 @@ export default {
     return {
       loadingFlag: false,
       pageData: { page_offset: 1, page_size: 8 },
-      modelTableData: []
+      modelTableData: [],
+      searchForm: {
+        name: '',
+        id: ''
+      },
+      searchQuery: {
+        name: '',
+        id: ''
+      },
+      selectedId: ''
     }
   },
   created() {
     this.pageData.page_size = this.pageSizesOption[0]
-    this.getModelData()
+    if (this.value) {
+      const { id } = this.value
+      this.searchForm.id = id
+      this.selectedId = id
+    }
+    this.queryHandle()
   },
   computed: {
     ...mapGetters(['userId', 'agencyId'])
   },
   methods: {
     hanleSelectedModel(selected, item) {
+      this.selectedId = selected ? item.id : ''
       if (selected) {
         this.$emit('input', item)
         this.$emit('modelSelectedChange', item)
@@ -74,15 +114,23 @@ export default {
         this.$emit('modelSelectedChange', null)
       }
     },
+    queryHandle() {
+      this.searchQuery = { ...this.searchForm }
+      this.pageData.page_offset = 1
+      this.getModelData()
+    },
     async getModelData() {
       const { page_offset, page_size } = this.pageData
       const { jobType, queriedTypes } = this
+      const { id = '', name = '' } = this.searchQuery
+      const searchParams = handleParamsValid({ id, name })
       const params = { pageNum: page_offset, pageSize: page_size }
       this.loadingFlag = true
       const condition = {
         id: '',
         name: '',
-        owner: ''
+        owner: '',
+        ...searchParams
       }
       if (jobType) {
         condition.type = jobModelSettingMap[jobType]
@@ -122,7 +170,7 @@ export default {
     },
     paginationHandle(pageData) {
       this.pageData = { ...pageData }
-      this.getModelData()
+      this.queryHandle()
     }
   }
 }

@@ -4,10 +4,10 @@
       <el-icon v-if="isCollapse" class="icon el-icon-s-unfold" />
       <el-icon v-if="!isCollapse" class="icon el-icon-s-fold" />
     </div>
-    <div class="logo-con">
+    <div class="logo-con" v-if="!isCollapse">
       <img class="logo" src="~Assets/images/logo.png" alt="" />
     </div>
-    <div class="top-con">
+    <div class="top-con" v-show="false">
       <div class="header-bar">
         <div class="custom-content-con-box">
           <div class="custom-content-con">
@@ -22,23 +22,16 @@
               {{ userId }}
             </div>
           </div>
-          <modifyPassword :userinfo="userinfo" :showModifyModal="showModifyModal" @closeModal="closeModal" @handlOK="handlOK" />
+
         </div>
       </div>
     </div>
   </div>
 </template>
 <script>
-import { passwordHanle } from 'Mixin/passwordHandle.js'
-import { SET_USERINFO, SET_AUTHORIZATION, SET_PERMISSION, SET_USERID, SET_AGENCYNAME, SET_AGENCYID, SET_FILEUPLOADTASK } from 'Store/mutation-types.js'
-import { mapMutations, mapGetters } from 'vuex'
-import modifyPassword from '../modifyPassword/index.vue'
+import { mapGetters } from 'vuex'
 export default {
   name: 'HeaderBar',
-  mixins: [passwordHanle],
-  components: {
-    modifyPassword
-  },
   data() {
     return {
       showModifyModal: false
@@ -54,28 +47,6 @@ export default {
     ...mapGetters(['userinfo', 'userId'])
   },
   methods: {
-    ...mapMutations([SET_USERINFO, SET_AUTHORIZATION, SET_PERMISSION, SET_USERID, SET_AGENCYNAME, SET_AGENCYID, SET_FILEUPLOADTASK]),
-    logOut() {
-      this.SET_USERID('')
-      this.SET_AGENCYNAME('')
-      this.SET_AGENCYID('')
-      this.SET_PERMISSION([])
-      this.SET_AUTHORIZATION('')
-      this.SET_FILEUPLOADTASK(null)
-      this.SET_USERINFO({})
-      this.$router.push('/login')
-    },
-    showModifyPassword() {
-      this.showModifyModal = true
-    },
-    closeModal() {
-      this.showModifyModal = false
-    },
-    handlOK() {
-      this.showModifyModal = false
-      this.logOut()
-      this.$router.push({ path: '/login' })
-    },
     handleCollpasedChange() {},
     menuToggleClick() {
       this.$emit('menuToggleClick')
@@ -99,20 +70,25 @@ export default {
     height: 100px;
     display: flex;
     align-items: center;
+    background-color: rgb(55, 111, 224);
+    width: 148px;
     img {
+      height: 36px;
       width: auto;
-      height: 22px;
       display: block;
-      margin: 0 auto;
+      float: left;
     }
   }
   div.toggle-con {
     display: flex;
     align-items: center;
-    width: 64px;
+    width: 68px;
+    height: 100%;
     justify-content: center;
+    background-color: rgb(55, 111, 224);
     .icon {
       font-size: 26px;
+      color: #fff;
     }
   }
   div.top-con {

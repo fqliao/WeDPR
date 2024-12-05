@@ -122,7 +122,8 @@ export default {
         this.approveChainList = chain.map((v) => {
           return {
             ...v,
-            deleteAble: !dataOwners.includes(v.name) && v.name !== this.userId
+            deleteAble: !dataOwners.includes(v.name) && v.name !== this.userId && v.agency === this.agencyId,
+            addNextUserDisbaled: v.agency !== this.agencyId // 不能更改属于拥有方的审批环节
           }
         })
       }

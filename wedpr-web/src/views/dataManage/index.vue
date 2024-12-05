@@ -33,13 +33,15 @@
           </el-select>
         </el-form-item>
         <el-form-item prop="datasetTitle" label="资源名称：">
-          <el-input style="width: 120px" v-model="searchForm.datasetTitle" placeholder="请输入"> </el-input>
+          <el-input clearable style="width: 160px" v-model="searchForm.datasetTitle" placeholder="请输入"> </el-input>
         </el-form-item>
-
+        <el-form-item prop="datasetId" label="数据集ID：">
+          <el-input clearable style="width: 160px" v-model="searchForm.datasetId" placeholder="请输入"> </el-input>
+        </el-form-item>
         <el-form-item prop="status" label="上传状态：">
           <el-select size="small" style="width: 120px" v-model="searchForm.status" placeholder="请选择">
-            <el-option label="成功" :value="0"></el-option>
-            <el-option label="失败" :value="-1"></el-option>
+            <el-option label="成功" :value="dataStatusEnum.Success"></el-option>
+            <el-option label="失败" :value="dataStatusEnum.Failure"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
@@ -61,48 +63,54 @@
         <el-form-item>
           <el-button type="default" :disabled="showApplySelect || showDeleteSelect" :loading="queryFlag" @click="reset"> 重置 </el-button>
         </el-form-item>
-        <div v-if="!showApplySelect && !showDeleteSelect">
-          <el-form-item>
-            <el-button icon="el-icon-plus" type="primary" @click="createAccount"> 新建数据资源 </el-button>
-            <el-button icon="el-icon-plus" type="primary" @click="startApplySelect"> 批量申请授权 </el-button>
-            <el-button icon="el-icon-delete" style="color: red" @click="startDelete"> 批量删除 </el-button>
-          </el-form-item>
-        </div>
       </el-form>
-      <div class="handle" v-if="showApplySelect">
+      <div class="right-fix">
+        <el-button size="small" icon="el-icon-plus" type="primary" @click="createAccount"> 新建数据资源 </el-button>
+      </div>
+    </div>
+    <el-tabs type="card" v-model="activeName" @tab-click="handleClick">
+      <el-tab-pane label="我的数据" name="IsOwner"></el-tab-pane>
+      <el-tab-pane label="可申请的" name="NoPermission"></el-tab-pane>
+      <el-tab-pane label="已授权的" name="Authorized"></el-tab-pane>
+    </el-tabs>
+    <div>
+      <el-button size="small" v-if="activeName === 'NoPermission' && !showApplySelect" icon="el-icon-plus" type="primary" @click="startApplySelect"> 批量申请授权 </el-button>
+      <el-button size="small" v-if="activeName === 'IsOwner' && !showDeleteSelect" icon="el-icon-delete" style="color: red" @click="startDelete"> 批量删除 </el-button>
+
+      <div class="handle" v-if="showApplySelect && activeName === 'NoPermission'">
         <span>已选{{ selectdDataList.length }}项</span><el-button size="small" :disabled="!selectdDataList.length" type="primary" @click="applyAuth"> 确认申请 </el-button
         ><el-button size="small" type="info" @click="cancelApply"> 取消 </el-button>
       </div>
-      <div class="handle" v-if="showDeleteSelect">
+      <div class="handle" v-if="showDeleteSelect && activeName === 'IsOwner'">
         <span>已选{{ selectdDataList.length }}项</span><el-button style="color: red" size="small" :disabled="!selectdDataList.length" @click="showDeleteMore"> 确认删除 </el-button
         ><el-button size="small" type="info" @click="cancelDelete"> 取消 </el-button>
       </div>
+      <div class="card-container" v-if="total">
+        <dataCard
+          @deleteDataset="showDelModal(item)"
+          @getDetail="getDetail(item)"
+          @deleteData="showDelModal(item)"
+          @dataApply="dataApply(item)"
+          @selected="(checked) => selected(checked, item)"
+          :selected="selectdDataList.map((v) => v.datasetId).includes(item.datasetId)"
+          showEdit
+          showStatus
+          v-for="item in dataList"
+          :dataInfo="item"
+          :key="item.datasetId"
+        />
+      </div>
+      <el-empty v-if="!total" :image-size="120" description="暂无数据">
+        <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
+      </el-empty>
+      <we-pagination
+        :pageSizesOption="[8, 12, 16, 24, 32]"
+        :total="total"
+        :page_offset="pageData.page_offset"
+        :page_size="pageData.page_size"
+        @paginationChange="paginationHandle"
+      ></we-pagination>
     </div>
-    <div class="card-container" v-if="total">
-      <dataCard
-        @deleteDataset="showDelModal(item)"
-        @getDetail="getDetail(item)"
-        @deleteData="showDelModal(item)"
-        @dataApply="dataApply(item)"
-        @selected="(checked) => selected(checked, item)"
-        :selected="selectdDataList.map((v) => v.datasetId).includes(item.datasetId)"
-        showEdit
-        showStatus
-        v-for="item in dataList"
-        :dataInfo="item"
-        :key="item.datasetId"
-      />
-    </div>
-    <el-empty v-if="!total" :image-size="120" description="暂无数据">
-      <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
-    </el-empty>
-    <we-pagination
-      :pageSizesOption="[8, 12, 16, 24, 32]"
-      :total="total"
-      :page_offset="pageData.page_offset"
-      :page_size="pageData.page_size"
-      @paginationChange="paginationHandle"
-    ></we-pagination>
   </div>
 </template>
 <script>
@@ -122,24 +130,27 @@ export default {
   },
   data() {
     return {
-      activeName: 'first',
+      dataStatusEnum,
+      activeName: 'IsOwner',
       searchForm: {
         ownerAgencyName: '',
         ownerUserGroupId: '',
         ownerUserName: '',
         datasetTitle: '',
-        createTime: '',
+        createTime: [],
         dataSourceType: '',
-        status: ''
+        status: '',
+        datasetId: ''
       },
       searchQuery: {
         ownerAgencyName: '',
         ownerUserGroupId: '',
         ownerUserName: '',
         datasetTitle: '',
-        createTime: '',
+        createTime: [],
         dataSourceType: '',
-        status: ''
+        status: '',
+        datasetId: ''
       },
       pageData: {
         page_offset: 1,
@@ -181,25 +192,30 @@ export default {
         page_offset: 1,
         page_size: 8
       }
-      this.query()
+      this.queryHandle()
     }
   },
   methods: {
     ...mapMutations([SET_FILEUPLOADTASK]),
     handleClick() {},
-    query() {
+    getParams() {
       const { activeName } = this
+      let params = {}
       switch (activeName) {
-        case 'first':
-          this.queryFollowerAuthList()
+        case 'IsOwner':
+          params = { ownerAgencyName: this.agencyId, ownerUserName: this.userId }
           break
-        case 'second':
-          this.queryMyApplyList()
+        case 'NoPermission':
+          params = { noPermissionType: 'usable', permissionType: 'usable' }
           break
-        case 'third':
-          this.queryMyFollowList()
+        case 'Authorized':
+          params = { permissionType: 'usable', excludeMyOwn: true }
+          break
+        default:
+          params = {}
           break
       }
+      return params
     },
     checkTask() {
       const { fileUploadTask } = this
@@ -319,13 +335,22 @@ export default {
     // 获取数据集列表
     async getListDataset() {
       const { page_offset, page_size } = this.pageData
-      const { ownerAgencyName = '', ownerUserGroupId = '', ownerUserName = '', datasetTitle = '', createTime = '', dataSourceType = '', status = '' } = this.searchQuery
-      let params = handleParamsValid({ ownerAgencyName, ownerUserGroupId, ownerUserName, datasetTitle, dataSourceType, status })
+      const {
+        ownerAgencyName = '',
+        ownerUserGroupId = '',
+        ownerUserName = '',
+        datasetId = '',
+        datasetTitle = '',
+        createTime = [],
+        dataSourceType = '',
+        status = ''
+      } = this.searchQuery
+      let params = handleParamsValid({ ownerAgencyName, ownerUserGroupId, ownerUserName, datasetId, datasetTitle, dataSourceType, status })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
       }
-      params = { ...params, pageNum: page_offset, pageSize: page_size }
+      params = { ...params, pageNum: page_offset, pageSize: page_size, ...this.getParams() }
       this.loadingFlag = true
       const res = await dataManageServer.listDataset(params)
       this.loadingFlag = false

@@ -1,5 +1,6 @@
 <template>
   <div class="login">
+    <img class="login-logo" src="~Assets/images/logo-color.png" />
     <div class="login-content">
       <img class="login-left" src="~Assets/images/logo-login.png" />
       <div class="login-right">
@@ -218,6 +219,13 @@ export default {
   background-image: url('~Assets/images/bg.png');
   background-size: 100% 100%;
   min-width: 1600px;
+  .login-logo {
+    position: absolute;
+    top: 22px;
+    left: 30px;
+    width: 125px;
+    height: auto;
+  }
   .code {
     width: auto;
     margin-left: 10px;
@@ -232,7 +240,7 @@ export default {
     width: 100%;
   }
   .login-left {
-    width: 45%;
+    width: 612px;
     height: auto;
   }
   .login-right {

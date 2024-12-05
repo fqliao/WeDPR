@@ -26,6 +26,27 @@
       <formCard style="width: 1124px" title="请选择模型" v-if="[jobEnum.XGB_PREDICTING, jobEnum.LR_PREDICTING].includes(selectedAlg.value)">
         <modelSelect :jobType="selectedAlg.value" @modelSelectedChange="modelSelectedChange" v-model="jobSettingForm.modelPredictAlgorithm" />
       </formCard>
+      <div
+        class="model-info"
+        v-if="[jobEnum.XGB_PREDICTING, jobEnum.LR_PREDICTING].includes(selectedAlg.value) && jobSettingForm.modelPredictAlgorithm && jobSettingForm.modelPredictAlgorithm.id"
+      >
+        <p>已选模型信息：</p>
+        <div class="tableContent autoTableWrap">
+          <el-table :max-height="tableHeight" size="small" :span-method="objectSpanMethodSaved" :data="modelDataSelected" :border="true" class="table-wrap">
+            <el-table-column label="模型名称" prop="name" show-overflow-tooltip />
+            <el-table-column label="所属机构" prop="agency" />
+            <el-table-column label="所属用户" prop="owner" />
+            <el-table-column label="标签提供方" prop="label_provider" />
+            <el-table-column label="标签字段" prop="label_column" />
+            <el-table-column label="参与机构" prop="agency" />
+            <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
+              <template v-slot="scope">
+                {{ scope.row.fields.join(',') }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
       <div class="tags data-container" v-if="selectedAlg.needTagsProvider">
         <p>
           选择标签数据
@@ -42,13 +63,13 @@
             <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
             <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
             <el-table-column label="包含字段" prop="datasetFields" show-overflow-tooltip />
-            <el-table-column v-if="selectedAlg.value === jobEnum.XGB_TRAINING" label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
+            <el-table-column v-if="[jobEnum.XGB_TRAINING, jobEnum.LR_TRAINING].includes(selectedAlg.value)" label="已选标签字段" prop="labelField" show-overflow-tooltip />
           </el-table>
         </div>
       </div>
       <div class="participates data-container" v-for="(item, index) in paticipateSelectList" :key="item">
         <p>
-          选择参与方数据 {{ selectedAlg.value === jobEnum.XGB_TRAINING ? '' : index + 1 }}
+          选择参与方数据 {{ [jobEnum.XGB_TRAINING, jobEnum.LR_TRAINING].includes(selectedAlg.value) ? '' : index + 1 }}
           <span class="btn" @click="removeParticipate(index)" v-if="item.datasetId"><img src="~Assets/images/icon_delete.png" alt="" /> 移除 </span>
         </p>
         <div class="area" @click="showAddParticipate(index)" v-if="!item.datasetId">
@@ -70,7 +91,7 @@
       </div>
     </div>
     <div v-show="active === 1 && selectedAlg.value === jobEnum.PIR">
-      <serviceSelect :serviceType="serviceTypeEnum.PIR" @selected="handleServiceSelected" />
+      <serviceSelect :serviceType="serviceTypeEnum.PIR" v-model="selectedServiceId" />
       <div class="participates data-container" v-if="selectedServiceConfig.datasetId">
         <p>服务详情</p>
         <div class="area table-area">
@@ -110,8 +131,8 @@
             <el-table size="small" :data="jobSettingForm.selectedData" :border="true" class="table-wrap">
               <el-table-column label="角色" prop="ownerAgencyName" show-overflow-tooltip>
                 <template v-slot="scope">
-                  <el-tag color="#4384ff" style="color: white" v-if="scope.row.selectedTagFields" size="small">标签方</el-tag>
-                  <el-tag color="#4CA9EC" style="color: white" v-if="!scope.row.selectedTagFields" size="small">参与方</el-tag>
+                  <el-tag color="#4384ff" style="color: white" v-if="scope.row.labelField" size="small">标签方</el-tag>
+                  <el-tag color="#4CA9EC" style="color: white" v-if="!scope.row.labelField" size="small">参与方</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
@@ -119,7 +140,7 @@
               <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
               <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
               <el-table-column label="包含字段" prop="datasetFields" show-overflow-tooltip />
-              <el-table-column label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
+              <el-table-column label="已选标签字段" prop="labelField" show-overflow-tooltip />
             </el-table>
           </div>
         </div>
@@ -236,35 +257,30 @@
               <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
               <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
               <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
-              <el-table-column label="包含字段" prop="ownerUserName" show-overflow-tooltip />
+              <el-table-column label="包含字段" prop="datasetFields" show-overflow-tooltip />
             </el-table>
           </div>
         </div>
-        <formCard key="SQL" class="sql-card" title="编写SQL语句" v-if="selectedAlg.value === jobEnum.SQL">
+        <formCard style="width: 870px" key="SQL" class="sql-card" title="编写SQL语句" v-if="selectedAlg.value === jobEnum.SQL">
           <el-form-item label="" prop="sql" label-width="0">
             <div class="sql-container">
+              <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
               <div class="modify-container">
                 <editorCom v-model="jobSettingForm.sql" lang="sql" />
               </div>
-              <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
             </div>
           </el-form-item>
         </formCard>
-        <formCard key="Python" class="sql-card" title="编写Python语句" v-if="selectedAlg.value === jobEnum.MPC">
+        <formCard style="width: 870px" key="Python" class="sql-card" title="编写Python语句" v-if="selectedAlg.value === jobEnum.MPC">
           <el-form-item label="" prop="python" label-width="0">
             <div class="sql-container">
+              <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
               <div class="modify-container">
                 <editorCom v-model="jobSettingForm.python" lang="python" />
               </div>
-              <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
             </div>
           </el-form-item>
         </formCard>
-        <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
-          <el-select size="small" style="width: 360px" v-model="jobSettingForm.receiver" multiple placeholder="请选择">
-            <el-option :key="item" v-for="item in agencyListAble" multiple :label="item.label" :value="item.value"></el-option>
-          </el-select>
-        </el-form-item>
       </el-form>
       <!-- PIR -->
       <el-form v-if="selectedAlg.value === jobEnum.PIR" key="3" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
@@ -374,7 +390,7 @@
   </div>
 </template>
 <script>
-import { settingManageServer, projectManageServer } from 'Api'
+import { settingManageServer, projectManageServer, jobManageServer, dataManageServer, serviceManageServer } from 'Api'
 import tagSelect from './tagSelect/index.vue'
 import participateSelect from './participateSelect/index.vue'
 import modelSelect from './modelSelect/index.vue'
@@ -403,6 +419,7 @@ export default {
         receiver: [],
         selectedData: [],
         sql: '',
+        python: '',
         queryType: 1,
         dataFields: [],
         fieldsValueList: [],
@@ -439,13 +456,21 @@ export default {
       selectedServiceConfig: {},
       tagAgency: '',
       filterPaticipateAgency: [],
-      agencyListAble: []
+      agencyListAble: [],
+      selectedServiceId: '',
+      copiedModelSetting: null,
+      jobID: ''
     }
   },
   created() {
-    const { projectId } = this.$route.query
+    const { projectId, jobID } = this.$route.query
     this.projectId = projectId
     projectId && this.queryProject()
+    // 复制任务
+    if (jobID) {
+      this.jobID = jobID
+      this.initJob()
+    }
   },
   watch: {
     selectedAlg(selectedAlg) {
@@ -480,17 +505,20 @@ export default {
       }
     },
     selectedData(v) {
-      console.log(v, 'selectedData=================')
       const ownerAgencyNameList = v.map((v) => v.ownerAgencyName)
+      // 计算结果接受方下拉列表 清除已选择的接收方
       this.agencyListAble = this.agencyList.filter((v) => ownerAgencyNameList.includes(v.value))
-      if (this.selectedAlg.value === jobEnum.PSI) {
-        this.jobSettingForm.selectedData = v.map((v) => {
-          return { ...v, datasetFieldsSelected: [] }
-        })
+      this.jobSettingForm.receiver = this.jobSettingForm.receiver.filter((v) => this.agencyListAble.map((v) => v.value).includes(v))
+      this.jobSettingForm.selectedData = v.map((v) => {
+        return { ...v, datasetFieldsSelected: v.datasetFieldsSelected || [] }
+      })
+    },
+    selectedServiceId(v) {
+      if (v) {
+        this.getServiceDetail(v)
       } else {
-        this.jobSettingForm.selectedData = v.map((v) => {
-          return { ...v }
-        })
+        this.selectedServiceConfig = {}
+        this.jobSettingForm.selectedData = []
       }
     }
   },
@@ -510,8 +538,12 @@ export default {
     selectedData() {
       const paticipateData = this.paticipateSelectList.map((v) => {
         // v.datasetFields 兼容后台服务
-        return { ...v, datasetFields: v.datasetFields || '', datasetFieldsSelected: [] }
+        return { ...v, datasetFields: v.datasetFields || '', datasetFieldsSelected: v.datasetFieldsSelected || [] }
       })
+      if ([jobEnum.MPC, jobEnum.SQL].includes(this.selectedAlg.value)) {
+        // 处理数据集顺序
+        return this.moveSelfItemToFirst(paticipateData)
+      }
       return [...this.tagSelectList, ...paticipateData]
     },
     runDisabaled() {
@@ -524,6 +556,12 @@ export default {
           disabled = !(this.jobSettingForm.receiver.length && selectedFields)
           break
         case jobEnum.PIR:
+          disabled = false
+          break
+        case jobEnum.MPC:
+          disabled = false
+          break
+        case jobEnum.SQL:
           disabled = false
           break
         default:
@@ -555,9 +593,10 @@ export default {
     },
     jobSettingFormRules() {
       return {
-        receiver: [{ required: true, message: '结果接收方不能为空', trigger: 'blur' }],
+        receiver: [{ required: ![jobEnum.SQL, jobEnum.MPC].includes(this.selectedAlg.value), message: '结果接收方不能为空', trigger: 'blur' }],
         selectedData: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
         sql: [{ required: this.selectedAlg.value === jobEnum.SQL, message: 'sql内容不能为空', trigger: 'blur' }],
+        python: [{ required: this.selectedAlg.value === jobEnum.MPC, message: 'MPC内容不能为空', trigger: 'blur' }],
         queryType: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询类型', trigger: 'blur' }],
         modelPredictAlgorithm: [
           { required: this.selectedAlg.value === jobEnum.XGB_PREDICTING || this.selectedAlg.value === jobEnum.LR_PREDICTING, message: '请选择模型', trigger: 'blur' }
@@ -566,15 +605,136 @@ export default {
         queriedFields: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询字段', trigger: 'blur' }],
         searchIdList: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请输入字段值', trigger: 'blur' }]
       }
+    },
+    modelDataSelected() {
+      const { setting = '{}', ...restSetting } = this.jobSettingForm.modelPredictAlgorithm
+      const { participant_agency_list = [], label_provider } = JSON.parse(setting)
+      const data = participant_agency_list.map((v) => {
+        return {
+          ...restSetting,
+          label_provider,
+          ...v
+        }
+      })
+      console.log(data, 'data')
+      return data
     }
   },
   methods: {
-    handleServiceSelected(service) {
-      console.log(service)
-      const { serviceConfig } = service
-      const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
-      this.selectedServiceConfig = JSON.parse(serviceConfig)
-      this.jobSettingForm.selectedData = [{ ...service, datasetId, searchType, idField, accessibleValueQueryFields, selectedServiceConfig: this.selectedServiceConfig }]
+    // 根据ids获取数据集详情 来回显
+    async getListDetail(params) {
+      const datasetIdList = params.map((v) => v.datasetID)
+      const dataMap = {}
+      params.forEach((v) => {
+        dataMap[v.datasetID] = v
+      })
+      const res = await dataManageServer.queryDatasetList({ datasetIdList })
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { data = [] } = res
+        this.paticipateSelectList = []
+        data.forEach((v, i) => {
+          const { datasetId } = v
+          const { labelProvider, labelField = 'y' } = dataMap[datasetId]
+          if (labelProvider) {
+            this.tagSelectList = [
+              {
+                datasetTitle: v.datasetTitle,
+                ownerAgencyName: v.ownerAgencyName,
+                datasetId,
+                ownerUserName: v.ownerUserName,
+                datasetFields: v.datasetFields,
+                labelProvider: true, // xgb 任务当时选的label字段
+                labelField
+              }
+            ]
+          } else {
+            this.paticipateSelectList.push({
+              datasetTitle: v.datasetTitle,
+              ownerAgencyName: v.ownerAgencyName,
+              datasetId,
+              ownerUserName: v.ownerUserName,
+              datasetFields: v.datasetFields,
+              labelProvider: false,
+              labelField: '',
+              datasetFieldsSelected: dataMap[datasetId].idFields // psi 任务当时选的求交字段
+            })
+          }
+        })
+        console.log(this.paticipateSelectList, 'this.paticipateSelectList')
+        this.jobSettingForm.receiver = params.filter((v) => v.receiveResult).map((v) => v.ownerAgency)
+      } else {
+        this.paticipateSelectList = [{}]
+      }
+    },
+    // 获取serviceId获取服务详情 来回显
+    async getServiceDetail(serviceId) {
+      const params = {
+        condition: { serviceId },
+        serviceIdList: [],
+        pageNum: 1,
+        pageSize: 10
+      }
+      const res = await serviceManageServer.getPublishList(params)
+      if (res.code === 0 && res.data) {
+        const { wedprPublishedServiceList = [] } = res.data
+        if (wedprPublishedServiceList.length) {
+          const service = wedprPublishedServiceList[0]
+          const { serviceConfig } = service
+          const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
+          this.selectedServiceConfig = JSON.parse(serviceConfig)
+          this.jobSettingForm.selectedData = [{ ...service, datasetId, searchType, idField, accessibleValueQueryFields, selectedServiceConfig: this.selectedServiceConfig }]
+        } else {
+          this.selectedServiceConfig = {}
+          this.jobSettingForm.selectedData = []
+        }
+      } else {
+        this.selectedServiceConfig = {}
+        this.jobSettingForm.selectedData = []
+      }
+    },
+    // 回显任务
+    async initJob() {
+      const { jobID } = this
+      const res = await jobManageServer.queryJobDetail({ jobID })
+      if (res.code === 0 && res.data) {
+        const { job = {} } = res.data
+        const { jobType, param = '' } = job
+        this.selectedAlg = this.algList.filter((v) => v.value === jobType)[0]
+        const params = JSON.parse(param)
+        const { dataSetList, serviceId } = params
+        console.log(dataSetList, 'dataSetList')
+        // 数据集类型任务回显数据集
+        if (dataSetList && dataSetList.length) {
+          const datasetList = dataSetList.map((v) => {
+            return { ...v, ...v.dataset }
+          })
+          this.getListDetail(datasetList)
+          const { mpcContent, sql, modelSetting, modelPredictAlgorithm } = params
+          if (mpcContent) {
+            this.jobSettingForm.python = mpcContent
+          }
+          if (sql) {
+            this.jobSettingForm.sql = sql
+          }
+          if (modelSetting) {
+            this.copiedModelSetting = modelSetting
+          }
+          if (modelPredictAlgorithm) {
+            this.jobSettingForm.modelPredictAlgorithm = JSON.parse(modelPredictAlgorithm)
+          }
+        }
+        // 服务类型任务回显服务详情和参数
+        if (serviceId) {
+          this.selectedServiceId = serviceId
+          const { searchIdList, queriedFields, searchType } = params
+          this.jobSettingForm.searchIdList = searchIdList.join(',')
+          this.jobSettingForm.queriedFields = queriedFields
+          this.jobSettingForm.searchType = searchType
+        }
+
+        this.active = 2
+      }
     },
     checkJobData() {
       this.$refs.jobSettingForm.validate((valid) => {
@@ -655,12 +815,8 @@ export default {
       const { selectedData, receiver } = this.jobSettingForm
       const { projectId } = this
       const dataSetList = selectedData.map((v) => {
-        console.log(v, v.datasetStoragePath, JSON.parse(v.datasetStoragePath))
         const dataset = {
-          owner: v.ownerUserName,
           ownerAgency: v.ownerAgencyName,
-          path: JSON.parse(v.datasetStoragePath).filePath,
-          storageTypeStr: v.datasetStorageType,
           datasetID: v.datasetId
         }
         return {
@@ -683,21 +839,18 @@ export default {
     // mpc sql
     handleMPCdata() {
       const { selectedAlg } = this
-      const { selectedData, receiver, python, sql } = this.jobSettingForm
+      const { selectedData, python, sql } = this.jobSettingForm
       const { projectId } = this
       const dataSetList = selectedData.map((v) => {
         console.log(v, v.datasetStoragePath, JSON.parse(v.datasetStoragePath))
         const dataset = {
-          owner: v.ownerUserName,
           ownerAgency: v.ownerAgencyName,
-          path: JSON.parse(v.datasetStoragePath).filePath,
-          storageTypeStr: v.datasetStorageType,
           datasetID: v.datasetId,
           datasetRecordCount: v.recordCount
         }
         return {
-          dataset,
-          receiveResult: receiver.includes(v.ownerAgencyName)
+          dataset
+          // receiveResult: receiver.includes(v.ownerAgencyName)
         }
       })
       const param = { dataSetList }
@@ -722,19 +875,16 @@ export default {
       const { selectedAlg, modelModule } = this
       const { selectedData, receiver } = this.jobSettingForm
       const { projectId } = this
-      console.log(selectedData, 'selectedData')
       const dataSetList = selectedData.map((v) => {
         const dataset = {
-          owner: v.ownerUserName,
           ownerAgency: v.ownerAgencyName,
-          path: JSON.parse(v.datasetStoragePath).filePath,
-          storageTypeStr: v.datasetStorageType,
           datasetID: v.datasetId
         }
         return {
           idFields: v.datasetFieldsSelected,
+          labelField: v.labelField,
           dataset,
-          labelProvider: !!v.selectedTagFields,
+          labelProvider: !!v.labelField,
           receiveResult: receiver.includes(v.ownerAgencyName)
         }
       })
@@ -764,10 +914,7 @@ export default {
       console.log(selectedData, 'selectedData')
       const dataSetList = selectedData.map((v, i) => {
         const dataset = {
-          owner: v.ownerUserName,
           ownerAgency: v.ownerAgencyName,
-          path: JSON.parse(v.datasetStoragePath).filePath,
-          storageTypeStr: v.datasetStorageType,
           datasetID: v.datasetId
         }
         return {
@@ -830,6 +977,13 @@ export default {
         const { setting = '' } = res.data.dataList[0]
         console.log(setting, 'JSON.parse(setting)')
         this.modelModule = JSON.parse(setting)
+        // 复制任务配置参数回显，然后置空
+        if (this.copiedModelSetting) {
+          this.modelModule.forEach((v) => {
+            v.value = this.copiedModelSetting[v.label]
+          })
+          this.copiedModelSetting = null
+        }
       }
     },
     // 查询用户自定义setting模板list
@@ -895,7 +1049,6 @@ export default {
       this.showParticipateModal = false
       this.$set(this.paticipateSelectList, this.addContainerIndex, data)
     },
-    handleClick() {},
     addTag() {
       this.showTagsModal = true
     },
@@ -910,7 +1063,7 @@ export default {
       if (this.active === 1) {
         const { participateNumber } = this.selectedAlg
         const validpaticipateSelect = this.paticipateSelectList.filter((v) => v.datasetId)
-        const validDataLength = validpaticipateSelect.length // 有效数据集数量
+        // const validDataLength = validpaticipateSelect.length // 有效数据集数量
         const participateAgencyList = validpaticipateSelect.map((v) => v.ownerAgencyName)
         if (this.selectedAlg.value !== jobEnum.PIR) {
           if (!this.agencyListAble.some((v) => v.value === this.agencyId)) {
@@ -965,12 +1118,6 @@ export default {
               return
             }
           }
-        } else if (this.selectedAlg.value === jobEnum.PSI) {
-          // psi 可同一机构下多个数据集
-          if (!this.calcParticipateNumberMatch(participateNumber, validDataLength)) {
-            this.$message.error(`请添加至少${parseInt(participateNumber)}个参与方`)
-            return
-          }
         } else if (this.selectedAlg.value === jobEnum.PIR) {
           // pir 要选择服务
           if (!this.jobSettingForm.selectedData.length) {
@@ -995,6 +1142,29 @@ export default {
     selectAlg(selectedAlg) {
       console.log(selectedAlg, 'selectedAlg')
       this.selectedAlg = { ...selectedAlg }
+    },
+    moveSelfItemToFirst(arr) {
+      // 找到满足条件的项
+      const itemSelf = arr.filter((v) => v.ownerAgencyName === this.agencyId)
+      const itemOthers = arr.filter((v) => v.ownerAgencyName !== this.agencyId)
+      return [...itemSelf, ...itemOthers]
+    },
+    objectSpanMethodSaved({ row, column, rowIndex, columnIndex }) {
+      const length = this.modelDataSelected.length
+      if (columnIndex < 6 || columnIndex > 7) {
+        if (rowIndex === 0) {
+          return {
+            // 此单元格在列上要占据length个行单元格，1个列单元格
+            rowspan: length,
+            colspan: 1
+          }
+        } else {
+          return {
+            rowspan: 0,
+            colspan: 0
+          }
+        }
+      }
     }
   }
 }
@@ -1134,18 +1304,26 @@ div.lead-mode {
     margin-left: 16px;
     font-weight: 500;
   }
+  div.model-info {
+    margin-bottom: 32px;
+    width: 1160px;
+    p {
+      margin-bottom: 16px;
+    }
+  }
   div.sql-card {
     padding-bottom: 0;
     div.sql-container {
-      display: flex;
+      transform: translateY(-30px);
       div.modify-container {
         height: 500px;
-        width: 850px;
+        width: 830px;
       }
       div.lead {
         color: #3071f2;
         padding-left: 16px;
         cursor: pointer;
+        text-align: right;
         img {
           width: 16px;
           height: 16px;

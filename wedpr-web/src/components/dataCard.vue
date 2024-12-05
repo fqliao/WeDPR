@@ -26,6 +26,9 @@
           数据来源 <span :title="dataInfo.ownerAgencyName">{{ dataInfo.dataSourceType }}</span>
         </li>
         <li>
+          数据集ID <span :title="dataInfo.datasetId">{{ dataInfo.datasetId }}</span>
+        </li>
+        <li>
           创建时间 <span :title="dataInfo.createAt">{{ dataInfo.createAt }}</span>
         </li>
       </ul>
@@ -75,7 +78,7 @@
         <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
       </div>
       <div
-        style="height: 190px"
+        style="height: 220px"
         class="upload-loading"
         v-loading="true"
         :element-loading-text="'数据资源上传中...' + progress"
@@ -92,10 +95,10 @@
         <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
       </div>
       <div
-        style="height: 190px"
+        style="height: 220px"
         class="upload-loading"
         v-loading="true"
-        element-loading-text="服务端数据处理中"
+        element-loading-text="数据资源上传中..."
         element-loading-spinner="el-icon-loading"
         element-loading-background="transparent"
       ></div>
@@ -243,7 +246,7 @@ export default {
 div.data-card {
   background: #f6fcf9;
   // width: 314px;
-  max-height: 280px;
+  max-height: 310px;
   border: 1px solid #e0e4ed;
   border-radius: 12px;
   margin: 16px;
@@ -382,8 +385,8 @@ div.data-card {
     color: #787b84;
     text-align: center;
     font-size: 14px;
-    padding-top: 42px;
-    padding-bottom: 32px;
+    padding-top: 56px;
+    padding-bottom: 48px;
     i {
       color: #fea900;
       font-size: 18px;

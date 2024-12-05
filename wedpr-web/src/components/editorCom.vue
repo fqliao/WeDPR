@@ -24,11 +24,19 @@ import { format } from 'sql-formatter'
 export default {
   name: 'editorCom',
   props: {
+    value: {
+      type: String,
+      default: () => ''
+    },
     title: {
       type: String
     },
     lang: {
       type: String
+    },
+    readOnly: {
+      type: Boolean,
+      default: false
     }
   },
   model: {
@@ -87,7 +95,7 @@ export default {
         roundedSelection: false, // 选区是否有圆角
         scrollBeyondLastLine: false, // 设置编辑器是否可以滚动到最后一行之后
         readOnly: false, // 是否为只读模式
-        theme: 'vs' // vs, hc-black, or vs-dark
+        theme: 'GreyTheme' // vs, hc-black, or vs-dark
       },
       editor: null
     }
@@ -103,10 +111,21 @@ export default {
   },
   methods: {
     init() {
+      console.log(this.value, 'this.value')
+      monaco.editor.defineTheme('GreyTheme', {
+        base: 'vs',
+        inherit: true,
+        rules: [{ background: '#F5F7FB' }],
+        colors: {
+          // 相关颜色属性配置
+          'editor.background': '#F5F7FB' // 背景色
+        }
+      })
+      monaco.editor.setTheme('GreyTheme')
       // 初始化container的内容，销毁之前生成的编辑器
       this.$refs.container.innerHTML = ''
       // 生成编辑器配置
-      const editorOptions = Object.assign(this.defaultOpts, this.opts)
+      const editorOptions = Object.assign(this.defaultOpts, { readOnly: this.readOnly })
       // 生成编辑器对象
       this.editor = monaco.editor.create(this.$refs.container, editorOptions)
       // 编辑器内容发生改变时触发
@@ -120,7 +139,7 @@ export default {
       } else {
         this.addPythonTips()
       }
-
+      this.value && this.editor.setValue(this.value)
       // this.addFormatter()
     },
     addPythonTips() {
@@ -212,6 +231,7 @@ div.editor-container {
   border: 1px solid #e0e4ed;
   padding: 10px;
   border-radius: 10px;
+  background-color: #f5f7fb;
   div.monaco-editor {
     width: 100%;
     height: calc(100% - 30px);

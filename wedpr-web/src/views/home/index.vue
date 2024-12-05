@@ -21,7 +21,7 @@
             <dd>联合建模</dd>
           </dl>
           <dl @click="goPage('/projectManage')">
-            <dt><img src="~Assets/images/mpc_circle.png" /></dt>
+            <dt><img style="margin-bottom: 6px" src="~Assets/images/mpc_circle.png" /></dt>
             <dd>联合计算</dd>
           </dl>
         </div>
@@ -105,7 +105,19 @@
     </div>
     <div class="right">
       <div class="top container">
-        <p class="title">我的信息<span @click="modifyShow">修改信息</span></p>
+        <p class="title">
+          我的信息
+          <span class="op">
+            <el-dropdown>
+              <span class="el-dropdown-link"> <i class="el-icon-edit modify"></i>修改信息 </span>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item @click.native="modifyShow">更新信息</el-dropdown-item>
+                <el-dropdown-item @click.native="showModifyPassword">更新密码</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+            <span style="margin-left: 16px" @click="showLogoOutConfirm"><i class="el-icon-switch-button logoOut"></i> 退出登录</span>
+          </span>
+        </p>
         <div class="info-con">
           <img src="~Assets/images/avatar_male.png" />
           <ul>
@@ -152,17 +164,21 @@
       </div>
     </div>
     <modifyUser :key="userinfo.email" :userinfo="userinfo" :showModifyModal="showModifyModal" @closeModal="closeModal" @handlOK="handlOK" />
+    <modifyPassword :userinfo="userinfo" :showModifyModal="showModifyPasswordModal" @closeModal="closeModifyPasswordModal" @handlOK="handleModifyPasswordOK" />
   </div>
 </template>
 
 <script>
 import * as echarts from 'echarts'
-import { mapGetters } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
+import { SET_USERINFO, SET_AUTHORIZATION, SET_PERMISSION, SET_USERID, SET_AGENCYNAME, SET_AGENCYID, SET_FILEUPLOADTASK } from 'Store/mutation-types.js'
 import { dataManageServer, accountManageServer, projectManageServer, jobManageServer, serviceManageServer } from 'Api'
 import dayjs from 'dayjs'
 import { jobStatusMap } from 'Utils/constant.js'
 import modifyUser from './modifyUser/index.vue'
 import { spliceLegendHome } from './chartsSetting.js'
+import { passwordHanle } from 'Mixin/passwordHandle.js'
+import modifyPassword from './modifyPassword/index.vue'
 const channelColors = {
   PSI: '#2F89F3',
   XGB_TRAINING: '#FFA927',
@@ -170,8 +186,10 @@ const channelColors = {
 }
 export default {
   name: 'HomePage',
+  mixins: [passwordHanle],
   components: {
-    modifyUser
+    modifyUser,
+    modifyPassword
   },
   props: {},
   data() {
@@ -195,7 +213,8 @@ export default {
       jobStatusMap,
       showModifyModal: false,
       myChart: null,
-      serviceTotal: 0
+      serviceTotal: 0,
+      showModifyPasswordModal: false
     }
   },
   computed: {
@@ -218,6 +237,39 @@ export default {
     }
   },
   methods: {
+    ...mapMutations([SET_USERINFO, SET_AUTHORIZATION, SET_PERMISSION, SET_USERID, SET_AGENCYNAME, SET_AGENCYID, SET_FILEUPLOADTASK]),
+    showModifyPassword() {
+      this.showModifyPasswordModal = true
+    },
+    closeModifyPasswordModal() {
+      this.showModifyPasswordModal = false
+    },
+    handleModifyPasswordOK() {
+      this.showModifyPasswordModal = false
+      this.logOut()
+      this.$router.push({ path: '/login' })
+    },
+    showLogoOutConfirm() {
+      this.$confirm('确定退出登录吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          this.logOut()
+        })
+        .catch(() => {})
+    },
+    logOut() {
+      this.SET_USERID('')
+      this.SET_AGENCYNAME('')
+      this.SET_AGENCYID('')
+      this.SET_PERMISSION([])
+      this.SET_AUTHORIZATION('')
+      this.SET_FILEUPLOADTASK(null)
+      this.SET_USERINFO({})
+      this.$router.push('/login')
+    },
     handlOK() {
       this.showModifyModal = false
     },
@@ -260,6 +312,7 @@ export default {
         job: {
           id: ''
         },
+        onlyMeta: true,
         pageNum: 1,
         pageSize: 6
       })
@@ -279,7 +332,7 @@ export default {
         endTime: dayjs(that.searchDateVal[1]).format('YYYY-MM-DD') || ''
       }
       const jobTypeList = this.algList.map((v) => v.name)
-      this.queryJobLine({ statTime: params, jobTypeList })
+      this.queryJobLine({ statTime: params, jobTypeList, step: that.searchTabIndex === 2 ? 7 : 1 })
       console.log(params)
     },
     searchTabInput() {
@@ -341,7 +394,7 @@ export default {
       }
     },
     async queryProject() {
-      const res = await projectManageServer.queryProject({ project: { id: '' }, pageNum: 1, pageSize: 5 })
+      const res = await projectManageServer.queryProject({ project: { id: '' }, pageNum: 1, pageSize: 1 })
       this.loadingFlag = false
       if (res.code === 0 && res.data) {
         const { total } = res.data
@@ -465,7 +518,7 @@ div.app-container {
     }
   }
   .card {
-    height: 324px;
+    height: 329px;
     position: relative;
   }
   p.title {
@@ -475,6 +528,26 @@ div.app-container {
     text-align: left;
     color: #262a32;
     margin-bottom: 24px;
+    span.op {
+      float: right;
+      color: #3071f2;
+      cursor: pointer;
+      font-size: 14px;
+      i {
+        font-weight: bolder;
+        color: #3071f2;
+        cursor: pointer;
+        font-size: 16px;
+        transform: translateY(1px);
+      }
+      i.modify {
+        margin-right: 4px;
+      }
+      i.logoOut {
+        margin-right: -2px;
+        margin-top: -1px;
+      }
+    }
     span {
       cursor: pointer;
       color: #3071f2;
@@ -497,9 +570,10 @@ div.app-container {
           text-align: center;
           cursor: pointer;
           img {
-            width: 72px;
-            height: auto;
-            border-radius: 50%;
+            // width: 72px;
+            // height: auto;
+            height: 65px;
+            width: auto;
             margin-bottom: 12px;
           }
         }
@@ -518,9 +592,9 @@ div.app-container {
           border-radius: 12px;
           width: calc(20% - 24px);
           img {
-            width: 32px;
-            height: 32px;
-            margin-bottom: 20px;
+            width: auto;
+            height: 54px;
+            margin-bottom: 7px;
           }
           li.count {
             font-size: 28px;
@@ -567,7 +641,7 @@ div.app-container {
       background-color: white;
       div.info-con {
         height: 85px;
-        padding-top: 20px;
+        padding-top: 12px;
         padding-bottom: 4px;
         box-sizing: content-box;
         display: flex;

@@ -211,7 +211,7 @@ const routes = [
         path: '/leadMode',
         component: () => import(/* webpackChunkName: "layout" */ '@/views/leadMode/index.vue'),
         meta: {
-          title: '新增项目',
+          title: '新增任务',
           isParent: false,
           requireAuth: true,
           permissionCheck: true,

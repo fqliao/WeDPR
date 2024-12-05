@@ -7,6 +7,14 @@
       <el-form-item prop="ownerUserName" label="所属用户：">
         <el-input style="width: 160px" v-model="searchForm.ownerUserName" placeholder="请输入"> </el-input>
       </el-form-item>
+      <el-form-item prop="dataSourceType" label="数据类型：">
+        <el-select size="small" style="width: 120px" v-model="searchForm.dataSourceType" placeholder="请选择">
+          <el-option :key="item" v-for="item in typeList" :label="item.label" :value="item.value"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item prop="datasetId" label="数据集ID：">
+        <el-input clearable style="width: 160px" v-model="searchForm.datasetId" placeholder="请输入"> </el-input>
+      </el-form-item>
       <el-form-item prop="createTime" label="创建时间：">
         <el-date-picker
           style="width: 360px"
@@ -43,6 +51,7 @@
       <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
     </el-empty>
     <we-pagination
+      class="we-page"
       :pageSizesOption="[4, 8, 12, 16, 24]"
       :total="total"
       :page_offset="pageData.page_offset"
@@ -56,6 +65,7 @@ import { dataManageServer } from 'Api'
 import dataCard from '@/components/dataCard.vue'
 import { mapGetters } from 'vuex'
 import { handleParamsValid } from 'Utils/index.js'
+import { dataStatusEnum } from 'Utils/constant.js'
 export default {
   name: 'participateSelect',
   props: {
@@ -92,12 +102,14 @@ export default {
       dataList: [],
       selectdDataId: '',
       selectedData: {},
-      fieldList: []
+      fieldList: [],
+      typeList: []
     }
   },
   created() {
     this.selectdDataId = ''
     this.getListDataset()
+    this.getDataUploadType()
   },
   computed: {
     ...mapGetters(['userId', 'agencyId'])
@@ -134,16 +146,23 @@ export default {
         this.$emit('selected', null)
       }
     },
+    async getDataUploadType() {
+      const res = await dataManageServer.getDataUploadType()
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        this.typeList = res.data
+      }
+    },
     async getListDataset() {
       const { page_offset, page_size } = this.pageData
       const { ownerAgencyName = '' } = this
-      const { ownerUserName = '', datasetTitle = '', createTime = '' } = this.searchQuery
-      let params = handleParamsValid({ ownerAgencyName, ownerUserName, datasetTitle })
+      const { ownerUserName = '', datasetTitle = '', createTime = '', dataSourceType = '', datasetId = '' } = this.searchQuery
+      let params = handleParamsValid({ ownerAgencyName, ownerUserName, datasetTitle, dataSourceType, datasetId })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
       }
-      params = { ...params, pageNum: page_offset, pageSize: page_size, permissionType: 'usable' }
+      params = { ...params, pageNum: page_offset, pageSize: page_size, permissionType: 'usable', status: dataStatusEnum.Success }
       this.loadingFlag = true
       const res = await dataManageServer.listDataset(params)
       this.loadingFlag = false

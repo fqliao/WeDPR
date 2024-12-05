@@ -17,7 +17,7 @@ export function toDynamicTableData(input) {
     return null
   }
 
-  var dynamicTableData = {
+  const dynamicTableData = {
     columns: [],
     columnsOrigin: [],
     data: []
@@ -79,4 +79,12 @@ export function copy(val, message) {
   Message.success(message)
   // 复制成功后再将构造的标签 移除
   document.body.removeChild(cInput)
+}
+
+export function checkLabelProvider(str) {
+  if (!str || str === 'False') {
+    return false
+  } else {
+    return true
+  }
 }

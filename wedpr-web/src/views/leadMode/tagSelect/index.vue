@@ -131,7 +131,7 @@ export default {
             this.$message.error('请选择数据集')
             return
           }
-          this.$emit('tagSelected', [{ ...datasetInfo, selectedTagFields: fields }])
+          this.$emit('tagSelected', [{ ...datasetInfo, labelField: fields }])
         } else {
           return false
         }

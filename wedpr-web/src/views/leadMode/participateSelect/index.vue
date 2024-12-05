@@ -1,5 +1,5 @@
 <template>
-  <el-dialog width="1160px" height="806px" title="选择参与方" @close="handleClose" :visible="showParticipateModal">
+  <el-dialog width="1260px" height="806px" title="选择参与方" @close="handleClose" :visible="showParticipateModal">
     <div class="dataset-con">
       <el-form label-position="right" size="small" :model="dataForm" :rules="dataFormFormRules" ref="dataForm" :label-width="formLabelWidth">
         <el-form-item label="选择参与方：" prop="ownerAgencyName">

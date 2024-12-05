@@ -1,14 +1,14 @@
 <template>
-  <div class="access-manage" style="position: relative; height: 100%">
+  <div class="access-manage" style="height: 100%">
     <div class="warning">
       <p><i class="el-icon-warning"></i> AccessKeyID 和 AccessKey Secret 是您访问该隐私计算平台 API的密钥，具有该账户完全的权限，请您妥善保管。</p>
       <p class="next">AccessKey在线时间越长，泄露风险越高。您应定期创建新 AccessKey 替代旧的。</p>
     </div>
+    <div class="right-fix create">
+      <el-button size="small" type="primary" icon="el-icon-plus" @click="showAddKey"> 创建AccessKey </el-button>
+    </div>
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-plus" @click="showAddKey"> 创建AccessKey </el-button>
-        </el-form-item>
         <div style="float: right">
           <el-form-item label-width="124px" label="AccesssKey ID：" prop="accessKeyID">
             <el-input style="width: 160px" placeholder="请输入" v-model="searchForm.accessKeyID" autocomplete="off"></el-input>
@@ -179,15 +179,9 @@ export default {
     },
     // 查询
     queryHandle() {
-      this.$refs.searchForm.validate((valid) => {
-        if (valid) {
-          this.searchQuery = { ...this.searchForm }
-          this.pageData.page_offset = 1
-          this.queryAccessKeyList()
-        } else {
-          return false
-        }
-      })
+      this.searchQuery = { ...this.searchForm }
+      this.pageData.page_offset = 1
+      this.queryAccessKeyList()
     },
     reset() {
       this.$refs.searchForm.resetFields()

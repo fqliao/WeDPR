@@ -5,23 +5,12 @@
         <span :title="modelInfo.name">{{ modelInfo.name }}</span>
         <el-checkbox @change="handleSelect" :value="selected"></el-checkbox>
       </div>
-      <div class="count-detail" v-if="false">
-        <dl>
-          <dt>标签方</dt>
-          <dd>6</dd>
-        </dl>
-        <dl>
-          <dt>参与方</dt>
-          <dd>6</dd>
-        </dl>
-        <dl>
-          <dt>标签字段</dt>
-          <dd>6</dd>
-        </dl>
-      </div>
       <ul>
-        <li class="ell" v-for="item in modelInfo.participant_agency_list" :key="item.agency" :title="item.agency + ',字段' + item.fields">
-          {{ item.isLabelProvider ? '标签方：' : '机构方：' }} <span>{{ item.agency }},字段{{ item.fields }}</span>
+        <li class="ell" v-for="item in labelProviderAgency" :key="item.agency" :title="item.agency + ',字段' + item.fields">
+          标签方： <span :title="'字段:' + item.fields">{{ item.agency }}</span>
+        </li>
+        <li class="ell">
+          机构方：<span :title="'数据集字段：' + item.fields" v-for="item in participantAgencyList" :key="item.agency">{{ item.agency }}</span>
         </li>
         <li class="ell">
           标签字段： <span>{{ modelInfo.label_column }}</span>
@@ -53,7 +42,17 @@ export default {
   data() {
     return {}
   },
-  computed: {},
+  computed: {
+    labelProviderAgency() {
+      const { participant_agency_list = [] } = this.modelInfo
+      console.log(participant_agency_list)
+      return participant_agency_list.filter((v) => v.isLabelProvider)
+    },
+    participantAgencyList() {
+      const { participant_agency_list = [] } = this.modelInfo
+      return participant_agency_list.filter((v) => !v.isLabelProvider)
+    }
+  },
   methods: {
     handleSelect(checked) {
       this.$emit('selected', checked)

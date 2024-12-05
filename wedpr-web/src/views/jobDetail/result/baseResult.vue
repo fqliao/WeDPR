@@ -1,13 +1,15 @@
 <template>
-  <div class="info-container">
+  <div class="info-container" v-loading="loading">
     <ul>
       <li>
         <span class="label">任务耗时：</span> <span class="info"> {{ jobStatusInfo.timeCostMs / 1000 }}s </span>
       </li>
       <li>
         <span class="label">结果文件：</span>
-        <el-button type="text" v-if="jobType === jobEnum.PSI" @click="getLink('psi_result.json')">{{ 'psi_result.json' }}</el-button>
+        <el-button type="text" v-if="jobType === jobEnum.PSI" @click="getLink('psi_result.csv')">{{ 'psi_result.csv' }}</el-button>
         <el-button type="text" v-if="jobType === jobEnum.PIR" @click="getLink('pir_result.csv')">{{ 'pir_result.csv' }}</el-button>
+        <el-button type="text" v-if="jobType === jobEnum.MPC" @click="getLink('result.csv')">{{ 'result.csv' }}</el-button>
+        <el-button type="text" v-if="jobType === jobEnum.SQL" @click="getLink('result.csv')">{{ 'result.csv' }}</el-button>
       </li>
     </ul>
   </div>
@@ -32,13 +34,13 @@ export default {
         return ''
       }
     },
-    jobStatusInfo: {
+    resultFileInfo: {
       type: Object,
       default: () => {
         return {}
       }
     },
-    resultFileInfo: {
+    jobStatusInfo: {
       type: Object,
       default: () => {
         return {}
@@ -52,22 +54,10 @@ export default {
       jobEnum
     }
   },
-  watch: {
-    jobID() {
-      this.handleResult()
-    }
-  },
-  created() {
-    this.handleResult()
-  },
   methods: {
-    handleResult() {
-      this.jobResult = this.resultFileInfo
-    },
     getLink(fileName) {
-      const { path } = this.jobResult
-      console.log(path, 'path')
-      this.downloadLargeFile({ filePath: path }, fileName)
+      const { path } = this.resultFileInfo
+      path && this.downloadLargeFile({ filePath: path }, fileName)
     }
   }
 }
@@ -75,10 +65,10 @@ export default {
 
 <style lang="scss" scoped>
 ul {
-  padding: 10px 0;
+  padding-bottom: 10px;
 }
 li {
-  padding: 8px;
+  padding: 4px;
 }
 span.label {
   margin-right: 6px;

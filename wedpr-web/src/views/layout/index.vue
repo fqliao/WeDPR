@@ -1,13 +1,14 @@
 <template>
   <el-container class="layout-contaioner">
-    <el-header height="64px"><HeaderTop @menuToggleClick="menuToggleClick" :isCollapse="isCollapse" /></el-header>
     <el-container class="main-container">
-      <el-aside :width="isCollapse ? '68px' : '240px'">
+      <el-aside :width="isCollapse ? '68px' : '216px'">
+        <el-header height="64px"><HeaderTop @menuToggleClick="menuToggleClick" :isCollapse="isCollapse" /></el-header>
         <MenuLeft :isCollapse="isCollapse" />
         <div class="guide" v-if="!isCollapse && !hiddenFeed">
           <img class="close" @click="closeFeed" src="~Assets/images/icon_close.png" alt="" />
           <img src="~Assets/images/guide.png" alt="" />
-          <el-button type="primary" size="small" @click="feed">点击反馈</el-button>
+          <p>使用过程遇到问题？</p>
+          <el-button class="feed" size="small" @click="feed">点击反馈</el-button>
         </div>
       </el-aside>
       <el-main class="elmain">
@@ -92,8 +93,7 @@ export default {
   .elmain {
     height: 100%;
     padding: 0;
-    padding-bottom: 24px;
-    padding-right: 24px;
+    padding: 20px;
     background-color: #f6f8fc;
     .elmain-container {
       padding: 30px 0;
@@ -127,10 +127,8 @@ export default {
     text-align: center;
     position: absolute;
     bottom: 32px;
-    left: 0;
-    width: 100%;
-    padding: 0 24px;
     box-sizing: border-box;
+    width: calc(100% - 20px);
     .close {
       position: absolute;
       right: 24px;
@@ -139,12 +137,22 @@ export default {
       height: 16px;
       cursor: pointer;
     }
+    p {
+      margin-top: 9px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: normal;
+    }
     img {
-      width: 120px;
-      height: 120px;
+      width: 108px;
+      height: auto;
       display: block;
       margin: 0 auto;
       margin-bottom: 12px;
+    }
+    .feed {
+      transform: translateX(-10px);
+      color: #376fe0;
     }
   }
 }

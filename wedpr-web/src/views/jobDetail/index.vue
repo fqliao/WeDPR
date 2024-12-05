@@ -1,235 +1,252 @@
 <template>
   <div class="group-manage">
     <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
-      <el-tab-pane label="任务信息" name="first">
-        <div v-loading="loading">
-          <div class="info-container">
-            <div class="whole">
-              <div class="half">
-                <span class="title">任务ID：</span>
-                <span class="info" :title="jobInfo.id"> {{ jobInfo.id }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
-              <div class="half">
-                <span class="title">所选服务：</span>
-                <span class="info link" :title="jobInfo.serviceId" @click="goServiceDetail(jobInfo.serviceId, jobInfo.serviceType)"> {{ jobInfo.serviceId }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
-              <div class="half">
-                <span class="title">数据集：</span>
-                <span class="info link" :title="jobInfo.datasetId" @click="goDatasetDetail(jobInfo.serviceId)"> {{ jobInfo.datasetId }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
-              <div class="half">
-                <span class="title">查询类型：</span>
-                <span class="info" :title="searchTypeDesEnum[jobInfo.searchType]"> {{ searchTypeDesEnum[jobInfo.searchType] }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR && jobInfo.searchType !== searchTypeEnum.SearchExist">
-              <div class="half">
-                <span class="title">查询字段：</span>
-                <span class="info" :title="jobInfo.queriedFields"> {{ jobInfo.queriedFields }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
-              <div class="half">
-                <span class="title">查询字段值：</span>
-                <span class="info" :title="jobInfo.searchIdList"> {{ jobInfo.searchIdList }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR && jobInfo.jobType !== jobEnum.PSI">
-              <div class="half">
-                <span class="title">标签提供方：</span>
-                <span class="info" :title="jobInfo.labelProvider"> {{ jobInfo.labelProvider }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
-              <div class="half">
-                <span class="title">参与方：</span>
-                <span class="info" :title="jobInfo.particapate"> {{ jobInfo.particapate }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
-              <div class="half">
-                <span class="title">结果接收方：</span>
-                <span class="info" :title="jobInfo.receiver"> {{ jobInfo.receiver }} </span>
-              </div>
-            </div>
-            <div class="whole">
-              <div class="half">
-                <span class="title">创建时间：</span>
-                <span class="info" :title="jobInfo.createTime"> {{ jobInfo.createTime }} </span>
-              </div>
-            </div>
-            <div class="whole">
-              <div class="half">
-                <span class="title">算法模板：</span>
-                <span class="info" :title="jobInfo.jobType"> {{ jobInfo.jobType }} </span>
-              </div>
-            </div>
-            <div class="whole">
-              <div class="half">
-                <span class="title">任务状态：</span>
-                <span class="info" :title="jobInfo.status">
-                  <el-tag size="small" v-if="jobInfo.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
-                  <el-tag size="small" v-else-if="jobInfo.status === 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
-                  <el-tag size="small" v-else-if="jobInfo.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
-                  <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[jobInfo.status] }}</el-tag>
-                </span>
-              </div>
-            </div>
-            <div class="whole" v-if="false">
-              <div class="half">
-                <span class="title">运行进度：</span>
-                <span class="info" :title="jobInfo.projectDesc"> {{ jobInfo.projectDesc }} </span>
-              </div>
-            </div>
-            <div class="whole" v-if="false">
-              <div class="half">
-                <span class="title">链上存证：</span>
-                <span class="info" :title="jobInfo.projectDesc"> {{ jobInfo.projectDesc }} </span>
-              </div>
-            </div>
-          </div>
-          <div class="con" v-if="dataList.length">
-            <div class="title-radius">参与数据资源</div>
-            <div class="tableContent autoTableWrap">
-              <el-table :max-height="tableHeight" size="small" :data="dataList" :border="true" class="table-wrap">
-                <el-table-column label="数据资源ID" prop="datasetId" />
-                <el-table-column label="数据资源名称" prop="datasetTitle" />
-                <el-table-column label="所属机构" prop="ownerAgencyName" />
-                <el-table-column label="所属用户" prop="ownerUserName" />
-                <el-table-column label="数据集字段" prop="datasetFields" show-overflow-tooltip />
-                <el-table-column label="创建时间" prop="createAt" />
-                <el-table-column label="操作">
-                  <template v-slot="scope">
-                    <el-button size="small" type="text" @click="getDetail(scope.row.datasetId)">查看详情</el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-          </div>
-          <div class="con" v-if="[jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING, jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING].includes(jobInfo.jobType)">
-            <div class="title-radius">配置信息</div>
-            <div class="tableContent autoTableWrap">
-              <el-table :max-height="300" size="small" :data="settingTableData" :border="true" class="table-wrap">
-                <el-table-column label="参数" prop="label" />
-                <el-table-column label="取值" prop="value" />
-              </el-table>
-            </div>
-          </div>
-          <div class="con" v-if="xgbJobSavedModelData.length || xgbJobOriginModelData.length">
-            <div class="title-radius">模型信息</div>
-            <div class="tableContent autoTableWrap">
-              <el-table
-                :max-height="tableHeight"
-                v-if="xgbJobSavedModelData.length"
-                size="small"
-                :span-method="objectSpanMethodSaved"
-                :data="xgbJobSavedModelData"
-                :border="true"
-                class="table-wrap"
-              >
-                <el-table-column label="模型名称" prop="modelName" />
-                <el-table-column label="所属机构" prop="modelAgency" />
-                <el-table-column label="所属用户" prop="modelOwner" />
-                <el-table-column label="模型任务来源" prop="jobID">
-                  <template v-slot="scope">
-                    <el-button @click="goJobDetail(scope.row.jobID)" size="small" type="text">{{ scope.row.jobID }}</el-button>
-                  </template>
-                </el-table-column>
-                <el-table-column label="标签提供方" prop="label_provider" />
-                <el-table-column label="标签字段" prop="label_column" />
-                <el-table-column label="参与机构" prop="agency" />
-                <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
-                  <template v-slot="scope">
-                    {{ scope.row.fields.join(',') }}
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作">
-                  <template v-slot="scope">
-                    <el-button @click="copyModel(scope.row.modelString)" size="small" type="text">复制模型</el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              <el-table
-                v-if="xgbJobOriginModelData.length"
-                :max-height="tableHeight"
-                :span-method="objectSpanMethodOrigin"
-                size="small"
-                :data="xgbJobOriginModelData"
-                :border="true"
-                class="table-wrap"
-              >
-                <el-table-column label="模型类型" prop="model_type" />
-                <el-table-column label="标签提供方" prop="label_provider" />
-                <el-table-column label="标签字段" prop="label_column" />
-                <el-table-column label="参与机构" prop="agency" />
-                <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
-                  <template v-slot="scope">
-                    {{ scope.row.fields.join(',') }}
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-            <div v-if="xgbJobOriginModelData.length">
-              <div style="margin-top: 20px; padding-bottom: 20px">
-                <el-button type="primary" @click="showSettingSaveModal"> 保存配置 </el-button>
-                <el-button type="primary" @click="showSettingSaveModelModal"> 保存模型 </el-button>
-                <el-button @click="reBuild"> 调参重跑 </el-button>
-              </div>
-              <div class="tips">* 保存配置：后续可选择基于该配置进行建模与调参重跑</div>
-              <div class="tips">* 保存模型：后续可选择基于该模型进行预测</div>
-            </div>
-          </div>
-          <div v-if="jobInfo.status === 'RunSuccess' && jobInfo.jobType === jobEnum.PIR && jobInfo.owner === userId && jobInfo.ownerAgency === agencyId">
-            <div class="title-radius">任务结果</div>
-            <div style="padding-left: 10px">
-              <baseResult :jobType="jobInfo.jobType" v-if="jobInfo.jobType === jobEnum.PIR" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :resultFileInfo="resultFileInfo" />
-            </div>
-          </div>
-        </div>
+      <el-tab-pane label="任务信息" name="jobInfo"> </el-tab-pane>
+      <el-tab-pane label="运行日志" name="log" v-if="[jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING, jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING].includes(jobInfo.jobType)">
       </el-tab-pane>
-      <el-tab-pane label="运行日志" name="second" v-if="logSize">
-        <div class="log-container">
-          日志下载： <el-button type="text" @click="downloadLog(logPath)">{{ 'job.log' }}</el-button>
-        </div>
-        <div class="log-container" v-if="logContent">
-          <div class="log" v-html="logContent"></div>
-        </div>
-      </el-tab-pane>
-      <el-tab-pane label="工作流视图" name="third" v-if="false"> </el-tab-pane>
-      <el-tab-pane label="审计信息" name="four" v-if="false"> </el-tab-pane>
-      <el-tab-pane label="查看结果" name="five" v-if="jobInfo.jobType !== jobEnum.PIR && jobInfo.status === 'RunSuccess' && receiverList.includes(agencyId)">
-        <xgbResult
-          v-if="[jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING, jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING].includes(jobInfo.jobType)"
-          :jobID="jobID"
-          :jobType="jobInfo.jobType"
-          :jobStatusInfo="jobStatusInfo"
-          :modelResultDetail="modelResultDetail"
-        />
-        <baseResult :jobType="jobInfo.jobType" v-if="jobInfo.jobType === jobEnum.PSI" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :resultFileInfo="resultFileInfo" />
+      <el-tab-pane
+        label="查看结果"
+        name="result"
+        v-if="
+          [jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING, jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING].includes(jobInfo.jobType) &&
+          jobInfo.status === 'RunSuccess' &&
+          receiverList.includes(agencyId)
+        "
+      >
       </el-tab-pane>
     </el-tabs>
+    <div v-loading="loading" v-if="activeName === 'jobInfo'">
+      <div class="info-container">
+        <div class="whole">
+          <div class="half">
+            <span class="title">任务ID：</span>
+            <span class="info" :title="jobInfo.id"> {{ jobInfo.id }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+          <div class="half">
+            <span class="title">所选服务：</span>
+            <span class="info link" :title="jobInfo.serviceId" @click="goServiceDetail(jobInfo.serviceId, jobInfo.serviceType)"> {{ jobInfo.serviceId }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+          <div class="half">
+            <span class="title">数据集：</span>
+            <span class="info link" :title="jobInfo.datasetId" @click="goDatasetDetail(jobInfo.datasetId)"> {{ jobInfo.datasetId }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+          <div class="half">
+            <span class="title">查询类型：</span>
+            <span class="info" :title="searchTypeDesEnum[jobInfo.searchType]"> {{ searchTypeDesEnum[jobInfo.searchType] }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR && jobInfo.searchType !== searchTypeEnum.SearchExist">
+          <div class="half">
+            <span class="title">查询字段：</span>
+            <span class="info" :title="jobInfo.queriedFields"> {{ jobInfo.queriedFields }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+          <div class="half">
+            <span class="title">查询字段值：</span>
+            <span class="info" :title="jobInfo.searchIdList"> {{ jobInfo.searchIdList }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="![jobEnum.PIR, jobEnum.PSI, jobEnum.MPC, jobEnum.SQL].includes(jobInfo.jobType)">
+          <div class="half">
+            <span class="title">标签提供方：</span>
+            <span class="info" :title="jobInfo.labelProvider"> {{ jobInfo.labelProvider }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
+          <div class="half">
+            <span class="title">参与方：</span>
+            <span class="info" :title="jobInfo.particapate"> {{ jobInfo.particapate }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
+          <div class="half">
+            <span class="title">结果接收方：</span>
+            <span class="info" :title="jobInfo.receiver"> {{ jobInfo.receiver || jobInfo.ownerAgency }} </span>
+          </div>
+        </div>
+        <div class="whole">
+          <div class="half">
+            <span class="title">创建时间：</span>
+            <span class="info" :title="jobInfo.createTime"> {{ jobInfo.createTime }} </span>
+          </div>
+        </div>
+        <div class="whole">
+          <div class="half">
+            <span class="title">算法模板：</span>
+            <span class="info" :title="jobInfo.jobType"> {{ jobInfo.jobType }} </span>
+          </div>
+        </div>
+        <div class="whole">
+          <div class="half">
+            <span class="title">任务状态：</span>
+            <span class="info" :title="jobInfo.status">
+              <el-tag size="small" v-if="jobInfo.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
+              <el-tag size="small" v-else-if="jobInfo.status === 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
+              <el-tag size="small" v-else-if="jobInfo.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
+              <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[jobInfo.status] }}</el-tag>
+            </span>
+          </div>
+        </div>
+        <div class="whole" v-if="jobInfo.status === 'RunFailed'">
+          <div class="half" style="width: 90%">
+            <span class="title">诊断信息：</span>
+            <span class="error-conatiner">
+              {{ jobInfo.statusDetail }}
+            </span>
+          </div>
+        </div>
+
+        <div class="whole" v-if="false">
+          <div class="half">
+            <span class="title">运行进度：</span>
+            <span class="info" :title="jobInfo.projectDesc"> {{ jobInfo.projectDesc }} </span>
+          </div>
+        </div>
+        <div class="whole" v-if="false">
+          <div class="half">
+            <span class="title">链上存证：</span>
+            <span class="info" :title="jobInfo.projectDesc"> {{ jobInfo.projectDesc }} </span>
+          </div>
+        </div>
+      </div>
+      <div class="con" v-if="dataList.length">
+        <div class="title-radius">参与数据资源</div>
+        <div class="tableContent autoTableWrap">
+          <el-table size="small" :data="dataList" :border="true" class="table-wrap">
+            <el-table-column label="数据资源ID" prop="datasetId" />
+            <el-table-column label="数据资源名称" prop="datasetTitle" />
+            <el-table-column label="所属机构" prop="ownerAgencyName" />
+            <el-table-column label="所属用户" prop="ownerUserName" />
+            <el-table-column label="数据集字段" prop="datasetFields" show-overflow-tooltip />
+            <el-table-column label="创建时间" prop="createAt" />
+            <el-table-column label="操作">
+              <template v-slot="scope">
+                <el-button size="small" type="text" @click="getDetail(scope.row.datasetId)">查看详情</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+      <div class="con" v-if="jobEnum.MPC === jobInfo.jobType">
+        <div class="title-radius">Python语句</div>
+        <div class="modify-container" style="height: 300px">
+          <editorCom v-model="jobInfo.mpcContent" :readOnly="true" lang="python" />
+        </div>
+      </div>
+      <div class="con" v-if="jobEnum.SQL === jobInfo.jobType">
+        <div class="title-radius">SQL语句</div>
+        <div class="modify-container" style="height: 300px">
+          <editorCom v-model="jobInfo.sql" :readOnly="true" lang="sql" />
+        </div>
+      </div>
+      <div class="con" v-if="[jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING, jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING].includes(jobInfo.jobType)">
+        <div class="title-radius">配置信息</div>
+        <div class="tableContent autoTableWrap">
+          <el-table :max-height="300" size="small" :data="settingTableData" :border="true" class="table-wrap">
+            <el-table-column label="参数" prop="label" />
+            <el-table-column label="取值" prop="value" />
+          </el-table>
+        </div>
+      </div>
+      <div class="con" v-if="xgbJobSavedModelData.length || xgbJobOriginModelData.length">
+        <div class="title-radius">模型信息</div>
+        <div class="tableContent autoTableWrap">
+          <el-table v-if="xgbJobSavedModelData.length" size="small" :span-method="objectSpanMethodSaved" :data="xgbJobSavedModelData" :border="true" class="table-wrap">
+            <el-table-column label="模型名称" prop="modelName" />
+            <el-table-column label="所属机构" prop="modelAgency" />
+            <el-table-column label="所属用户" prop="modelOwner" />
+            <el-table-column label="模型任务来源" prop="jobID">
+              <template v-slot="scope">
+                <el-button @click="goJobDetail(scope.row.jobID)" size="small" type="text">{{ scope.row.jobID }}</el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="标签提供方" prop="label_provider" />
+            <el-table-column label="标签字段" prop="label_column" />
+            <el-table-column label="参与机构" prop="agency" />
+            <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
+              <template v-slot="scope">
+                {{ scope.row.fields.join(',') }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作">
+              <template v-slot="scope">
+                <el-button @click="copyModel(scope.row.modelString)" size="small" type="text">复制模型</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-table v-if="xgbJobOriginModelData.length" :span-method="objectSpanMethodOrigin" size="small" :data="xgbJobOriginModelData" :border="true" class="table-wrap">
+            <el-table-column label="模型类型" prop="model_type" />
+            <el-table-column label="标签提供方" prop="label_provider" />
+            <el-table-column label="标签字段" prop="label_column" />
+            <el-table-column label="参与机构" prop="agency" />
+            <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
+              <template v-slot="scope">
+                {{ scope.row.fields.join(',') }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <div v-if="xgbJobOriginModelData.length">
+          <div style="margin-top: 20px; padding-bottom: 20px">
+            <el-button type="primary" @click="showSettingSaveModal"> 保存配置 </el-button>
+            <el-button type="primary" @click="showSettingSaveModelModal"> 保存模型 </el-button>
+            <el-button @click="reBuild"> 调参重跑 </el-button>
+          </div>
+          <div class="tips">* 保存配置：后续可选择基于该配置进行建模与调参重跑</div>
+          <div class="tips">* 保存模型：后续可选择基于该模型进行预测</div>
+        </div>
+      </div>
+      <div
+        v-if="
+          jobInfo.status === 'RunSuccess' &&
+          [jobEnum.PIR, jobEnum.PSI, jobEnum.MPC, jobEnum.SQL].includes(jobInfo.jobType) &&
+          jobInfo.owner === userId &&
+          jobInfo.ownerAgency === agencyId
+        "
+      >
+        <div class="title-radius">任务结果</div>
+        <div style="padding-left: 10px">
+          <baseResult :jobType="jobInfo.jobType" :jobID="jobID" :resultFileInfo="resultFileInfo" :jobStatusInfo="jobStatusInfo" />
+        </div>
+      </div>
+    </div>
+    <div v-if="activeName === 'log'">
+      <logComp :jobID="jobID" :jobType="jobInfo.jobType" />
+    </div>
+    <div v-if="activeName === 'result'">
+      <xgbResult
+        v-if="[jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING, jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING].includes(jobInfo.jobType)"
+        :jobID="jobID"
+        :jobType="jobInfo.jobType"
+      />
+    </div>
   </div>
 </template>
 <script>
 import { jobManageServer, dataManageServer, settingManageServer, serviceManageServer } from 'Api'
 import xgbResult from './result/xgbResult.vue'
 import baseResult from './result/baseResult.vue'
+import logComp from './log/index.vue'
 import { jobStatusMap, jobEnum, searchTypeEnum, searchTypeDesEnum, settingMap, modelSettingMap } from 'Utils/constant.js'
 import { copy } from 'Utils'
 import { mapGetters } from 'vuex'
 import { downloadLargeFile } from 'Mixin/downloadLargeFile.js'
+import editorCom from '@/components/editorCom.vue'
 export default {
   name: 'groupManage',
   mixins: [downloadLargeFile],
   components: {
     xgbResult,
-    baseResult
+    baseResult,
+    editorCom,
+    logComp
   },
   data() {
     return {
@@ -237,7 +254,7 @@ export default {
       queryFlag: false,
       tableData: [],
       showAddModal: false,
-      activeName: 'first',
+      activeName: 'jobInfo',
       jobID: '',
       jobResult: {},
       dataList: [],
@@ -258,10 +275,7 @@ export default {
       loading: false,
       xgbJobSavedModelData: [],
       xgbJobOriginModelData: [],
-      timer: null,
-      logContent: '',
-      logPath: '',
-      logSize: 0
+      timer: null
     }
   },
   created() {
@@ -338,19 +352,19 @@ export default {
         })
       })
     },
-    async getJobInfo() {
+    async getJobInfo(params) {
       this.loading = !this.timer
       const { jobID } = this
-      const res = await jobManageServer.queryJobDetail({ jobID })
+      const res = await jobManageServer.queryJobDetail({ jobID, ...params })
       this.loading = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { job = {}, modelResultDetail = {}, resultFileInfo, model, log } = res.data
+        const { job = {}, model, resultFileInfo } = res.data
         const { parties = '', param } = job
         const { jobStatusInfo = {} } = job
         this.jobInfo = { ...job }
         console.log(JSON.parse(param), 'JSON.parse(param)')
-        const { dataSetList, modelPredictAlgorithm = '', modelSetting, serviceId, searchType, queriedFields, searchIdList } = JSON.parse(param)
+        const { dataSetList, modelPredictAlgorithm = '', modelSetting, serviceId, searchType, queriedFields, searchIdList, mpcContent, sql } = JSON.parse(param)
         this.modelSetting = modelSetting
         // 展示建模和预测任务参数
         if (this.modelSetting) {
@@ -388,48 +402,31 @@ export default {
           this.jobInfo = { ...this.jobInfo, searchType, queriedFields, searchIdList }
           this.queryService(serviceId)
         }
-        console.log(JSON.parse(parties), 'parties')
-        this.modelResultDetail = modelResultDetail
-        this.jobStatusInfo = jobStatusInfo
-        this.resultFileInfo = resultFileInfo
-        if (log) {
-          const { logContent, logPath, logSize } = log
-          this.logSize = logSize
-          // 高亮运行日志
-          if (logContent) {
-            this.logContent = this.highLightLog(logContent)
-          } else {
-            this.logPath = logPath
-          }
+        // 展示诊断信息
+        if (jobStatusInfo.status === 'RunFailed') {
+          this.jobInfo.statusDetail = jobStatusInfo.statusDetail
         }
+        if (mpcContent) {
+          this.jobInfo.mpcContent = mpcContent
+        }
+        if (sql) {
+          this.jobInfo.sql = sql
+        }
+        // pir psi sql mpc 直接展示任务结果
+        if (resultFileInfo) {
+          this.resultFileInfo = resultFileInfo
+        }
+        console.log(JSON.parse(parties), 'parties')
+        this.jobStatusInfo = jobStatusInfo
         this.startInterVal()
       } else {
         this.jobInfo = {}
       }
     },
-    highLightLog(logContent) {
-      const content = logContent.replace(/\n/g, '<br>')
-      const dataArray = content.split('<br>')
-      const dataDrawedList = dataArray.map((v) => {
-        if (v.toLowerCase().indexOf('error') > -1) {
-          return `<span class='error'>${v}</span>`
-        }
-        if (v.toLowerCase().indexOf('warn') > -1) {
-          return `<span class='warn'>${v}</span>`
-        }
-        return v
-      })
-      console.log(dataDrawedList, 'dataDrawedList')
-      return dataDrawedList.join('<br>')
-    },
-    downloadLog(path) {
-      this.downloadLargeFile({ filePath: path }, 'job.log')
-    },
     startInterVal() {
       this.timer && clearInterval(this.timer)
       this.timer = setInterval(() => {
         const pendingStatus = ['Submitted', 'Handshaking', 'HandshakeSuccess', 'Running']
-        console.log(999999999)
         if (pendingStatus.includes(this.jobInfo.status)) {
           this.getJobInfo()
         } else {
@@ -589,6 +586,10 @@ export default {
 div.whole {
   display: flex;
   margin-bottom: 16px;
+  .error-conatiner {
+    max-width: 80%;
+    word-break: break-all;
+  }
 }
 div.half {
   width: 50%;
@@ -634,6 +635,12 @@ div.info-container {
     text-overflow: ellipsis;
     font-size: 14px;
     line-height: 22px;
+  }
+  span.error-conatiner {
+    color: #262a32;
+    font-size: 14px;
+    line-height: 22px;
+    word-break: break-all;
   }
   span.info.link {
     cursor: pointer;

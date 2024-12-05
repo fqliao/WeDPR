@@ -425,8 +425,8 @@ export default {
         const approvalChainData = Array.isArray(JSON.parse(approvalChain)) ? JSON.parse(approvalChain) : []
         const approvalChainList = approvalChainData.map((v) => {
           return {
-            agency: this.agencyId,
-            name: v,
+            agency: v.agency,
+            name: v.name,
             deleteAble: false,
             visible: false
           }
@@ -709,7 +709,14 @@ export default {
             // 权限中文描述 及参数处理
             const datasetVisibilityDetails = this.handlePermissionDes({ datasetVisibility, setting, agencyList, userList, groupIdList })
             this.datasetId && (params.datasetId = this.datasetId)
-            params.approvalChain = this.approveChainList.filter((v) => v.agency).map((v) => v.name)
+            params.approvalChain = this.approveChainList
+              .filter((v) => v.agency)
+              .map((v) => {
+                return {
+                  agency: v.agency,
+                  name: v.name
+                }
+              })
             this.createDataset({ ...params, datasetVisibilityDetails }, { dataSourceType: sourceType, dataFile })
           }
         })
@@ -729,7 +736,14 @@ export default {
             // 权限中文描述 及参数处理
             const datasetVisibilityDetails = this.handlePermissionDes({ datasetVisibility, setting, agencyList, userList, groupIdList })
             params.datasetId = this.datasetId
-            params.approvalChain = this.approveChainList.filter((v) => v.agency).map((v) => v.name)
+            params.approvalChain = this.approveChainList
+              .filter((v) => v.agency)
+              .map((v) => {
+                return {
+                  agency: v.agency,
+                  name: v.name
+                }
+              })
             this.updateDataset({ ...params, datasetVisibilityDetails })
           }
         })
