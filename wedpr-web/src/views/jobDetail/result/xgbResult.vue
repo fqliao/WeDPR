@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <el-tabs v-model="activeName">
+  <div v-loading="loading">
+    <el-tabs v-model="activeName" type="card">
       <el-tab-pane key="建模结果" label="建模结果" name="建模结果">
         <el-form label-position="right" label-width="120px" class="form">
           <el-form-item label="任务耗时：">
@@ -85,7 +85,7 @@
         </el-card>
         <el-card v-if="outputPreviewTableData" class="info-card">
           <div slot="header" class="clearfix">
-            <span>{{ jobAlgorithmType === jobEnum.XGB_TRAINING ? '测试集预测结果' : '验证集预测结果' }}</span>
+            <span>{{ jobType === jobEnum.XGB_TRAINING ? '测试集预测结果' : '验证集预测结果' }}</span>
           </div>
           <div class="pd20">
             <el-form label-position="right" label-width="80px" class="form">
@@ -161,7 +161,7 @@
         </el-card>
         <el-card v-if="KSTableData || outputMetricsGraphs.length" class="info-card">
           <div slot="header" class="clearfix">
-            <span> {{ jobAlgorithmType === jobEnum.XGB_TRAINING ? '测试集效果评估' : '验证集效果评估' }}</span>
+            <span> {{ jobType === jobEnum.XGB_TRAINING ? '测试集效果评估' : '验证集效果评估' }}</span>
           </div>
           <div class="pd20">
             <el-table v-if="KSTableData" ref="dynamicTable" :data="KSTableData.data" border fit stripe max-height="385">
@@ -229,6 +229,7 @@
 import { toDynamicTableData } from 'Utils/index.js'
 import { downloadLargeFile } from 'Mixin/downloadLargeFile.js'
 import { jobEnum } from 'Utils/constant.js'
+import { jobManageServer } from 'Api'
 export default {
   name: 'AiResultNew',
   mixins: [downloadLargeFile],
@@ -243,18 +244,6 @@ export default {
       type: String,
       default: () => {
         return ''
-      }
-    },
-    jobStatusInfo: {
-      type: Object,
-      default: () => {
-        return {}
-      }
-    },
-    modelResultDetail: {
-      type: Object,
-      default: () => {
-        return {}
       }
     }
   },
@@ -277,23 +266,38 @@ export default {
       EvaluationTable: null,
       outputTrainMetricsGraphs: [],
       outputMetricsGraphs: [],
+      outputTrainMetricsGraphsDataList: [],
       FEPreviewData: null,
       PRPreviewTableData: null,
       resultLink: {},
-      jobEnum
+      jobEnum,
+      jobStatusInfo: {},
+      loading: false
     }
   },
   watch: {
     jobID() {
-      this.handleResult()
+      this.getJobResult()
     }
   },
   created() {
-    this.handleResult()
-    console.log(this.modelResultDetail, 'modelResultDetail')
-    console.log(this.jobStatusInfo, 'jobStatusInfo')
+    this.getJobResult()
   },
   methods: {
+    async getJobResult() {
+      const { jobID } = this
+      this.loading = true
+      const res = await jobManageServer.queryJobDetail({ jobID, fetchJobResult: true, fetchJobDetail: false })
+      if (res.code === 0 && res.data) {
+        const { modelResultDetail = {}, resultFileInfo, job = {} } = res.data
+        const { jobStatusInfo = {} } = job
+        this.modelResultDetail = modelResultDetail
+        this.resultFileInfo = resultFileInfo
+        this.jobStatusInfo = jobStatusInfo
+        this.handleResult()
+      }
+      this.loading = false
+    },
     downloadResult(path, fileName) {
       path && this.downloadLargeFile({ filePath: path }, fileName)
     },
@@ -311,7 +315,7 @@ export default {
         outputModelResult = [],
         outputTrainPreview,
         outputPreview,
-        outputTrainMetricsGraphs,
+        outputTrainMetricsGraphs = [],
         FEPreview,
         PRPreview,
         ModelResult

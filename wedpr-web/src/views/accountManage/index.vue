@@ -112,15 +112,9 @@ export default {
     },
     // 查询
     queryHandle() {
-      this.$refs.searchForm.validate((valid) => {
-        if (valid) {
-          this.searchQuery = { ...this.searchForm }
-          this.pageData.page_offset = 1
-          this.getAccountList()
-        } else {
-          return false
-        }
-      })
+      this.searchQuery = { ...this.searchForm }
+      this.pageData.page_offset = 1
+      this.getAccountList()
     },
     // 获取群组信息
     async getGroupList() {

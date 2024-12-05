@@ -22,6 +22,9 @@
         服务类型：<span class="count">{{ serviceInfo.serviceType }}</span>
       </dd>
       <dd>
+        服务ID：<span class="count">{{ serviceInfo.serviceId }}</span>
+      </dd>
+      <dd>
         创建时间：<span>{{ serviceInfo.createTime }}</span>
       </dd>
     </dl>
@@ -146,7 +149,7 @@ div.server-con {
     justify-content: space-between;
     align-items: center;
     img.type {
-      width: 48px;
+      width: auto;
       height: 48px;
       margin-bottom: 16px;
       float: left;

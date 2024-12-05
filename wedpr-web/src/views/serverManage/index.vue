@@ -13,6 +13,9 @@
         <el-form-item prop="serviceName" label="服务名称：">
           <el-input clearable style="width: 150px" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
         </el-form-item>
+        <el-form-item prop="serviceId" label="服务ID：">
+          <el-input style="width: 160px" v-model="searchForm.serviceId" placeholder="请输入"> </el-input>
+        </el-form-item>
         <el-form-item prop="status" label="发布状态：">
           <el-select clearable size="small" style="width: 150px" v-model="searchForm.status" placeholder="请选择">
             <el-option :key="item" v-for="item in servicePulishStatusList" :label="item.label" :value="item.value"></el-option>
@@ -37,13 +40,13 @@
         <el-form-item>
           <el-button type="default" @click="reset"> 重置 </el-button>
         </el-form-item>
-        <div class="op-container">
-          <div class="btn" @click="creatPsi"><img class="icon-btn" src="~Assets/images/lead icon_service1.png" alt="" /> 发布匿踪查询服务</div>
-          <div class="btn model" @click="creatModel"><img class="icon-btn" src="~Assets/images/lead icon_service2.png" alt="" /> 发布模型预测服务</div>
-        </div>
       </el-form>
     </div>
-    <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+    <div class="right-fix op-container">
+      <div class="btn" @click="creatPsi"><img class="icon-btn" src="~Assets/images/lead icon_service1.png" alt="" /> 发布匿踪查询服务</div>
+      <div class="btn model" @click="creatModel"><img class="icon-btn" src="~Assets/images/lead icon_service2.png" alt="" /> 发布模型预测服务</div>
+    </div>
+    <el-tabs type="card" v-model="activeName" @tab-click="handleClick">
       <el-tab-pane label="我的服务" name="IsOwner"></el-tab-pane>
       <el-tab-pane label="可申请的" name="NoPermission"></el-tab-pane>
       <el-tab-pane label="已授权的" name="Authorized"></el-tab-pane>
@@ -98,14 +101,16 @@ export default {
         owner: '',
         serviceName: '',
         createTime: '',
-        status: ''
+        status: '',
+        serviceId: ''
       },
       searchQuery: {
         agency: '',
         owner: '',
         serviceName: '',
         createTime: '',
-        status: ''
+        status: '',
+        serviceId: ''
       },
       pageData: {
         page_offset: 1,
@@ -187,15 +192,9 @@ export default {
     },
     // 查询
     queryHandle() {
-      this.$refs.searchForm.validate((valid) => {
-        if (valid) {
-          this.searchQuery = { ...this.searchForm }
-          this.pageData.page_offset = 1
-          this.getPublishList()
-        } else {
-          return false
-        }
-      })
+      this.searchQuery = { ...this.searchForm }
+      this.pageData.page_offset = 1
+      this.getPublishList()
     },
     // 删除服务
     showDeleteModal(serverData) {
@@ -234,13 +233,13 @@ export default {
     // 获取服务列表
     async getPublishList() {
       const { page_offset, page_size } = this.pageData
-      const { agency = '', owner = '', serviceName = '', createTime = '', status } = this.searchQuery
-      let params = handleParamsValid({ agency, owner, serviceName, status })
+      const { agency = '', owner = '', serviceName = '', createTime = '', status, serviceId = '' } = this.searchQuery
+      let params = handleParamsValid({ agency, owner, serviceName, status, serviceId })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
       }
-      params = { condition: { ...params, serviceId: '', ...this.getParams() }, serviceIdList: [], pageNum: page_offset, pageSize: page_size }
+      params = { condition: { serviceId: '', ...params, ...this.getParams() }, serviceIdList: [], pageNum: page_offset, pageSize: page_size }
       this.loadingFlag = true
       const res = await serviceManageServer.getPublishList(params)
       this.loadingFlag = false
@@ -297,7 +296,6 @@ export default {
 </script>
 <style lang="less" scoped>
 div.op-container {
-  margin: 16px 0;
   div.btn {
     padding: 5px 16px;
     border-radius: 4px;
@@ -329,7 +327,7 @@ div.card-container {
 }
 div.apply-container {
   display: flex;
-  div.handle{
+  div.handle {
     padding-left: 20px;
   }
 }

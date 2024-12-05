@@ -11,6 +11,9 @@
           <el-form-item prop="applyTitle" label="审批单名称：">
             <el-input style="width: 160px" v-model="searchForm.applyTitle" placeholder="请输入"> </el-input>
           </el-form-item>
+          <el-form-item prop="id" label="申请表单ID：">
+            <el-input style="width: 160px" v-model="searchForm.id" placeholder="请输入"> </el-input>
+          </el-form-item>
           <el-form-item prop="createTime" label="申请时间：">
             <el-date-picker value-format="yyyy-MM-dd" v-model="searchForm.createTime" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期">
             </el-date-picker>
@@ -154,12 +157,14 @@ export default {
       searchForm: {
         status: '',
         applyTitle: '',
-        createTime: ''
+        createTime: '',
+        id: ''
       },
       searchQuery: {
         status: '',
         applyTitle: '',
-        createTime: ''
+        createTime: '',
+        id: ''
       },
       pageData: {
         page_offset: 1,
@@ -229,9 +234,9 @@ export default {
     // 获取我的待办列表
     async queryTODOList() {
       const { page_offset, page_size } = this.pageData
-      const { status = '', applyTitle = '', createTime = '' } = this.searchQuery
+      const { status = '', applyTitle = '', createTime = '', id = '' } = this.searchQuery
       this.tableData = []
-      let params = handleParamsValid({ applyTitle })
+      let params = handleParamsValid({ applyTitle, id })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
@@ -266,9 +271,9 @@ export default {
     // 获取我的审批列表
     async queryFollowerAuthList() {
       const { page_offset, page_size } = this.pageData
-      const { status = '', applyTitle = '', createTime = '' } = this.searchQuery
+      const { status = '', applyTitle = '', createTime = '', id = '' } = this.searchQuery
       this.tableData = []
-      let params = handleParamsValid({ applyTitle })
+      let params = handleParamsValid({ applyTitle, id })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
@@ -306,9 +311,9 @@ export default {
     // 获取我的申请列表
     async queryMyApplyList() {
       const { page_offset, page_size } = this.pageData
-      const { status = '', applyTitle = '', createTime = '' } = this.searchQuery
+      const { status = '', applyTitle = '', createTime = '', id = '' } = this.searchQuery
       this.tableData = []
-      let params = handleParamsValid({ applyTitle })
+      let params = handleParamsValid({ applyTitle, id })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]

@@ -15,7 +15,7 @@
           <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
           <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
           <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
-          <el-table-column v-if="false" label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
+          <el-table-column v-if="false" label="已选标签字段" prop="labelField" show-overflow-tooltip />
         </el-table>
       </div>
     </div>
@@ -150,7 +150,7 @@ export default {
     async queryJobByCondition() {
       this.loadingFlag = true
       const { jobID } = this
-      const res = await jobManageServer.queryJobByCondition({ job: { id: jobID } })
+      const res = await jobManageServer.queryJobByCondition({ job: { id: jobID }, onlyMeta: false })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
@@ -158,7 +158,6 @@ export default {
         this.jobInfo = jobs[0]
         const { parties, param, projectId } = this.jobInfo
         const { modelSetting = {}, dataSetList = {} } = JSON.parse(param)
-        console.log(dataSetList, 'dataSetList', JSON.parse(param))
         this.modelSetting = modelSetting
         this.dataSetList = dataSetList
         this.modelModule.forEach((v) => {

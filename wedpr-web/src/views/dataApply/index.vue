@@ -143,23 +143,26 @@ export default {
         console.log(data, 'data')
         // 合并审批链 FIXME:
         // 插入自己
-        let combineApproveChainList = [{ agency: this.agencyId, name: this.userId, deleteAble: false }]
+        const combineApproveChainList = [{ agency: this.agencyId, name: this.userId, deleteAble: false }]
         // 循环插入每个数据集自己设置的审批链,且申请方不能更改，只能在前方插入自己机构的人
         data.forEach((v) => {
           const { approvalChain = '' } = v
           const approvalChainList = Array.isArray(JSON.parse(approvalChain)) ? JSON.parse(approvalChain) : []
           approvalChainList.forEach((k) => {
             // 已有的不放入链内
-            combineApproveChainList = combineApproveChainList.filter((dataPushed) => {
-              return !(dataPushed.agency === v.ownerAgencyName && dataPushed.name === k)
-            })
-            combineApproveChainList.push({
-              agency: v.ownerAgencyName,
-              name: k,
-              deleteAble: false,
-              addNextUserDisbaled: true,
-              visible: false
-            })
+            if (
+              !combineApproveChainList.some((dataPushed) => {
+                return dataPushed.name === k.name && dataPushed.agency === k.agency
+              })
+            ) {
+              combineApproveChainList.push({
+                agency: k.agency,
+                name: k.name,
+                deleteAble: false,
+                addNextUserDisbaled: true,
+                visible: false
+              })
+            }
           })
         })
         console.log(combineApproveChainList, 'combineApproveChainList')

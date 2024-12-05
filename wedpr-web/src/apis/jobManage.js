@@ -13,6 +13,6 @@ const retryJobs = (params) => http.post('/project/retryJobs', params)
 // 查询关注任务
 const queryFollowerJobByCondition = (params) => http.post('/project/queryFollowerJobByCondition', params)
 // 查询任务进展
-const queryJobDetail = (params) => http.get('/scheduler/queryJobDetail', params)
+const queryJobDetail = (params) => http.post('/scheduler/queryJobDetail', params)
 
 export default { retryJobs, killJobs, queryJobByCondition, queryProject, deleteProject, queryFollowerJobByCondition, queryJobDetail }

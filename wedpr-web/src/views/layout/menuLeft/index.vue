@@ -91,8 +91,8 @@ export default {
           name: 'accessKeyManage',
           path: '/accessKeyManage',
           text: '凭证管理',
-          icon_src: 'service',
-          icon_active_src: 'service_active'
+          icon_src: 'accessKey',
+          icon_active_src: 'accessKey_active'
         },
         {
           name: 'approveManage',
@@ -191,10 +191,9 @@ export default {
 .el-aside {
   height: 100%;
   width: 100%;
-  background-color: #f6f8fc;
+  background-color: rgb(55, 111, 224);
   text-align: left;
   color: white;
-  border-radius: 4px;
   position: relative;
   span.menu-text {
     padding-left: 12px;
@@ -223,16 +222,17 @@ export default {
     line-height: 1;
     color: #787b84;
   }
-  .el-menu-item:hover,
+  .el-menu-item:hover {
+    background-color: #4da6ff;
+    border-radius: 4px;
+  }
   .el-menu-item.is-active {
     background: #e8f0ff;
     color: #3071f2;
-  }
-  .el-menu-item:hover {
-    color: #787b84;
+    border-radius: 4px;
   }
   .el-menu-item {
-    color: #787b84;
+    color: #ffffff;
   }
 }
 .el-aside.aside-menu {
@@ -240,7 +240,7 @@ export default {
   width: 100%;
 }
 .el-menu-container.el-menu {
-  background-color: #f6f8fc;
+  background-color: rgb(55, 111, 224);
   color: #fff;
   font-size: 14px;
 }

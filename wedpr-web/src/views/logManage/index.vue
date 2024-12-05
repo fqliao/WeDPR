@@ -7,6 +7,9 @@
             <el-option :label="item.label" :value="item.value" v-for="item in opTypeList" :key="item.value"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item prop="resourceID" label="日志ID：">
+          <el-input style="width: 160px" v-model="searchForm.resourceID" placeholder="请输入"> </el-input>
+        </el-form-item>
         <el-form-item prop="resourceAction" label="操作：">
           <el-select style="width: 160px" v-model="searchForm.resourceAction" placeholder="请选择" clearable>
             <el-option :label="item.label" :value="item.value" v-for="item in actionList" :key="item.value"></el-option>
@@ -72,13 +75,15 @@ export default {
         createTime: '',
         resourceType: '',
         resourceAction: '',
-        status: ''
+        status: '',
+        resourceID: ''
       },
       searchQuery: {
         createTime: '',
         resourceType: '',
         resourceAction: '',
-        status: ''
+        status: '',
+        resourceID: ''
       },
       pageData: {
         page_offset: 1,
@@ -144,13 +149,13 @@ export default {
     // 获取账户列表
     async queryRecordSyncStatus() {
       const { page_offset, page_size } = this.pageData
-      const { createTime, resourceType, resourceAction, status } = this.searchQuery
-      let params = handleParamsValid({ resourceType, resourceAction, status })
+      const { createTime, resourceType, resourceAction, status, resourceID } = this.searchQuery
+      let params = handleParamsValid({ resourceType, resourceAction, status, resourceID })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
       }
-      params = { resourceActionDO: { ...params, resourceID: '' }, pageNum: page_offset, pageSize: page_size }
+      params = { resourceActionDO: { resourceID: '', ...params }, pageNum: page_offset, pageSize: page_size }
       this.loadingFlag = true
       const res = await projectManageServer.queryRecordSyncStatus(params)
       this.loadingFlag = false

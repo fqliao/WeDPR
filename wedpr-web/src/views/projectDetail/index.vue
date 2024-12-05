@@ -89,7 +89,7 @@
             <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="350">
           <template v-slot="scope">
             <el-button size="small" @click="goDetail(scope.row.id)" type="text">查看详情</el-button>
             <el-button
@@ -102,7 +102,7 @@
             >
             <el-button
               size="small"
-              v-if="scope.row.owner === userId && scope.row.ownerAgency === agencyId && !['Running', 'RunSuccess'].includes(scope.row.status)"
+              v-if="scope.row.owner === userId && scope.row.ownerAgency === agencyId && !['Running', 'RunSuccess', 'Submitted'].includes(scope.row.status)"
               @click="retryJobs(scope.row)"
               type="primary"
               >重试任务</el-button
@@ -119,6 +119,7 @@
               @click="reBuild(scope.row)"
               >调参重跑</el-button
             >
+            <el-button size="small" v-if="scope.row.owner === userId && scope.row.ownerAgency === agencyId" type="primary" @click="copyJob(scope.row)">复制任务</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -182,6 +183,13 @@ export default {
       this.$router.push({
         path: 'resetParams',
         query: { jobID: id, jobType }
+      })
+    },
+    copyJob(data) {
+      const { id = '' } = data
+      this.$router.push({
+        path: 'leadMode',
+        query: { jobID: id, projectId: this.projectId }
       })
     },
     handleData(key) {
@@ -290,7 +298,7 @@ export default {
         params.startTime = createTime[0]
         params.endTime = createTime[1]
       }
-      const res = await jobManageServer.queryJobByCondition({ job: { id: '', projectId, ...params }, pageNum: page_offset, pageSize: page_size })
+      const res = await jobManageServer.queryJobByCondition({ job: { id: '', projectId, ...params }, onlyMeta: true, pageNum: page_offset, pageSize: page_size })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {

@@ -1,11 +1,27 @@
 <template>
   <div class="select-data">
+    <div class="form-search">
+      <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
+        <el-form-item prop="serviceName" label="服务名称：">
+          <el-input clearable style="width: 180px" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
+        </el-form-item>
+        <el-form-item prop="serviceId" label="服务ID：">
+          <el-input clearable style="width: 180px" v-model="searchForm.serviceId" placeholder="请输入"> </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="queryFlag" @click="queryHandle">
+            {{ queryFlag ? '查询中...' : '查询' }}
+          </el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="default" @click="reset"> 重置 </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
     <div class="card-container">
       <serviceCard
         @selected="(checked) => selected(checked, item)"
-        :selected="selectdserviceId === item.serviceId"
-        @deleteService="showDeleteModal(item)"
-        @modifyData="modifyData(item)"
+        :selected="serviceId === item.serviceId"
         v-for="item in tableData"
         :serviceInfo="item"
         :key="item.serviceId"
@@ -29,14 +45,22 @@ import { mapGetters } from 'vuex'
 import serviceCard from '@/components/serviceCard.vue'
 import { serviceManageServer } from 'Api'
 import { serviceAuthStatus } from 'Utils/constant.js'
+import { handleParamsValid } from 'Utils/index.js'
 export default {
   name: 'participateSelect',
+  model: {
+    prop: 'value'
+  },
   props: {
     showTagsModal: {
       type: Boolean,
       default: false
     },
     serviceType: {
+      type: String,
+      default: ''
+    },
+    value: {
       type: String,
       default: ''
     }
@@ -52,19 +76,49 @@ export default {
       pageData: { page_offset: 1, page_size: 4 },
       total: -1,
       dataList: [],
-      selectdserviceId: '',
       selectedData: {},
       fieldList: [],
-      tableData: []
+      tableData: [],
+      serviceId: '',
+      searchForm: {
+        serviceName: '',
+        serviceId: ''
+      },
+      searchQuery: {
+        serviceName: '',
+        serviceId: ''
+      }
     }
   },
   created() {
-    this.getPublishList()
+    // 编辑的回显
+    this.init()
   },
   computed: {
     ...mapGetters(['userId', 'agencyId'])
   },
+  watch: {
+    value(val) {
+      if (val !== this.serviceId) {
+        this.init()
+      }
+    }
+  },
   methods: {
+    init() {
+      // 回显初始化
+      if (this.value) {
+        this.serviceId = this.value
+        this.searchForm.serviceId = this.value
+      }
+      this.queryHandle()
+    },
+    // 查询
+    queryHandle() {
+      this.searchQuery = { ...this.searchForm }
+      this.pageData.page_offset = 1
+      this.getPublishList()
+    },
     reset() {
       this.$refs.searchForm.resetFields()
     },
@@ -72,22 +126,21 @@ export default {
     selected(checked, row) {
       const { serviceId } = row
       if (checked) {
-        this.selectdserviceId = serviceId
+        this.serviceId = serviceId
+        this.$emit('input', serviceId)
       } else {
-        this.selectdserviceId = ''
-      }
-      if (this.selectdserviceId) {
-        this.$emit('selected', row)
-      } else {
-        this.$emit('selected', null)
+        this.serviceId = ''
+        this.$emit('input', '')
       }
     },
     // 获取服务列表
-    async getPublishList() {
+    async getPublishList(cb) {
       const { page_offset, page_size } = this.pageData
+      const { serviceName = '', serviceId = '' } = this.searchQuery
+      const searchParams = handleParamsValid({ serviceName, serviceId })
       const { serviceType } = this
       const params = {
-        condition: { serviceId: '', serviceType, authStatus: serviceAuthStatus.Authorized, status: 'PublishSuccess' },
+        condition: { serviceId: '', ...searchParams, serviceType, authStatus: serviceAuthStatus.Authorized, status: 'PublishSuccess' },
         serviceIdList: [],
         pageNum: page_offset,
         pageSize: page_size
@@ -106,6 +159,7 @@ export default {
           }
         })
         this.total = total
+        cb && cb()
       } else {
         this.tableData = []
         this.total = 0
@@ -113,7 +167,7 @@ export default {
     },
     paginationHandle(pageData) {
       this.pageData = { ...pageData }
-      this.getPublishList()
+      this.queryHandle()
     }
   }
 }
