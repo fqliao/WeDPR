@@ -87,7 +87,6 @@ public class MPCJobParam {
             if (index == 0) {
                 // String owner = datasetInfo.getDataset().getOwner();
                 this.submitJobAgency = datasetInfo.getDataset().getOwnerAgency();
-                this.receiveResult = true;
                 logger.info("submit mpc job agency, jobId: {}, agency: {}", jobID, agency);
             }
 
