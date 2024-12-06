@@ -41,6 +41,7 @@ public class MPCJobParam {
     @JsonIgnore private DatasetInfo selfDataset;
     @JsonIgnore private int selfIndex = -1;
     @JsonIgnore private transient List<String> datasetIDList;
+    @JsonIgnore private FileMeta psiResultFileMeta;
 
     public void check(DatasetMapper datasetMapper) throws Exception {
 

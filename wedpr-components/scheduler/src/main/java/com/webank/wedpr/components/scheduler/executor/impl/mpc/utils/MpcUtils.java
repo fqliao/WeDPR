@@ -15,8 +15,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -250,6 +253,51 @@ public class MpcUtils {
         return needRunPsi;
     }
 
+    public static List<Integer> loadIdFieldValuesFromFile(String jobId, String inputFilePath)
+            throws Exception {
+        List<Integer> idValues = new ArrayList<>();
+
+        long lineNum = 0;
+
+        // read the id field value of the psi result file
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(inputFilePath));
+                CSVReader psiResultReader = new CSVReader(bufferedReader)) {
+
+            String[] fieldNames = psiResultReader.readNextSilently();
+            List<String> originalFieldNames = Arrays.asList(fieldNames);
+
+            int idFieldIndex = getIdFieldIndex(inputFilePath, originalFieldNames);
+
+            String[] nextLine;
+            // TODO: id值都放在内存,数据量大的时候会有较高的内存占用
+            while ((nextLine = psiResultReader.readNext()) != null) {
+
+                String idFieldValue = nextLine[idFieldIndex];
+                if (logger.isTraceEnabled()) {
+                    logger.trace(
+                            "load id field values, jobId: {}, idFieldValue: {}, next line: {}",
+                            jobId,
+                            idFieldValue,
+                            Arrays.asList(nextLine));
+                }
+
+                lineNum++;
+
+                idValues.add(Integer.valueOf(idFieldValue));
+            }
+
+            logger.info(
+                    "load id field values, jobId: {}, fieldNames: {}, idFieldIndex: {}, lineNum: {}",
+                    jobId,
+                    fieldNames,
+                    idFieldIndex,
+                    lineNum);
+        }
+
+        Collections.sort(idValues);
+        return idValues;
+    }
+
     public static long mergeAndSortById(
             String jobId,
             String datasetFilePath,
@@ -298,6 +346,108 @@ public class MpcUtils {
                     psiResultFileLineNum);
         }
 
+        // id => line  sorted
+        List<String> csvFieldNames = null;
+        Map<Integer, String[]> csvId2Lines = new TreeMap<>();
+
+        long totalReadLineNum = 0;
+        long datasetFileLineNum = 0;
+        // read the id field value of the psi result file
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(datasetFilePath));
+                CSVReader datasetFileReader = new CSVReader(bufferedReader)) {
+
+            String[] fieldNames = datasetFileReader.readNextSilently();
+            List<String> originalFieldNames = Arrays.asList(fieldNames);
+
+            List<String> normalizedFieldNames =
+                    makeFieldNamesNormalized(datasetFilePath, originalFieldNames);
+
+            int idFieldIndex = getIdFieldIndex(datasetFilePath, originalFieldNames);
+
+            List<String> selectFieldNames = makeSelectFields(datasetCountNumber);
+
+            List<Integer> selectFieldsIndex =
+                    makeSelectFieldsIndex(selectFieldNames, normalizedFieldNames);
+
+            csvFieldNames = selectFieldNames;
+
+            String[] nextLine;
+            while ((nextLine = datasetFileReader.readNext()) != null) {
+
+                datasetFileLineNum++;
+
+                String strId = nextLine[idFieldIndex];
+                Integer id = Integer.valueOf(strId);
+                if (!psiIdMap.contains(id)) {
+                    continue;
+                }
+
+                String[] writeNextLine = makeNextLine(nextLine, selectFieldsIndex);
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace(
+                            "prepare step(psi), jobId: {}, next line: {}",
+                            jobId,
+                            Arrays.asList(writeNextLine));
+                }
+
+                csvId2Lines.put(id, writeNextLine);
+                // resultFileWriter.writeNext(writeNextLine, false);
+                totalReadLineNum++;
+            }
+
+            logger.info(
+                    "prepare step(psi), jobId: {}, totalReadLineNum: {}, dataset original field names: {}, normalized field names: {}, idIndex: {}, select field names: {}, select field index: {}, datasetFileLineNum: {}",
+                    jobId,
+                    totalReadLineNum,
+                    originalFieldNames,
+                    normalizedFieldNames,
+                    idFieldIndex,
+                    selectFieldNames,
+                    selectFieldsIndex,
+                    datasetFileLineNum);
+        }
+
+        long totalWriteLineNum = 0;
+        // read the id field value of the psi result file
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(resultFilePath));
+                CSVWriter resultFileWriter =
+                        new CSVWriter(
+                                bufferedWriter,
+                                ' ',
+                                ICSVWriter.DEFAULT_QUOTE_CHARACTER,
+                                ICSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                                ICSVWriter.DEFAULT_LINE_END)) {
+
+            if (withHeader) {
+                // write in new column names
+                resultFileWriter.writeNext(csvFieldNames.toArray(new String[0]), false);
+            }
+
+            for (Map.Entry<Integer, String[]> entry : csvId2Lines.entrySet()) {
+                Integer key = entry.getKey();
+                String[] value = entry.getValue();
+                resultFileWriter.writeNext(value, false);
+                totalWriteLineNum++;
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace(
+                            "prepare step(psi), jobId: {}, id: {}, next line: {}",
+                            jobId,
+                            key,
+                            value);
+                }
+            }
+
+            logger.info(
+                    "prepare step(psi), jobId: {}, totalWriteLineNum: {}",
+                    jobId,
+                    totalWriteLineNum);
+        }
+
+        return totalReadLineNum;
+
+        /*
         long totalLineNum = 0;
         long datasetFileLineNum = 0;
         // read the id field value of the psi result file
@@ -365,6 +515,6 @@ public class MpcUtils {
                     datasetFileLineNum);
         }
 
-        return totalLineNum;
+        */
     }
 }

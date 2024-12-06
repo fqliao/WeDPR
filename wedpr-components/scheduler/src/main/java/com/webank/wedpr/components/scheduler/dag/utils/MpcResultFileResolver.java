@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,19 +103,25 @@ public class MpcResultFileResolver {
     }
 
     public void transMpcOutputFile2ResultFile(
-            String jobId, String mpcOutputFile, String mpcResultFile)
+            String jobId,
+            boolean needRunPsi,
+            List<Integer> idValues,
+            String mpcOutputFile,
+            String mpcResultFile)
             throws IOException, WeDPRException {
 
         long startTimeMillis = System.currentTimeMillis();
         logger.info(
-                "trans mpc output file to mpc result file start, jobId: {}, mpcOutputFile: {}, mpcResultFile: {}",
+                "trans mpc output file to mpc result file start, jobId: {}, needRunPsi: {}, idValues size: {}, mpcOutputFile: {}, mpcResultFile: {}",
                 jobId,
+                needRunPsi,
+                idValues.size(),
                 mpcOutputFile,
                 mpcResultFile);
 
         MpcResult mpcResult = doParseMpcResultFile(mpcOutputFile, true);
 
-        int rowNumber = 0;
+        int rowNumber = -1;
         try (BufferedReader mpcOutputBufferedReader =
                         new BufferedReader(new FileReader(mpcOutputFile));
                 FileWriter mpcResultFileWriter = new FileWriter(mpcResultFile);
@@ -138,9 +145,22 @@ public class MpcResultFileResolver {
 
                 rowNumber++;
 
-                StringBuilder stringBuilder = new StringBuilder(String.valueOf(rowNumber));
-
                 String[] valuesList = line.split("=")[1].trim().split(BLANK_SEP);
+
+                StringBuilder stringBuilder = new StringBuilder();
+
+                if (needRunPsi) {
+                    if (rowNumber >= idValues.size()) {
+                        Integer idValue = idValues.get(idValues.size() - 1);
+                        int row = idValue + rowNumber - idValues.size() + 1;
+                        stringBuilder.append(row);
+                    } else {
+                        stringBuilder.append(idValues.get(rowNumber));
+                    }
+                } else {
+                    stringBuilder.append(rowNumber);
+                }
+
                 for (String value : valuesList) {
                     stringBuilder.append(CSV_SEP).append(value);
                 }
