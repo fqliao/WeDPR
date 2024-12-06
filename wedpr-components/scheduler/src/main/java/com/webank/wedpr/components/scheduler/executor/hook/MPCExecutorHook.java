@@ -327,6 +327,7 @@ public class MPCExecutorHook implements ExecutorHook {
                     jobID);
 
             storage.download(psiResultStoragePath.getStoragePath(), psiResultFilePath);
+            mpcJobParam.setPsiResultFileMeta(psiResultStoragePath);
 
             logger.info(
                     "prepare step(psi), download psi result file successfully, jobId: {}", jobID);
