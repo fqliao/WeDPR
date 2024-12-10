@@ -2,10 +2,10 @@
   <div class="record">
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item prop="serviceName" label="模型名称：">
+        <el-form-item prop="name" label="模型名称：">
           <el-input clearable style="width: 180px" v-model="searchForm.name" placeholder="请输入"> </el-input>
         </el-form-item>
-        <el-form-item prop="serviceId" label="模型ID：">
+        <el-form-item prop="id" label="模型ID：">
           <el-input style="width: 180px" v-model="searchForm.id" placeholder="请输入" clearable> </el-input>
         </el-form-item>
         <el-form-item>
@@ -18,7 +18,7 @@
         </el-form-item>
       </el-form>
     </div>
-    <div class="card-container" v-if="modelTableData.length">
+    <div class="card-container" v-if="modelTableData.length" v-loading="queryFlag">
       <modelCard
         v-for="item in modelTableData"
         :selected="selectedId === item.id"
@@ -77,7 +77,7 @@ export default {
   },
   data() {
     return {
-      loadingFlag: false,
+      queryFlag: false,
       pageData: { page_offset: 1, page_size: 8 },
       modelTableData: [],
       searchForm: {
@@ -104,6 +104,9 @@ export default {
     ...mapGetters(['userId', 'agencyId'])
   },
   methods: {
+    reset() {
+      this.$refs.searchForm.resetFields()
+    },
     hanleSelectedModel(selected, item) {
       this.selectedId = selected ? item.id : ''
       if (selected) {
@@ -125,7 +128,7 @@ export default {
       const { id = '', name = '' } = this.searchQuery
       const searchParams = handleParamsValid({ id, name })
       const params = { pageNum: page_offset, pageSize: page_size }
-      this.loadingFlag = true
+      this.queryFlag = true
       const condition = {
         id: '',
         name: '',
@@ -143,7 +146,7 @@ export default {
         ...params,
         condition
       })
-      this.loadingFlag = false
+      this.queryFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
         const { dataList, total } = res.data

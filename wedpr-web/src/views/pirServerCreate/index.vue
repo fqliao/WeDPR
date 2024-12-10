@@ -10,6 +10,38 @@
         </el-form-item>
       </formCard>
       <formCard title="选择发布数据" v-if="type !== 'edit'">
+        <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
+          <el-form-item prop="datasetTitle" label="资源名称：">
+            <el-input style="width: 160px" v-model="searchForm.datasetTitle" placeholder="请输入"> </el-input>
+          </el-form-item>
+          <el-form-item prop="dataSourceType" label="数据类型：">
+            <el-select clearable size="small" style="width: 120px" v-model="searchForm.dataSourceType" placeholder="请选择">
+              <el-option :key="item" v-for="item in typeList" :label="item.label" :value="item.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item prop="datasetId" label="数据集ID：">
+            <el-input clearable style="width: 160px" v-model="searchForm.datasetId" placeholder="请输入"> </el-input>
+          </el-form-item>
+          <el-form-item prop="createTime" label="创建时间：">
+            <el-date-picker
+              style="width: 360px"
+              value-format="yyyy-MM-dd"
+              v-model="searchForm.createTime"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="loadingFlag" @click="queryHandle">
+              {{ queryFlag ? '查询中...' : '查询' }}
+            </el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="default" :loading="loadingFlag" @click="reset"> 重置 </el-button>
+          </el-form-item>
+        </el-form>
         <div class="card-container">
           <dataCard
             @selected="(checked) => selected(checked, item)"
@@ -21,6 +53,9 @@
             :key="item.datasetId"
           />
         </div>
+        <el-empty v-if="!total" :image-size="120" description="暂无数据">
+          <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
+        </el-empty>
         <we-pagination
           :pageSizesOption="[8, 12, 16, 24, 32]"
           :total="total"
@@ -73,8 +108,10 @@
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import dataCard from '@/components/dataCard.vue'
 import { serviceManageServer, dataManageServer, accessKeyManageServer } from 'Api'
-import { searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
+import { searchTypeEnum, serviceTypeEnum, dataStatusEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
+import { handleParamsValid } from 'Utils/index.js'
+
 export default {
   name: 'pirServerCreate',
   mixins: [tableHeightHandle],
@@ -91,6 +128,18 @@ export default {
         idField: '',
         accessibleValueQueryFields: [],
         grantedAccessKeyList: []
+      },
+      searchForm: {
+        datasetTitle: '',
+        dataSourceType: '',
+        createTime: '',
+        datasetId: ''
+      },
+      searchQuery: {
+        datasetTitle: '',
+        dataSourceType: '',
+        createTime: '',
+        datasetId: ''
       },
       pageData: {
         page_offset: 1,
@@ -109,7 +158,8 @@ export default {
       accessKeyList: [],
       selectedData: {},
       serviceId: '',
-      searchTypeEnum
+      searchTypeEnum,
+      typeList: []
     }
   },
 
@@ -122,6 +172,7 @@ export default {
       this.serviceId = serviceId
       this.queryService()
     } else {
+      this.getDataUploadType()
       this.getListDataset()
     }
   },
@@ -182,6 +233,22 @@ export default {
     }
   },
   methods: {
+    reset() {
+      this.$refs.searchForm.resetFields()
+    },
+    // 查询
+    queryHandle() {
+      this.searchQuery = { ...this.searchForm }
+      this.pageData.page_offset = 1
+      this.getListDataset()
+    },
+    async getDataUploadType() {
+      const res = await dataManageServer.getDataUploadType()
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        this.typeList = res.data
+      }
+    },
     // 获取服务详情回显
     async queryService() {
       this.loadingFlag = true
@@ -297,10 +364,16 @@ export default {
     },
     async getListDataset() {
       const { page_offset, page_size } = this.pageData
+      const { ownerUserName = '', datasetTitle = '', createTime = '', dataSourceType = '', datasetId = '' } = this.searchQuery
+      const params = handleParamsValid({ ownerUserName, datasetTitle, dataSourceType, datasetId })
+      if (createTime && createTime.length) {
+        params.startTime = createTime[0]
+        params.endTime = createTime[1]
+      }
       // 仅选择自己的数据
-      const params = { pageNum: page_offset, pageSize: page_size, ownerUserName: this.userId, permissionType: 'usable' }
+      const dataParams = { pageNum: page_offset, pageSize: page_size, ...params, ownerUserName: this.userId, permissionType: 'usable', status: dataStatusEnum.Success }
       this.loadingFlag = true
-      const res = await dataManageServer.listDataset(params)
+      const res = await dataManageServer.listDataset(dataParams)
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
@@ -312,7 +385,6 @@ export default {
             isOwner: v.ownerAgencyName === this.agencyId && v.ownerUserName === this.userId
           }
         })
-        console.log(content, 'content', totalCount)
         this.total = totalCount
       } else {
         this.dataList = []

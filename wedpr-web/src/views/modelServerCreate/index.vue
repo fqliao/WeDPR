@@ -14,6 +14,13 @@
           <modelSelect :queriedTypes="['XGB_MODEL_SETTING', 'LR_MODEL_SETTING']" v-model="serverForm.serviceConfig" />
         </el-form-item>
       </formCard>
+      <formCard title="设置访问凭证">
+        <el-form-item label-width="108px" label="访问凭证：" prop="grantedAccessKeyList">
+          <el-select style="width: 480px" multiple v-model="serverForm.grantedAccessKeyList" placeholder="请选择" clearable>
+            <el-option :title="item.value" :label="item.label" :value="item.value" :key="item" v-for="item in accessKeyList"></el-option>
+          </el-select>
+        </el-form-item>
+      </formCard>
     </el-form>
     <div>
       <el-button size="medium" type="primary" @click="checkService" v-if="type === 'edit'"> 编辑服务 </el-button>
@@ -23,7 +30,7 @@
 </template>
 <script>
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { serviceManageServer } from 'Api'
+import { serviceManageServer, accessKeyManageServer } from 'Api'
 import { mapGetters } from 'vuex'
 import modelSelect from '../leadMode/modelSelect/index.vue'
 import { serviceTypeEnum } from 'Utils/constant.js'
@@ -38,7 +45,8 @@ export default {
       serverForm: {
         serviceName: '',
         serviceDesc: '',
-        serviceConfig: ''
+        serviceConfig: '',
+        grantedAccessKeyList: []
       },
       pageData: {
         page_offset: 1,
@@ -51,13 +59,15 @@ export default {
       type: '',
       dataList: [],
       selectedData: {},
-      serviceId: ''
+      serviceId: '',
+      accessKeyList: []
     }
   },
 
   created() {
     const { type, serviceId } = this.$route.query
     this.type = type
+    this.queryAccessKeyList()
     if (this.type === 'edit') {
       this.serviceId = serviceId
       this.queryService()
@@ -81,6 +91,13 @@ export default {
             trigger: 'blur'
           }
         ],
+        grantedAccessKeyList: [
+          {
+            required: true,
+            message: '请选择访问凭证',
+            trigger: 'blur'
+          }
+        ],
         serviceConfig: [
           {
             required: true,
@@ -92,6 +109,21 @@ export default {
     }
   },
   methods: {
+    // 获取ak列表
+    async queryAccessKeyList() {
+      const params = { condition: { status: 'Enable', id: '' }, pageNum: -1, pageSize: 1 }
+      const res = await accessKeyManageServer.queryAccessKeyList(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { credentials = [] } = res.data
+        this.accessKeyList = credentials.map((v) => {
+          return {
+            label: v.desc + '-' + v.accessKeyID,
+            value: v.accessKeyID
+          }
+        })
+      }
+    },
     // 获取服务详情回显
     async queryService() {
       this.loadingFlag = true
@@ -127,7 +159,7 @@ export default {
     checkService() {
       this.$refs.serverForm.validate((valid) => {
         if (valid) {
-          const { serviceName, serviceDesc, serviceConfig } = this.serverForm
+          const { serviceName, serviceDesc, serviceConfig, grantedAccessKeyList } = this.serverForm
           let setting = ''
           if (this.type === 'edit') {
             setting = serviceConfig
@@ -135,11 +167,11 @@ export default {
             setting = serviceConfig.setting
           }
           const { model_type } = JSON.parse(setting)
-          const serviceType = model_type === 'xgb_model' ? serviceTypeEnum.XGB : serviceTypeEnum.LR
+          const serviceType = model_type === 'lr_model' ? serviceTypeEnum.LR : serviceTypeEnum.XGB
           if (this.type === 'edit') {
-            this.updateService({ serviceName, serviceDesc, serviceId: this.serviceId, serviceConfig: setting, serviceType })
+            this.updateService({ serviceName, serviceDesc, serviceId: this.serviceId, serviceConfig: setting, serviceType, grantedAccessKeyList })
           } else {
-            this.createService({ serviceName, serviceDesc, serviceType, serviceConfig: setting })
+            this.createService({ serviceName, serviceDesc, serviceType, serviceConfig: setting, grantedAccessKeyList })
           }
         } else {
           return false

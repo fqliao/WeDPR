@@ -229,7 +229,6 @@
 import { toDynamicTableData } from 'Utils/index.js'
 import { downloadLargeFile } from 'Mixin/downloadLargeFile.js'
 import { jobEnum } from 'Utils/constant.js'
-import { jobManageServer } from 'Api'
 export default {
   name: 'AiResultNew',
   mixins: [downloadLargeFile],
@@ -245,6 +244,14 @@ export default {
       default: () => {
         return ''
       }
+    },
+    modelResultDetail: {
+      type: Object,
+      default: () => {}
+    },
+    jobStatusInfo: {
+      type: Object,
+      default: () => {}
     }
   },
   data() {
@@ -270,34 +277,18 @@ export default {
       FEPreviewData: null,
       PRPreviewTableData: null,
       resultLink: {},
-      jobEnum,
-      jobStatusInfo: {},
-      loading: false
+      jobEnum
     }
   },
   watch: {
-    jobID() {
-      this.getJobResult()
+    modelResultDetail() {
+      this.handleResult()
     }
   },
   created() {
-    this.getJobResult()
+    this.handleResult()
   },
   methods: {
-    async getJobResult() {
-      const { jobID } = this
-      this.loading = true
-      const res = await jobManageServer.queryJobDetail({ jobID, fetchJobResult: true, fetchJobDetail: false })
-      if (res.code === 0 && res.data) {
-        const { modelResultDetail = {}, resultFileInfo, job = {} } = res.data
-        const { jobStatusInfo = {} } = job
-        this.modelResultDetail = modelResultDetail
-        this.resultFileInfo = resultFileInfo
-        this.jobStatusInfo = jobStatusInfo
-        this.handleResult()
-      }
-      this.loading = false
-    },
     downloadResult(path, fileName) {
       path && this.downloadLargeFile({ filePath: path }, fileName)
     },
