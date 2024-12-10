@@ -86,14 +86,16 @@ export default {
       searchForm: {
         datasetTitle: '',
         ownerUserName: '',
-        tag: '',
-        createTime: ''
+        dataSourceType: '',
+        createTime: '',
+        datasetId: ''
       },
       searchQuery: {
         datasetTitle: '',
         ownerUserName: '',
-        tag: '',
-        createTime: ''
+        dataSourceType: '',
+        createTime: '',
+        datasetId: ''
       },
       formLabelWidth: '112px',
       loadingFlag: false,
@@ -218,5 +220,10 @@ export default {
       line-height: 26px;
     }
   }
+}
+</style>
+<style lang="less">
+.el-select-dropdown {
+  z-index: 2100 !important;
 }
 </style>

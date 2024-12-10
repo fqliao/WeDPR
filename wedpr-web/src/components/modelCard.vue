@@ -16,6 +16,9 @@
           标签字段： <span>{{ modelInfo.label_column }}</span>
         </li>
         <li class="ell">
+          模型ID： <span>{{ modelInfo.id }}</span>
+        </li>
+        <li class="ell">
           发起人： <span>{{ modelInfo.owner }}</span>
         </li>
         <li>
