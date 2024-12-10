@@ -1,8 +1,31 @@
 [env]
-binary_path = "bin/"
+#### define the binary path ###
+# the binary path for ppc-pro-node and ppc-gateway-service
+binary_path = "/data/home/wedpr/WeDPR-Component/cpp/build/bin"
+# the dist path for wedpr-site
+wedpr_site_dist_path = "/data/home/wedpr/WeDPR/wedpr-site/dist/"
+# the dist path for wedpr-dir
+wedpr_pir_dist_path = "/data/home/wedpr/WeDPR/wedpr-pir/dist/"
+# the wedpr model source path,
+# pls clone from https://github.com/WeBankBlockchain/WeDPR-Component
+wedpr_model_source_path = "/data/home/wedpr/WeDPR-Component/python/"
+
+# use docker mode or not
+docker_mode = true
+
+#### define the docker images desc ###
+wedpr_gateway_service_image_desc = "fiscoorg/wedpr-gateway-service:latest"
+wedpr_node_service_image_desc = "fiscoorg/wedpr-pro-node-service:latest"
+wedpr_mpc_service_image_desc = "fiscoorg/wedpr-mpc-service:latest"
+wedpr_jupyter_worker_image_desc = "fiscoorg/wedpr-jupyter-worker:latest"
+wedpr_model_image_desc = "fiscoorg/wedpr-model-service:latest"
+wedpr_site_image_desc = "fiscoorg/wedpr-site:latest"
+wedpr_pir_image_desc = "fiscoorg/wedpr-pir:latest"
+
+
 deploy_dir = "wedpr-example"
 # the wedpr zone(used to distinguish different privacy computing environments)
-zone = "wedpr.zone.example"
+zone = "wedpr.zone.default"
 
 # the blockchain config
 [blockchain]
@@ -12,6 +35,10 @@ blockchain_group = "group0"
 blockchain_peers = []
 # Required, the blockchain cert path
 blockchain_cert_path = ""
+# Required, the contract address for recorder factory contract
+recorder_factory_contract_address = ""
+# Required, the contract address for sequencer contract
+sequencer_contract_address = ""
 
 [crypto]
 # the gateway-service enable ssl or not, default enable ssl
@@ -29,6 +56,7 @@ sm_crypto = false
 name = "agency0"
 #the time of the gateway holding and waiting to dispatcher the unsynced task, in minutes
 holding_msg_minutes = 30
+psi_api_token = "wedpr_psi_api_token_agency0"
 
     [agency.gateway]
     deploy_ip=["127.0.0.1:2"]
@@ -57,6 +85,7 @@ holding_msg_minutes = 30
         home = "/user/wedpr/agency0"
         name_node = "127.0.0.1"
         name_node_port = 9000
+        webfs_port = 50700
         token = ""
         # enable auth or not, default is false
         enable_krb5_auth = false
@@ -68,6 +97,10 @@ holding_msg_minutes = 30
         ccache_path = "/tmp/krb5cc_ppc_node"
         # the krb5 conf path
         krb5_conf_path = "conf/krb5.conf"
+        # keytab path
+        krb5_keytab_path = ""
+        # auth host name override
+        auth_host_name_override = ""
 
     # the agency mysql configuration
     [agency.mysql]
@@ -89,13 +122,17 @@ holding_msg_minutes = 30
         # the pir deploy ip
         deploy_ip=["127.0.0.1:2"]
         # the server start port
-        server_start_port = "27000"
+        server_start_port = "17000"
+    # configuration for wedpr model
+    [agency.model]
+        deploy_ip = ["127.0.0.1:2"]
+        server_start_port = "18000"
 
     # configuration for wedpr worker
     [agency.jupyter_worker]
-        deploy_ip = ["127.0.0.1:2"]
+        deploy_ip = ["127.0.0.1:1"]
         # the server start port
-        server_start_port = "28000"
+        server_start_port = "19000"
 
     # configuration for the wedpr nodes
     [[agency.node]]
@@ -145,15 +182,12 @@ holding_msg_minutes = 30
             user = "wedpr"
             password = ""
             database = ""
-        # the gateway config
-        [agency.node.gateway]
-            gateway_grpc_target = ["127.0.0.1:40600", "127.0.0.1:40601"]
-
 
 [[agency]]
 name = "agency1"
 #the time of the gateway holding and waiting to dispatcher the unsynced task, in minutes
 holding_msg_minutes = 30
+psi_api_token = "wedpr_psi_api_token_agency1"
 
     [agency.gateway]
     deploy_ip=["127.0.0.1:2"]
@@ -182,6 +216,7 @@ holding_msg_minutes = 30
         home = "/user/wedpr/agency1"
         name_node = "127.0.0.1"
         name_node_port = 9000
+        webfs_port = 50700
         token = ""
         # enable auth or not, default is false
         enable_krb5_auth = false
@@ -193,6 +228,9 @@ holding_msg_minutes = 30
         ccache_path = "/tmp/krb5cc_ppc_node"
         # the krb5 conf path
         krb5_conf_path = "conf/krb5.conf"
+        # auth host name override
+        auth_host_name_override = ""
+
     # the agency mysql configuration
     [agency.mysql]
         host = "127.0.0.1"
@@ -206,20 +244,25 @@ holding_msg_minutes = 30
         # the site deploy ip
         deploy_ip=["127.0.0.1:2"]
         # the server port
-        server_start_port = "16000"
+        server_start_port = "26000"
 
     # configuration for wedpr pir
     [agency.pir]
         # the pir deploy ip
         deploy_ip=["127.0.0.1:2"]
         # the server start port
-        server_start_port = "27100"
+        server_start_port = "27000"
+
+    # configuration for wedpr model
+    [agency.model]
+        deploy_ip = ["127.0.0.1:2"]
+        server_start_port = "28000"
 
     # configuration for wedpr worker
     [agency.jupyter_worker]
-        deploy_ip = ["127.0.0.1:2"]
+        deploy_ip = ["127.0.0.1:1"]
         # the server start port
-        server_start_port = "28100"
+        server_start_port = "29000"
 
     # configuration for the wedpr nodes
     [[agency.node]]
@@ -286,7 +329,3 @@ holding_msg_minutes = 30
             ccache_path = "/tmp/krb5cc_ppc_node"
             # the krb5 conf path
             krb5_conf_path = "conf/krb5.conf"
-
-        # the gateway config
-        [agency.node.gateway]
-            gateway_grpc_target = ["127.0.0.1:40620", "127.0.0.1:40621"]

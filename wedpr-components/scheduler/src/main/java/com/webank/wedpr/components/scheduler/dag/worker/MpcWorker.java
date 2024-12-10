@@ -9,18 +9,23 @@ import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.loadbalancer.LoadBalancer;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.client.MpcClient;
+import com.webank.wedpr.components.scheduler.core.SpdzConnections;
 import com.webank.wedpr.components.scheduler.dag.entity.JobWorker;
 import com.webank.wedpr.components.scheduler.dag.utils.MpcResultFileResolver;
 import com.webank.wedpr.components.scheduler.executor.hook.MPCExecutorHook;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
+import com.webank.wedpr.components.scheduler.executor.impl.model.FileMeta;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.executor.impl.mpc.MPCJobParam;
 import com.webank.wedpr.components.scheduler.executor.impl.mpc.request.MpcRunJobRequest;
+import com.webank.wedpr.components.scheduler.executor.impl.mpc.utils.MpcUtils;
 import com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.storage.impl.hdfs.HDFSStoragePath;
 import com.webank.wedpr.sdk.jni.transport.model.ServiceMeta;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +43,8 @@ public class MpcWorker extends Worker {
             JobWorkerMapper jobWorkerMapper,
             DatasetMapper datasetMapper,
             FileStorageInterface fileStorageInterface,
-            FileMetaBuilder fileMetaBuilder) {
+            FileMetaBuilder fileMetaBuilder,
+            SpdzConnections spdzConnections) {
         super(
                 jobDO,
                 jobWorker,
@@ -48,7 +54,8 @@ public class MpcWorker extends Worker {
                 jobWorkerMapper,
                 datasetMapper,
                 fileStorageInterface,
-                fileMetaBuilder);
+                fileMetaBuilder,
+                spdzConnections);
     }
 
     @SneakyThrows
@@ -67,7 +74,10 @@ public class MpcWorker extends Worker {
 
         MPCExecutorHook mpcExecutorHook =
                 new MPCExecutorHook(
-                        getDatasetMapper(), getFileStorageInterface(), getFileMetaBuilder());
+                        getDatasetMapper(),
+                        getFileStorageInterface(),
+                        getFileMetaBuilder(),
+                        getSpdzConnections());
         boolean needRunPsi = mpcJobParam.isNeedRunPsi();
         if (needRunPsi) {
             mpcExecutorHook.prepareWithPsi(getDatasetMapper(), jobDO, mpcJobParam);
@@ -154,13 +164,17 @@ public class MpcWorker extends Worker {
             return;
         }
 
+        MPCJobParam mpcJobParam = (MPCJobParam) getJobDO().getJobParam();
+        boolean needRunPsi = mpcJobParam.isNeedRunPsi();
+
         long startTimeMillis = System.currentTimeMillis();
 
         logger.info(
-                "## mpc worker on finished, jobId: {}, workerId: {}, args: {}",
+                "## mpc worker on finished, jobId: {}, workerId: {}, args: {}, needRunPsi: {}",
                 getJobId(),
                 getWorkerId(),
-                workerArgs);
+                workerArgs,
+                needRunPsi);
 
         String outputFilePath = mpcRunJobRequest.getOutputFilePath();
         String resultFilePath = mpcRunJobRequest.getResultFilePath();
@@ -176,6 +190,11 @@ public class MpcWorker extends Worker {
                         ExecutorConfig.getJobCacheDir(getJobId()),
                         ExecutorConfig.getMpcResultFileName());
 
+        String psiResultFilePath =
+                Common.joinPath(
+                        ExecutorConfig.getJobCacheDir(getJobId()),
+                        ExecutorConfig.getPsiResultFileName());
+
         try {
             // 1. download mpc_result.txt
             logger.info(
@@ -190,6 +209,21 @@ public class MpcWorker extends Worker {
 
             logger.info("download the mpc output file successfully, jobId: {}", getJobId());
 
+            List<Integer> idValues = new ArrayList<>();
+            if (needRunPsi) {
+                FileMeta psiResultFileMeta = mpcJobParam.getPsiResultFileMeta();
+
+                logger.info(
+                        "begin to download mpc psi result file from {}=>{}, jobId: {}",
+                        psiResultFileMeta.getPath(),
+                        psiResultFilePath,
+                        getJobId());
+
+                getFileStorageInterface()
+                        .download(psiResultFileMeta.getStoragePath(), psiResultFilePath);
+                idValues = MpcUtils.loadIdFieldValuesFromFile(getJobId(), psiResultFilePath);
+            }
+
             // 2. trans mpc_result.txt to mpc_result.csv
             logger.info(
                     "begin to trans mpc output file to mpc result file from {}=>{}, jobId: {}",
@@ -199,7 +233,7 @@ public class MpcWorker extends Worker {
 
             MpcResultFileResolver mpcResultFileResolver = new MpcResultFileResolver();
             mpcResultFileResolver.transMpcOutputFile2ResultFile(
-                    getJobId(), mpcOutputFilePath, mpcResultFilePath);
+                    getJobId(), needRunPsi, idValues, mpcOutputFilePath, mpcResultFilePath);
 
             logger.info(
                     "trans mpc output file to mpc result file successfully, jobId: {}", getJobId());
@@ -221,6 +255,7 @@ public class MpcWorker extends Worker {
             // 4. remove temp file
             Common.deleteFile(new File(mpcOutputFilePath));
             Common.deleteFile(new File(mpcResultFilePath));
+            Common.deleteFile(new File(psiResultFilePath));
 
             long endTimeMillis = System.currentTimeMillis();
 

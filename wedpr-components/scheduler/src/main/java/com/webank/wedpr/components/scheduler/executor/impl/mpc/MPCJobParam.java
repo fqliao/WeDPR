@@ -27,6 +27,7 @@ public class MPCJobParam {
 
     @JsonIgnore private transient String jobID;
     @JsonIgnore private transient JobType jobType;
+    @JsonIgnore private transient String submitJobAgency;
 
     private String sql;
     private String mpcContent;
@@ -36,10 +37,11 @@ public class MPCJobParam {
     // the dataset information
     private List<DatasetInfo> dataSetList;
 
-    @JsonIgnore private boolean receiveResult = true;
+    @JsonIgnore private boolean receiveResult = false;
     @JsonIgnore private DatasetInfo selfDataset;
     @JsonIgnore private int selfIndex = -1;
     @JsonIgnore private transient List<String> datasetIDList;
+    @JsonIgnore private FileMeta psiResultFileMeta;
 
     public void check(DatasetMapper datasetMapper) throws Exception {
 
@@ -48,6 +50,7 @@ public class MPCJobParam {
         if (dataSetList == null || dataSetList.isEmpty()) {
             throw new WeDPRException("Invalid mpc job param, must define the dataSet information!");
         }
+
         //        if (this.jobType == null) {
         //            throw new WeDPRException("Invalid mpc job param, must define the job type!");
         //        }
@@ -73,6 +76,7 @@ public class MPCJobParam {
 
         this.shareBytesLength = MpcUtils.getShareBytesLength(mpcContent);
         this.needRunPsi = MpcUtils.checkNeedRunPsi(jobID, mpcContent);
+        this.receiveResult = false;
 
         int index = 0;
         for (DatasetInfo datasetInfo : dataSetList) {
@@ -81,11 +85,20 @@ public class MPCJobParam {
             datasetInfo.getDataset().obtainDatasetInfo(datasetMapper);
             datasetInfo.check();
 
+            if (index == 0) {
+                // String owner = datasetInfo.getDataset().getOwner();
+                this.submitJobAgency = datasetInfo.getDataset().getOwnerAgency();
+                logger.info("submit mpc job agency, jobId: {}, agency: {}", jobID, agency);
+            }
+
             String ownerAgency = datasetInfo.getDataset().getOwnerAgency();
             if (agency.equals(ownerAgency)) {
                 selfDataset = datasetInfo;
                 selfIndex = index;
-                receiveResult = datasetInfo.getReceiveResult();
+
+                if (selfIndex == 0) {
+                    this.receiveResult = true;
+                }
             }
 
             index++;
