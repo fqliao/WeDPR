@@ -1,0 +1,8 @@
+.idea
+.gradle
+build
+dist
+wedpr-adm/src/main/resources/
+wedpr-admin/src/main/resources/
+logs/
+**/GenerateCodeMain2.java
