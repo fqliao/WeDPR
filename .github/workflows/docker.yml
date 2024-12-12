@@ -9,14 +9,7 @@ on:
       - 'v3.*.*'
     branches:
       - feature-milestone2
-  pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "python/**"
-      - "Changelog.md"
-      - "README.md"
-    types:
-      - closed
+      - main
   release:
     types: [prereleased]
     

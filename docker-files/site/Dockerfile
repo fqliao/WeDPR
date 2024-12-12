@@ -66,4 +66,5 @@ COPY --from=builder /WeDPR/wedpr-site/dist/ /data/home/wedpr/wedpr-site
 # copy the web package
 COPY --from=web_builder /WeDPR/wedpr-web/dist /data/home/wedpr/wedpr-site/web
 
-ENTRYPOINT ["/usr/sbin/nginx","&&", "/bin/bash", "/data/home/wedpr/wedpr-site/start.sh", "true"]
+
+ENTRYPOINT ["/bin/sh", "-c", "/usr/sbin/nginx && /bin/bash /data/home/wedpr/wedpr-site/start.sh true"]
