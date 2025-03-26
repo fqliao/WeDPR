@@ -1,8 +1,11 @@
 .idea
+.vscode
 .gradle
 build
 dist
-wedpr-adm/src/main/resources/
-wedpr-admin/src/main/resources/
+**/bin/default
+**/bin/generated-sources
+**/bin/main
 logs/
 **/GenerateCodeMain2.java
+package-lock.json
