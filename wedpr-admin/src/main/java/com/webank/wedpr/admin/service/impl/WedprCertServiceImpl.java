@@ -28,6 +28,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,7 +44,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 @Slf4j
 public class WedprCertServiceImpl extends ServiceImpl<WedprCertMapper, WedprCert>
         implements WedprCertService {
-    @Autowired private WedprAgencyService wedprAgencyService;
+    @Lazy @Autowired private WedprAgencyService wedprAgencyService;
 
     @Autowired private WedprCertConfig wedprCertConfig;
 

@@ -3,7 +3,7 @@ SHELL_FOLDER=$(cd $(dirname $0);pwd)
 cd ${SHELL_FOLDER}
 
 # JAVA_HOME="/nemo/jdk8"
-APP_MAIN="com.webank.wedpr.admin.WedprAdminApplication"
+APP_MAIN="com.webank.wedpr.WedprAdminApplication"
 LOG_DIR=.
 SERVER_NAME="WeDPR-ADMIN"
 CLASSPATH='conf/:apps/*:lib/*'

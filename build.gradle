@@ -16,7 +16,6 @@ ext {
     if (!project.hasProperty("ossrhPassword")) {
         ossrhPassword="xxx"
     }
-    wedprDependentLibVersion = "1.0.0-rc1-SNAPSHOT"
     jacksonVersion = "2.18.1"
     apacheCommonLangVersion = "3.17.0"
     lombokVersion = "1.18.32"
