@@ -2,7 +2,7 @@
 SHELL_FOLDER=$(cd $(dirname $0);pwd)
 
 # JAVA_HOME="/nemo/jdk8"
-APP_MAIN="com.webank.wedpr.admin.WedprAdminApplication"
+APP_MAIN="com.webank.wedpr.WedprAdminApplication"
 
 
 LOG_INFO()

@@ -28,5 +28,5 @@ export const permissionMap = {
     'approveManage',
     'serverManage'
   ],
-  agency_admin: ['agencyManage', 'feed', 'dataManage', 'projectManage', 'logManage', 'certificateManage', 'addCertificate', 'screen']
+  agency_admin: ['agencyManage', 'agencyCreate', 'feed', 'dataManage', 'projectManage', 'logManage', 'certificateManage', 'addCertificate', 'screen']
 }
