@@ -19,7 +19,7 @@ useSMCrypto = "false"                       # RPC SM crypto type
 [network]
 messageTimeout = "10000"
 defaultGroup="group0"                            # Console default group to connect
-peers=["139.159.202.235:30202", "139.159.202.235:30203"]    # The peer list to connect
+peers=["127.0.0.1:30202", "127.0.0.1:30203"]    # The peer list to connect
 
 [account]
 keyStoreDir = "account"         # The directory to load/store the account file, default is "account"
