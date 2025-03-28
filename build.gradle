@@ -16,13 +16,12 @@ ext {
     if (!project.hasProperty("ossrhPassword")) {
         ossrhPassword="xxx"
     }
-
     jacksonVersion = "2.18.1"
     apacheCommonLangVersion = "3.17.0"
     lombokVersion = "1.18.32"
     junitVersion = "4.13.2"
     hadoopVersion = "3.4.0"
-    mysqlConnectorVersion = "8.0.29"
+    mysqlConnectorVersion = "8.2.0"
     // Note: pageHelper depends on jsqlParser,
     // it's jsqlParser version should be equal to jsqlParser version of mybatis-plus
     pageHelperVersion = "5.3.1"
@@ -99,7 +98,7 @@ ext {
 // integrationTest.mustRunAfter test
 allprojects {
     group = 'com.webank.wedpr'
-    version = '3.0.0'
+    version = '3.1.0'
     apply plugin: 'maven-publish'
     apply plugin: 'com.github.sherter.google-java-format'
     apply plugin: 'idea'

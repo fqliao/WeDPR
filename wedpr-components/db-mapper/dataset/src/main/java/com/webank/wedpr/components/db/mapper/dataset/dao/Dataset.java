@@ -58,7 +58,10 @@ public class Dataset {
     private String datasetStorageType;
 
     private String datasetStoragePath;
-    @JsonProperty private StoragePathMeta storagePathMeta;
+
+    @TableField(exist = false) // 标记该字段不是数据库表字段
+    @JsonProperty
+    private StoragePathMeta storagePathMeta;
 
     // the data source type
     private String dataSourceType;

@@ -7,7 +7,7 @@ dependencies {
     api libraries.spring, libraries.spring_boot
     api project(":wedpr-common-utils")
     api ("com.alibaba:druid:${druidVersion}")
-    api ("mysql:mysql-connector-java:${mysqlConnectorVersion}")
+    api ("com.mysql:mysql-connector-j:${mysqlConnectorVersion}")
     api ("com.baomidou:mybatis-plus-boot-starter:${mybatisPlusVersion}")
     api("commons-collections:commons-collections:${commonsCollectionsVersion}")
     api("com.github.pagehelper:pagehelper:${pageHelperVersion}")

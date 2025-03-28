@@ -17,4 +17,5 @@ dependencies {
     api project(":wedpr-components-agency")
     api project(":wedpr-components-security")
     api project(":wedpr-components-jupyter-intergration")
+    api project(":wedpr-components-report")
 }
