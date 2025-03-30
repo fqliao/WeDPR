@@ -120,6 +120,19 @@ CREATE TABLE `wedpr_dataset_permission` (
   KEY `expired_at_index` (`expired_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='数据集权限表';
 
+create table if not exists `wedpr_follower_table`(
+    `id` varchar(64) not null comment "id",
+    `user_name` varchar(255) not null comment "关注人",
+    `agency` varchar(255) not null comment "关注人所在机构",
+    `resource_id` varchar(64) not null comment "关注的审批单",
+    `type` varchar(255) not null comment "关注类型(如审批单, 任务)",
+    `create_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "创建时间",
+    `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "更新时间",
+    primary key(`id`),
+    index resource_id_index(`resource_id`),
+    index user_index(`user_name`(128), `agency`(128)),
+    index follower_type_index(`type`)
+)ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE `wedpr_group` (
   `group_id` varchar(64) COLLATE utf8mb4_bin NOT NULL,

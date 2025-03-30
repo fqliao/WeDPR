@@ -14,11 +14,6 @@ dependencies {
     api project(":wedpr-components-security")
 }
 
-// 确保clean任务不会删除dist目录
-clean.doFirst {
-    delete fileTree(dir: 'dist', exclude: 'lib/**')
-}
-
 // 添加依赖复制任务
 task copyDependencies(type: Copy) {
     from configurations.runtimeClasspath
